@@ -9,22 +9,29 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_PREFIX_PATH "D:/Qt/Qt6/6.9.3/mingw_64")
 
 find_package(Boost)
-find_package(Qt6 COMPONENTS
+find_package(Qt6 REQUIRED COMPONENTS
         Core
         Gui
         Widgets
-        REQUIRED)
+        Pdf)
 
 add_executable(ChartNavigation
-        src/main.cpp)
+        src/main.cpp
+        src/gui/main_widget.cpp
+        src/gui/main_widget.hpp
+        src/gui/main_widget.ui
+        src/utils/affineTransformer.cpp
+        src/utils/affineTransformer.hpp)
 
 target_link_libraries(ChartNavigation
         ${Boost_LIBRARIES} ws2_32
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        Qt::Pdf
 )
 target_include_directories(ChartNavigation PRIVATE
+        ${Boost_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/include
