@@ -7,27 +7,43 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 set(CMAKE_PREFIX_PATH "D:/Qt/Qt6/6.9.3/mingw_64")
+set(QT_FORCE_CMP0156_TO_VALUE NEW)
 
 find_package(Boost)
 find_package(Qt6 REQUIRED COMPONENTS
         Core
         Gui
         Widgets
+        PdfWidgets
         Pdf)
 
-add_executable(ChartNavigation
+qt_add_executable(ChartNavigation
         src/main.cpp
         src/gui/main_widget.cpp
         src/gui/main_widget.hpp
         src/gui/main_widget.ui
         src/utils/affineTransformer.cpp
-        src/utils/affineTransformer.hpp)
+        src/utils/affineTransformer.hpp
+        src/gui/pdfView.cpp
+        src/gui/pdfView.hpp
+        resources.qrc
+        )
 
-target_link_libraries(ChartNavigation
+set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
+target_precompile_headers(ChartNavigation PRIVATE
+        <QtCore>
+        <QtGui>
+        <QtWidgets>
+        <QtPdf/QtPdf>
+        <QtPdfWidgets/QPdfView>
+)
+
+target_link_libraries(ChartNavigation PRIVATE
         ${Boost_LIBRARIES} ws2_32
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        Qt::PdfWidgets
         Qt::Pdf
 )
 target_include_directories(ChartNavigation PRIVATE

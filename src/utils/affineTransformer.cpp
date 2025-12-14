@@ -4,7 +4,7 @@
 double percentile (const Eigen::VectorXd &vec, const double q) {
     Eigen::VectorXd sorted{vec};
     std::sort(sorted.data(), sorted.data() + sorted.size());
-    const int idx = static_cast<int>(q) * (static_cast<int>(sorted.size()) - 1);
+    const int idx = q * (static_cast<int>(sorted.size()) - 1);
     return sorted(idx);
 }
 
