@@ -21,7 +21,7 @@ class main_widget final : public QWidget {
     private:
         Ui::main_widget *ui;
         QPdfDocument *document;
-        static std::vector<std::vector<double>> loadData (const QString &filePath) ;
+        std::vector<std::vector<double>> loadData (const QString &filePath) const;
     private slots:
         void on_chart_lineEdit_editingFinished () const;
 };

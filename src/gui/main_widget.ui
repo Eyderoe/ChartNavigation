@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>396</width>
-    <height>358</height>
+    <width>592</width>
+    <height>583</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -45,7 +45,7 @@
     </layout>
    </item>
    <item>
-    <widget class="PdfView" name="pdf_widget">
+    <widget class="PdfView" name="pdf_widget" native="true">
      <property name="minimumSize">
       <size>
        <width>300</width>
@@ -59,8 +59,9 @@
  <customwidgets>
   <customwidget>
    <class>PdfView</class>
-   <extends>QGraphicsView</extends>
-   <header location="global">gui/pdfView.hpp</header>
+   <extends>QWidget</extends>
+   <header>gui/pdfView.hpp</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

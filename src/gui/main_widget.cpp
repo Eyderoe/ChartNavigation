@@ -10,6 +10,7 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     ui->setupUi(this);
     // PDF文档
     document = new QPdfDocument(this);
+    ui->pdf_widget->setDocument(document);
     // 窗口布局
     if (settings.contains("geometry"))
         restoreGeometry(settings.value("geometry").toByteArray());
@@ -24,7 +25,7 @@ main_widget::~main_widget () {
     delete ui;
 }
 
-std::vector<std::vector<double>> main_widget::loadData (const QString &filePath) {
+std::vector<std::vector<double>> main_widget::loadData (const QString &filePath) const {
     // 检查文件夹可用性
     const QSettings settings;
     const QString mappingFolder = settings.value("mapping").toString();
@@ -48,7 +49,8 @@ std::vector<std::vector<double>> main_widget::loadData (const QString &filePath)
     std::vector<std::vector<double>> data;
     const auto &dataArray = config[baseName.toStdString()];
     data.reserve(dataArray.size());
-    for (const auto &mapData : dataArray) {
+    for (size_t i = 0; i < dataArray.size(); ++i) {
+        auto &mapData = dataArray[i];
         double d1 = mapData[0].get<double>();
         double d2 = mapData[1].get<double>();
         double d3 = mapData[2].get<double>();
@@ -61,16 +63,15 @@ std::vector<std::vector<double>> main_widget::loadData (const QString &filePath)
 void main_widget::on_chart_lineEdit_editingFinished () const {
     // 先关闭文档
     document->close();
-    ui->pdf_widget->setPdf(nullptr);
+    ui->pdf_widget->setDocSize(document->pagePointSize(0));
     ui->pdf_widget->loadMappingData({});
     // 再尝试加载
     auto pdfPath = ui->chart_lineEdit->text();
-    if (pdfPath.startsWith("\"") && pdfPath.endsWith("\"") && (pdfPath.size()>=2))
+    if (pdfPath.startsWith("\"") && pdfPath.endsWith("\"") && (pdfPath.size() >= 2))
         pdfPath = pdfPath.mid(1, pdfPath.length() - 2);
     if (const QFile file(pdfPath); !file.exists())
         return;
     document->load(pdfPath);
-    ui->pdf_widget->setPdf(document);
+    ui->pdf_widget->setDocSize(document->pagePointSize(0));
     ui->pdf_widget->loadMappingData(loadData(pdfPath));
-    qDebug() << document->pagePointSize(0);
 }
