@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QtPdf/QtPdf>
-#include <QtPdfWidgets/QPdfView>
+#include "gui/themeColor.hpp"
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -18,12 +18,15 @@ class main_widget final : public QWidget {
     public:
         explicit main_widget (QWidget *parent = nullptr);
         ~main_widget () override;
+    public Q_SLOTS:
+        void setTheme(Qt::ColorScheme colorScheme);
     private:
         Ui::main_widget *ui;
         QPdfDocument *document;
-        std::vector<std::vector<double>> loadData (const QString &filePath) const;
-    private slots:
+        static std::vector<std::vector<double>> loadData (const QString &filePath) ;
+    private Q_SLOTS:
         void on_chart_lineEdit_editingFinished () const;
+        void on_dark_checkBox_clicked(bool checked);
 };
 
 

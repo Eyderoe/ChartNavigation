@@ -11,10 +11,9 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     // PDF文档
     document = new QPdfDocument(this);
     ui->pdf_widget->setDocument(document);
-    // 窗口布局
+    // 设置恢复: 布局 映射路径
     if (settings.contains("geometry"))
         restoreGeometry(settings.value("geometry").toByteArray());
-    // 地图映射
     if (!settings.contains("mapping"))
         settings.setValue("mapping", "INOP");
 }
@@ -25,7 +24,7 @@ main_widget::~main_widget () {
     delete ui;
 }
 
-std::vector<std::vector<double>> main_widget::loadData (const QString &filePath) const {
+std::vector<std::vector<double>> main_widget::loadData (const QString &filePath) {
     // 检查文件夹可用性
     const QSettings settings;
     const QString mappingFolder = settings.value("mapping").toString();
@@ -74,4 +73,23 @@ void main_widget::on_chart_lineEdit_editingFinished () const {
     document->load(pdfPath);
     ui->pdf_widget->setDocSize(document->pagePointSize(0));
     ui->pdf_widget->loadMappingData(loadData(pdfPath));
+}
+
+void main_widget::setTheme (const Qt::ColorScheme colorScheme) {
+    if (colorScheme == Qt::ColorScheme::Dark) {
+        setDarkTheme(nullptr);
+        ui->pdf_widget->setColorTheme(true);
+        ui->dark_checkBox->setCheckState(Qt::Checked);
+    } else {
+        setLightTheme(nullptr);
+        ui->pdf_widget->setColorTheme(false);
+        ui->dark_checkBox->setCheckState(Qt::Unchecked);
+    }
+}
+
+void main_widget::on_dark_checkBox_clicked (bool checked) {
+    if (checked)
+        setTheme(Qt::ColorScheme::Dark);
+    else
+        setTheme(Qt::ColorScheme::Light);
 }

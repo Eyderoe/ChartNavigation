@@ -11,6 +11,7 @@ class PdfView final : public QPdfView {
     public:
         explicit PdfView (QWidget *parent = nullptr);
         void setDocSize (QSizeF point);
+        void setColorTheme(bool darkTheme);
         void loadMappingData (const std::vector<std::vector<double>> &data);
     private:
         // 地图缩放逻辑
@@ -19,7 +20,7 @@ class PdfView final : public QPdfView {
         void mousePressEvent (QMouseEvent *event) override;
         void mouseMoveEvent (QMouseEvent *event) override;
         void mouseReleaseEvent (QMouseEvent *event) override;
-        // 飞机绘制逻辑
+        // 地图绘制逻辑
         std::pair<double,double> trans();
         void paintEvent (QPaintEvent *event) override;
         // x-plane逻辑
@@ -27,6 +28,7 @@ class PdfView final : public QPdfView {
 
         // 地图拖动逻辑
         bool dragging{};
+        bool isDark{};
         QPoint lastPos{};
         // 仿射变换
         QSizeF docSize{-1, -1};

@@ -26,8 +26,13 @@ qt_add_executable(ChartNavigation
         src/utils/affineTransformer.hpp
         src/gui/pdfView.cpp
         src/gui/pdfView.hpp
+        src/gui/license.cpp
+        src/gui/license.hpp
+        src/gui/license.ui
         resources.qrc
-        )
+        src/gui/themeColor.cpp
+        src/gui/themeColor.hpp
+)
 
 set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
 target_precompile_headers(ChartNavigation PRIVATE

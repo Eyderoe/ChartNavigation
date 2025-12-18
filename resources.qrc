@@ -2,4 +2,13 @@
     <qresource prefix="/map">
         <file>resources/plane_small.png</file>
     </qresource>
+    <qresource prefix="/icon">
+        <file>resources/navi16.ico</file>
+        <file>resources/navi32.ico</file>
+        <file>resources/navi48.ico</file>
+        <file>resources/navi64.ico</file>
+        <file>resources/navi128.ico</file>
+        <file>resources/navi256.ico</file>
+        <file>resources/navi.png</file>
+    </qresource>
 </RCC>

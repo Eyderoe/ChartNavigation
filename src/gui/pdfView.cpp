@@ -5,8 +5,8 @@
 PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setPageMode(PageMode::SinglePage);
     setZoomMode(ZoomMode::Custom);
-    // setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    // setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     // 地图绘制
     plane.load(":/map/resources/plane_small.png");
     // xplane
@@ -120,30 +120,38 @@ std::pair<double, double> PdfView::trans () {
 }
 
 void PdfView::paintEvent (QPaintEvent *event) {
-    trans();
     QPdfView::paintEvent(event);
+    bool check{true};
     if (!connected) // xp已连接
-        return;
+        check = false;
     if (plane.isNull()) // 图片不可用
-        return;
+        check = false;
     if (!transActive) // 仿射变换可用
-        return;
+        check = false;
     if (planeInfo.track == -999) // xp信息不可用
-        return;
-    QPainter painter(viewport());
-    if (!painter.isActive()) // PDF文档已加载
-        return;
+        check = false;
 
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform);
-    auto [x,y] = trans();
-    painter.save();
-    painter.translate(x, y);
-    const double direct = std::fmod(planeInfo.track + 360, 360);
-    painter.rotate(direct);
-    painter.scale(0.4, 0.4);
-    painter.drawPixmap(-plane.width() / 2.0, -plane.height() / 2.0, plane);
-    painter.restore();
+    QPainter painter(viewport());
+    if (check) {
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        auto [x,y] = trans();
+        painter.save();
+        painter.translate(x, y);
+        const double direct = std::fmod(planeInfo.track + 360, 360);
+        painter.rotate(direct);
+        painter.scale(0.4, 0.4);
+        painter.drawPixmap(-plane.width() / 2, -plane.height() / 2, plane);
+        painter.restore();
+    }
+    if (isDark) {
+        painter.setCompositionMode(QPainter::CompositionMode_Difference);
+        painter.fillRect(rect(), Qt::white);
+    }
+}
+
+void PdfView::setColorTheme (const bool darkTheme) {
+    isDark = darkTheme;
 }
 
 void PdfView::xpInfoUpdate () {

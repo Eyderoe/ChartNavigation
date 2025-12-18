@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>main_widget</string>
+   <string>ChartNavigation</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -20,7 +20,11 @@
       <widget class="QLineEdit" name="chart_lineEdit"/>
      </item>
      <item>
-      <widget class="QComboBox" name="procedure_comboBox"/>
+      <widget class="QCheckBox" name="dark_checkBox">
+       <property name="text">
+        <string>暗色主题</string>
+       </property>
+      </widget>
      </item>
      <item>
       <spacer name="horizontalSpacer">
