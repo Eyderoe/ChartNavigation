@@ -11,4 +11,8 @@
         <file>resources/navi256.ico</file>
         <file>resources/navi.png</file>
     </qresource>
+    <qresource prefix="/css">
+        <file>resources/qdarkstyle/dark/darkstyle.qss</file>
+        <file>resources/qdarkstyle/light/lightstyle.qss</file>
+    </qresource>
 </RCC>

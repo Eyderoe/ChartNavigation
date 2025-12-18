@@ -3,9 +3,9 @@
 
 int main (int argc, char *argv[]) {
     QApplication app(argc, argv);
-    // 主题：qt启动时会自己匹配主题 这里就设置静态属性
-    setLightTheme(&app, true);
-    setDarkTheme(&app, true);
+    // 主题
+    setLightTheme(&app);
+    setDarkTheme(&app);
     // 设置
     QApplication::setOrganizationName("Eyderoe");
     QApplication::setApplicationName("ChartNavigation");
@@ -16,6 +16,7 @@ int main (int argc, char *argv[]) {
     QApplication::setWindowIcon(ico);
     // 窗口
     main_widget widget;
+    widget.setTheme(QApplication::styleHints()->colorScheme()); // 以系统色彩主题初始化一次
     QObject::connect(app.styleHints(),&QStyleHints::colorSchemeChanged,&widget,&main_widget::setTheme);
     widget.show();
     return QApplication::exec();

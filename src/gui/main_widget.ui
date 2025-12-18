@@ -22,7 +22,14 @@
      <item>
       <widget class="QCheckBox" name="dark_checkBox">
        <property name="text">
-        <string>暗色主题</string>
+        <string>暗色</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="follow_checkBox">
+       <property name="text">
+        <string>跟踪</string>
        </property>
       </widget>
      </item>

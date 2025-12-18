@@ -18,6 +18,9 @@ find_package(Qt6 REQUIRED COMPONENTS
         Pdf)
 
 qt_add_executable(ChartNavigation
+        resources.qrc
+        resources/qdarkstyle/dark/darkstyle.qrc
+        resources/qdarkstyle/light/lightstyle.qrc
         src/main.cpp
         src/gui/main_widget.cpp
         src/gui/main_widget.hpp
@@ -29,7 +32,6 @@ qt_add_executable(ChartNavigation
         src/gui/license.cpp
         src/gui/license.hpp
         src/gui/license.ui
-        resources.qrc
         src/gui/themeColor.cpp
         src/gui/themeColor.hpp
 )

@@ -48,8 +48,7 @@ std::vector<std::vector<double>> main_widget::loadData (const QString &filePath)
     std::vector<std::vector<double>> data;
     const auto &dataArray = config[baseName.toStdString()];
     data.reserve(dataArray.size());
-    for (size_t i = 0; i < dataArray.size(); ++i) {
-        auto &mapData = dataArray[i];
+    for (const auto & mapData : dataArray) {
         double d1 = mapData[0].get<double>();
         double d2 = mapData[1].get<double>();
         double d3 = mapData[2].get<double>();
@@ -75,7 +74,8 @@ void main_widget::on_chart_lineEdit_editingFinished () const {
     ui->pdf_widget->loadMappingData(loadData(pdfPath));
 }
 
-void main_widget::setTheme (const Qt::ColorScheme colorScheme) {
+// TODO 未完全解决Windows暗色主题
+void main_widget::setTheme (const Qt::ColorScheme colorScheme) const {
     if (colorScheme == Qt::ColorScheme::Dark) {
         setDarkTheme(nullptr);
         ui->pdf_widget->setColorTheme(true);
@@ -87,9 +87,11 @@ void main_widget::setTheme (const Qt::ColorScheme colorScheme) {
     }
 }
 
-void main_widget::on_dark_checkBox_clicked (bool checked) {
-    if (checked)
+void main_widget::on_dark_checkBox_clicked (const bool checked) const {
+    if (checked || (QApplication::styleHints()->colorScheme()==Qt::ColorScheme::Dark)) {
         setTheme(Qt::ColorScheme::Dark);
+        ui->dark_checkBox->setCheckState(Qt::Checked);
+    }
     else
         setTheme(Qt::ColorScheme::Light);
 }
