@@ -19,14 +19,18 @@ class main_widget final : public QWidget {
         explicit main_widget (QWidget *parent = nullptr);
         ~main_widget () override;
     public Q_SLOTS:
-        void setTheme(Qt::ColorScheme colorScheme) const;
+        void setTheme (Qt::ColorScheme colorScheme) const;
     private:
         Ui::main_widget *ui;
         QPdfDocument *document;
-        static std::vector<std::vector<double>> loadData (const QString &filePath) ;
+
+        static std::vector<std::vector<double>> loadData (const QString &filePath);
+        void readSettings ();
+        void writeSettings () const;
     private Q_SLOTS:
         void on_chart_lineEdit_editingFinished () const;
-        void on_dark_checkBox_clicked(bool checked) const;
+        void on_dark_checkBox_clicked (bool checked) const;
+        void on_follow_checkBox_clicked (bool checked);
 };
 
 

@@ -15,21 +15,38 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
         this->connected = state;
         qDebug() << "XPlane change state: " << state;
     });
-    timer.setInterval(1000);
-    connect(&timer, &QTimer::timeout, this, &PdfView::xpInfoUpdate);
-    timer.start();
+    // 定时器
+    xpUpdateTimer.setInterval(1000);
+    connect(&xpUpdateTimer, &QTimer::timeout, this, &PdfView::xpInfoUpdate);
+    xpUpdateTimer.start();
 }
 
+/**
+ * @brief 设置PDF文档尺寸
+ * @param point 单位:点(1/72英寸)
+ */
 void PdfView::setDocSize (const QSizeF point) {
     docSize = point;
 }
 
+/**
+ * @brief 设置是否追踪
+ * @param center 居中
+ */
+void PdfView::setCenterOn (const bool center) {
+    centerOn = center;
+}
+
+/**
+ * @brief 加载仿射变换数据集
+ * @param data [[lati,longi,x,y],...]
+ */
 void PdfView::loadMappingData (const std::vector<std::vector<double>> &data) {
     transActive = transformer.loadData(data);
     if (!transActive)
         return;
     auto [error,_] = transformer.evaluate();
-    qDebug() << std::format("nav available! error: {:.2f}", error);
+    qDebug() << std::format("RMS error: {:.2f}", error);
 }
 
 void PdfView::wheelEvent (QWheelEvent *event) {
@@ -80,9 +97,13 @@ void PdfView::mouseReleaseEvent (QMouseEvent *event) {
     QPdfView::mouseReleaseEvent(event);
 }
 
-std::pair<double, double> PdfView::trans () {
+/**
+ * @brief 转换经纬度至当前可视范围坐标
+ * @return (x,y)
+ */
+std::pair<double, double> PdfView::trans (const double latitude, const double longitude) {
     // 获取文档位置
-    auto [x, y] = transformer.transform(planeInfo.lat, planeInfo.lon);
+    auto [x, y] = transformer.transform(latitude, longitude);
     // 获取基本信息
     const auto viewSize = viewport()->size();
     const auto *scree = screen();
@@ -132,10 +153,11 @@ void PdfView::paintEvent (QPaintEvent *event) {
         check = false;
 
     QPainter painter(viewport());
+    // 飞机绘制逻辑
     if (check) {
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setRenderHint(QPainter::SmoothPixmapTransform);
-        auto [x,y] = trans();
+        auto [x,y] = trans(planeInfo.lat, planeInfo.lon);
         painter.save();
         painter.translate(x, y);
         const double direct = std::fmod(planeInfo.track + 360, 360);
@@ -144,6 +166,7 @@ void PdfView::paintEvent (QPaintEvent *event) {
         painter.drawPixmap(-plane.width() / 2, -plane.height() / 2, plane);
         painter.restore();
     }
+    // 暗色模式逻辑
     if (isDark) {
         painter.setCompositionMode(QPainter::CompositionMode_Difference);
         painter.fillRect(rect(), Qt::white);
@@ -154,10 +177,31 @@ void PdfView::setColorTheme (const bool darkTheme) {
     isDark = darkTheme;
 }
 
+/**
+ * @brief 更新机模的基本信息
+ */
 void PdfView::xpInfoUpdate () {
-    if (connected)
+    if (connected) {
         xp.getPlaneInfo(planeInfo);
-    else
+        if (centerOn) {
+            auto [x,y] = trans(planeInfo.lat, planeInfo.lon);
+            const auto vertBar = verticalScrollBar(), horzBar = horizontalScrollBar();
+            // 水平
+            if (horzBar->minimum() != horzBar->maximum()) {
+                const int deltaX = x - viewport()->width() / 2;
+                const int newPos = horzBar->value() + deltaX;
+                horzBar->setValue(qBound(horzBar->minimum(), newPos, horzBar->maximum()));
+            }
+            // 垂直
+            if (vertBar->minimum() != vertBar->maximum()) {
+                const int deltaY = y - viewport()->height() / 2;
+                const int newPos = vertBar->value() + deltaY;
+                vertBar->setValue(qBound(vertBar->minimum(), newPos, vertBar->maximum()));
+            }
+        }
+    } else {
         planeInfo.track = -999;
+    }
     this->viewport()->update();
+    viewport()->update();
 }

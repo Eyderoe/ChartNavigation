@@ -11,6 +11,7 @@ class PdfView final : public QPdfView {
     public:
         explicit PdfView (QWidget *parent = nullptr);
         void setDocSize (QSizeF point);
+        void setCenterOn (bool center);
         void setColorTheme(bool darkTheme);
         void loadMappingData (const std::vector<std::vector<double>> &data);
     private:
@@ -21,15 +22,17 @@ class PdfView final : public QPdfView {
         void mouseMoveEvent (QMouseEvent *event) override;
         void mouseReleaseEvent (QMouseEvent *event) override;
         // 地图绘制逻辑
-        std::pair<double,double> trans();
+        std::pair<double,double> trans(double latitude, double longitude);
         void paintEvent (QPaintEvent *event) override;
         // x-plane逻辑
         void xpInfoUpdate ();
 
         // 地图拖动逻辑
         bool dragging{};
-        bool isDark{};
         QPoint lastPos{};
+        // 地图显示逻辑
+        bool centerOn{};
+        bool isDark{};
         // 仿射变换
         QSizeF docSize{-1, -1};
         AffineTransformer transformer{};
@@ -39,7 +42,8 @@ class PdfView final : public QPdfView {
         eyderoe::XPlaneUdp xp;
         eyderoe::XPlaneUdp::PlaneInfo planeInfo{.track = -999};
         bool connected{false};
-        QTimer timer;
+        // 定时器
+        QTimer xpUpdateTimer;
 };
 
 #endif //CHARTNAVIGATION_PDFVIEW_HPP

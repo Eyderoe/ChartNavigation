@@ -1,11 +1,12 @@
 #include "themeColor.hpp"
 #include "QStyle"
 
-
+// TODO 未完全解决Windows暗色主题 只能说很奇怪的跑起来了
 void setDarkTheme (QApplication *a) {
     static QApplication *app{a};
+    if (QApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark)
+        QApplication::setPalette(QApplication::style()->standardPalette());
     app->setStyleSheet("");
-    QApplication::setPalette(QApplication::style()->standardPalette());
     static QString sheet{};
     if (a != nullptr) {
         QFile qss(":/css/resources/qdarkstyle/dark/darkstyle.qss");
@@ -19,7 +20,6 @@ void setDarkTheme (QApplication *a) {
 void setLightTheme (QApplication *a) {
     static QApplication *app{a};
     app->setStyleSheet("");
-    QApplication::setPalette(QApplication::style()->standardPalette());
     static QString sheet{};
     if (a != nullptr) {
         QFile qss(":/css/resources/qdarkstyle/light/lightstyle.qss");

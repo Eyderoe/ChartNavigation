@@ -4,23 +4,45 @@
 
 using namespace nlohmann;
 
-main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_widget) {
+void main_widget::readSettings () {
     QSettings settings;
+    // 窗口布局
+    if (settings.contains("geometry"))
+        restoreGeometry(settings.value("geometry").toByteArray());
+    // 数据映射
+    if (!settings.contains("mapping"))
+        settings.setValue("mapping", "INOP");
+    // 居中
+    bool center{};
+    if (settings.contains("center_on"))
+        center = settings.value("center_on").toBool();
+    if (center)
+        ui->follow_checkBox->setCheckState(Qt::Checked);
+    else
+        ui->follow_checkBox->setCheckState(Qt::Unchecked);
+    ui->pdf_widget->setCenterOn(center);
+}
+
+void main_widget::writeSettings () const {
+    QSettings settings;
+    // 窗口布局
+    settings.setValue("geometry", saveGeometry());
+    // 居中
+    settings.setValue("center_on", ui->follow_checkBox->isChecked());
+}
+
+main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_widget) {
     // 构件初始化
     ui->setupUi(this);
     // PDF文档
     document = new QPdfDocument(this);
     ui->pdf_widget->setDocument(document);
-    // 设置恢复: 布局 映射路径
-    if (settings.contains("geometry"))
-        restoreGeometry(settings.value("geometry").toByteArray());
-    if (!settings.contains("mapping"))
-        settings.setValue("mapping", "INOP");
+    // 设置
+    readSettings();
 }
 
 main_widget::~main_widget () {
-    QSettings settings;
-    settings.setValue("geometry", saveGeometry());
+    writeSettings();
     delete ui;
 }
 
@@ -48,7 +70,7 @@ std::vector<std::vector<double>> main_widget::loadData (const QString &filePath)
     std::vector<std::vector<double>> data;
     const auto &dataArray = config[baseName.toStdString()];
     data.reserve(dataArray.size());
-    for (const auto & mapData : dataArray) {
+    for (const auto &mapData : dataArray) {
         double d1 = mapData[0].get<double>();
         double d2 = mapData[1].get<double>();
         double d3 = mapData[2].get<double>();
@@ -74,7 +96,6 @@ void main_widget::on_chart_lineEdit_editingFinished () const {
     ui->pdf_widget->loadMappingData(loadData(pdfPath));
 }
 
-// TODO 未完全解决Windows暗色主题
 void main_widget::setTheme (const Qt::ColorScheme colorScheme) const {
     if (colorScheme == Qt::ColorScheme::Dark) {
         setDarkTheme(nullptr);
@@ -88,10 +109,13 @@ void main_widget::setTheme (const Qt::ColorScheme colorScheme) const {
 }
 
 void main_widget::on_dark_checkBox_clicked (const bool checked) const {
-    if (checked || (QApplication::styleHints()->colorScheme()==Qt::ColorScheme::Dark)) {
+    if (checked || (QApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark)) {
         setTheme(Qt::ColorScheme::Dark);
         ui->dark_checkBox->setCheckState(Qt::Checked);
-    }
-    else
+    } else
         setTheme(Qt::ColorScheme::Light);
+}
+
+void main_widget::on_follow_checkBox_clicked (const bool checked) {
+    ui->pdf_widget->setCenterOn(checked);
 }
