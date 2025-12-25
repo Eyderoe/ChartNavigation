@@ -28,9 +28,11 @@ class main_widget final : public QWidget {
         void readSettings ();
         void writeSettings () const;
     private Q_SLOTS:
-        void on_chart_lineEdit_editingFinished () const;
-        void on_dark_checkBox_clicked (bool checked) const;
-        void on_follow_checkBox_clicked (bool checked);
+        void on_chart_lineEdit_editingFinished () const; // 文件路径输入框 -> 加载PDF文档
+        void on_dark_checkBox_clicked (bool checked) const; // 暗色主题选中框
+        void on_follow_checkBox_clicked (bool checked); // 机模跟踪选中框
+        void on_pin_checkBox_clicked (bool checked); // 程序窗口是否置顶
+        void on_pageNum_spinBox_valueChanged (int pageNum); // PDF文档页数切换
 };
 
 

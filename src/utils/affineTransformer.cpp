@@ -4,16 +4,16 @@
 double percentile (const Eigen::VectorXd &vec, const double q) {
     Eigen::VectorXd sorted{vec};
     std::sort(sorted.data(), sorted.data() + sorted.size());
-    const int idx = q * (static_cast<int>(sorted.size()) - 1);
+    const int idx = static_cast<int>(q * (static_cast<int>(sorted.size()) - 1));
     return sorted(idx);
 }
 
 /**
  * @brief 采取IQR方法筛选异常值
  * @param values 值列表
- * @return 异常值列表
+ * @return 异常值位置列表
  */
-std::vector<int> findAbnormal (const std::vector<double> &values) {
+std::vector<int> findAbnormal_IQR (const std::vector<double> &values) {
     Eigen::VectorXd data(values.size());
     for (int i = 0; i < values.size(); ++i)
         data(i) = values[i];
@@ -32,6 +32,48 @@ std::vector<int> findAbnormal (const std::vector<double> &values) {
     return abnormalValues;
 }
 
+double median(const Eigen::VectorXd& data) {
+    Eigen::VectorXd sortedData = data;
+    std::sort(sortedData.data(), sortedData.data() + sortedData.size());
+    if (const long long size = sortedData.size(); size % 2 == 0) {
+        return (sortedData(size / 2 - 1) + sortedData(size / 2)) / 2.0;
+    } else {
+        return sortedData(size / 2);
+    }
+}
+
+double mad(const Eigen::VectorXd& data) {
+    const double med = median(data);
+    Eigen::VectorXd absDev(data.size());
+    for (int i = 0; i < data.size(); ++i) {
+        absDev(i) = std::abs(data(i) - med);
+    }
+    return median(absDev);
+}
+
+/**
+ * @brief 基于MAD算法筛选异常值
+ * @param values 值列表
+ * @return 异常值位置列表
+ */
+std::vector<int> findAbnormal_MAD(const std::vector<double>& values) {
+    Eigen::VectorXd data(values.size());
+    for (int i = 0; i < values.size(); ++i)
+        data(i) = values[i];
+    // 计算 MAD 参数
+    const double med = median(data);
+    const double madValue = mad(data);
+    constexpr double threshold = 3.0;
+    // 查找异常值的索引
+    std::vector<int> abnormalValues;
+    for (size_t i = 0; i < values.size(); ++i) {
+        if (std::abs(values[i] - med) > threshold * madValue) {
+            abnormalValues.push_back(static_cast<int>(i));
+        }
+    }
+    return abnormalValues;
+}
+
 /**
  * @brief 加载数据
  * @param dataList [[纬度,经度,x,y], ...]
@@ -43,7 +85,7 @@ bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataLi
     if (!fitAffine())
         return false;
     auto [_, errors] = evaluate();
-    auto idxes = findAbnormal(errors);
+    auto idxes = findAbnormal_IQR(errors);
     // 第二次变换
     std::ranges::sort(idxes, std::ranges::greater{});
     for (const auto idx : idxes)

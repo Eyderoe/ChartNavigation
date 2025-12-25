@@ -21,6 +21,15 @@ void main_widget::readSettings () {
     else
         ui->follow_checkBox->setCheckState(Qt::Unchecked);
     ui->pdf_widget->setCenterOn(center);
+    // 置顶
+    bool top{};
+    if (settings.contains("pin_top"))
+        top = settings.value("pin_top").toBool();
+    if (top)
+        ui->pin_checkBox->setCheckState(Qt::Checked);
+    else
+        ui->pin_checkBox->setCheckState(Qt::Unchecked);
+    on_pin_checkBox_clicked(top);
 }
 
 void main_widget::writeSettings () const {
@@ -29,6 +38,8 @@ void main_widget::writeSettings () const {
     settings.setValue("geometry", saveGeometry());
     // 居中
     settings.setValue("center_on", ui->follow_checkBox->isChecked());
+    // 置顶
+    settings.setValue("pin_top", ui->pin_checkBox->isChecked());
 }
 
 main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_widget) {
@@ -37,6 +48,7 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     // PDF文档
     document = new QPdfDocument(this);
     ui->pdf_widget->setDocument(document);
+    ui->pageNum_spinBox->setEnabled(false);
     // 设置
     readSettings();
 }
@@ -80,19 +92,22 @@ std::vector<std::vector<double>> main_widget::loadData (const QString &filePath)
     return data;
 }
 
+/**
+ * @brief 文件路径输入框 -> 加载PDF文档
+ */
 void main_widget::on_chart_lineEdit_editingFinished () const {
     // 先关闭文档
     document->close();
-    ui->pdf_widget->setDocSize(document->pagePointSize(0));
     ui->pdf_widget->loadMappingData({});
     // 再尝试加载
     auto pdfPath = ui->chart_lineEdit->text();
     if (pdfPath.startsWith("\"") && pdfPath.endsWith("\"") && (pdfPath.size() >= 2))
         pdfPath = pdfPath.mid(1, pdfPath.length() - 2);
+    if (!pdfPath.toLower().endsWith(".pdf"))
+        return;
     if (const QFile file(pdfPath); !file.exists())
         return;
     document->load(pdfPath);
-    ui->pdf_widget->setDocSize(document->pagePointSize(0));
     ui->pdf_widget->loadMappingData(loadData(pdfPath));
 }
 
@@ -108,6 +123,10 @@ void main_widget::setTheme (const Qt::ColorScheme colorScheme) const {
     }
 }
 
+/**
+ * @brief 暗色主题选中框
+ * @param checked 是否选中
+ */
 void main_widget::on_dark_checkBox_clicked (const bool checked) const {
     if (checked || (QApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark)) {
         setTheme(Qt::ColorScheme::Dark);
@@ -116,6 +135,28 @@ void main_widget::on_dark_checkBox_clicked (const bool checked) const {
         setTheme(Qt::ColorScheme::Light);
 }
 
+/**
+ * @brief 机模跟踪选中框
+ * @param checked 是否选中
+ */
 void main_widget::on_follow_checkBox_clicked (const bool checked) {
     ui->pdf_widget->setCenterOn(checked);
 }
+
+/**
+ * @brief 程序窗口是否置顶
+ * @param checked 是否选中
+ */
+void main_widget::on_pin_checkBox_clicked (const bool checked) {
+    if (checked)
+        setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+    else
+        setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
+    show();
+}
+
+/**
+ * @brief PDF文档页数切换
+ * @param pageNum 页数(起始为1)
+ */
+void main_widget::on_pageNum_spinBox_valueChanged (int pageNum) {}

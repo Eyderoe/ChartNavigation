@@ -20,6 +20,9 @@
       <widget class="QLineEdit" name="chart_lineEdit"/>
      </item>
      <item>
+      <widget class="QSpinBox" name="pageNum_spinBox"/>
+     </item>
+     <item>
       <widget class="QCheckBox" name="dark_checkBox">
        <property name="text">
         <string>暗色</string>
@@ -30,6 +33,22 @@
       <widget class="QCheckBox" name="follow_checkBox">
        <property name="text">
         <string>跟踪</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="pin_checkBox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>置顶</string>
        </property>
       </widget>
      </item>

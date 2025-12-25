@@ -17,7 +17,7 @@ find_package(Qt6 REQUIRED COMPONENTS
         PdfWidgets
         Pdf)
 
-qt_add_executable(ChartNavigation
+add_executable(ChartNavigation WIN32
         resources.qrc
         resources/qdarkstyle/dark/darkstyle.qrc
         resources/qdarkstyle/light/lightstyle.qrc
@@ -35,6 +35,13 @@ qt_add_executable(ChartNavigation
         src/gui/themeColor.cpp
         src/gui/themeColor.hpp
 )
+if (MINGW)
+    target_link_options(ChartNavigation PRIVATE
+            $<$<CONFIG:Debug>:-mconsole>
+            $<$<CONFIG:RelWithDebInfo>:-mconsole>
+            $<$<CONFIG:Release>:-mwindows>
+    )
+endif ()
 
 set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
 target_precompile_headers(ChartNavigation PRIVATE
@@ -46,7 +53,7 @@ target_precompile_headers(ChartNavigation PRIVATE
 )
 
 target_link_libraries(ChartNavigation PRIVATE
-        ${Boost_LIBRARIES} ws2_32
+        ${Boost_SYSTEM_LIBRARY} ws2_32
         Qt::Core
         Qt::Gui
         Qt::Widgets

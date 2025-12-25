@@ -1,7 +1,5 @@
 #include "pdfView.hpp"
 
-#include <iostream>
-
 PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setPageMode(PageMode::SinglePage);
     setZoomMode(ZoomMode::Custom);
@@ -22,11 +20,12 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
 }
 
 /**
- * @brief 设置PDF文档尺寸
- * @param point 单位:点(1/72英寸)
+ * @brief 获取PDF文档某一页尺寸
+ * @param page 页数
+ * @return (长,宽) 单位:点(1/72英寸)
  */
-void PdfView::setDocSize (const QSizeF point) {
-    docSize = point;
+QSizeF PdfView::getDocSize (const int page) const {
+    return document()->pagePointSize(page);
 }
 
 /**
@@ -109,11 +108,11 @@ std::pair<double, double> PdfView::trans (const double latitude, const double lo
     const auto *scree = screen();
     const auto vertBar = verticalScrollBar(), horzBar = horizontalScrollBar();
     const auto dpi = scree->logicalDotsPerInch();
-    const auto logicDocSize = zoomFactor() * docSize * dpi / 72;
+    const auto logicDocSize = zoomFactor() * getDocSize() * dpi / 72;
     const auto margin = documentMargins();
     // x计算
     double finalX{};
-    const double scaleX = x / docSize.width(); // 1 PDF (点)
+    const double scaleX = x / getDocSize().width(); // 1 PDF (点)
     double docX = scaleX * logicDocSize.width(); // 2 PDF (像素)
     if (horzBar->minimum() == horzBar->maximum()) { // 非缩放状态
         finalX = (viewSize.width() - logicDocSize.width()) / 2 + docX;
@@ -126,7 +125,7 @@ std::pair<double, double> PdfView::trans (const double latitude, const double lo
     }
     // y计算
     double finalY{};
-    const double scaleY = y / docSize.width();
+    const double scaleY = y / getDocSize().width();
     double docY = scaleY * logicDocSize.width();
     if (vertBar->minimum() == vertBar->maximum()) { // 非缩放状态
         finalY = margin.top() + docY;
@@ -142,6 +141,15 @@ std::pair<double, double> PdfView::trans (const double latitude, const double lo
 
 void PdfView::paintEvent (QPaintEvent *event) {
     QPdfView::paintEvent(event);
+    QPainter painter(viewport());
+    // 暗色模式逻辑
+    if (isDark) {
+        painter.save();
+        painter.setCompositionMode(QPainter::CompositionMode_Difference);
+        painter.fillRect(rect(), Qt::white);
+        painter.restore();
+    }
+
     bool check{true};
     if (!connected) // xp已连接
         check = false;
@@ -151,8 +159,6 @@ void PdfView::paintEvent (QPaintEvent *event) {
         check = false;
     if (planeInfo.track == -999) // xp信息不可用
         check = false;
-
-    QPainter painter(viewport());
     // 飞机绘制逻辑
     if (check) {
         painter.setRenderHint(QPainter::Antialiasing);
@@ -166,12 +172,8 @@ void PdfView::paintEvent (QPaintEvent *event) {
         painter.drawPixmap(-plane.width() / 2, -plane.height() / 2, plane);
         painter.restore();
     }
-    // 暗色模式逻辑
-    if (isDark) {
-        painter.setCompositionMode(QPainter::CompositionMode_Difference);
-        painter.fillRect(rect(), Qt::white);
-    }
 }
+
 
 void PdfView::setColorTheme (const bool darkTheme) {
     isDark = darkTheme;
@@ -185,16 +187,21 @@ void PdfView::xpInfoUpdate () {
         xp.getPlaneInfo(planeInfo);
         if (centerOn) {
             auto [x,y] = trans(planeInfo.lat, planeInfo.lon);
+            constexpr double edge{10};
+            if ((x < -edge) || (x > viewport()->width() + edge))
+                return;
+            if ((y < -edge) || (y > viewport()->height() + edge))
+                return;
             const auto vertBar = verticalScrollBar(), horzBar = horizontalScrollBar();
             // 水平
             if (horzBar->minimum() != horzBar->maximum()) {
-                const int deltaX = x - viewport()->width() / 2;
+                const int deltaX = static_cast<int>(x) - viewport()->width() / 2;
                 const int newPos = horzBar->value() + deltaX;
                 horzBar->setValue(qBound(horzBar->minimum(), newPos, horzBar->maximum()));
             }
             // 垂直
             if (vertBar->minimum() != vertBar->maximum()) {
-                const int deltaY = y - viewport()->height() / 2;
+                const int deltaY = static_cast<int>(y) - viewport()->height() / 2;
                 const int newPos = vertBar->value() + deltaY;
                 vertBar->setValue(qBound(vertBar->minimum(), newPos, vertBar->maximum()));
             }
@@ -202,6 +209,5 @@ void PdfView::xpInfoUpdate () {
     } else {
         planeInfo.track = -999;
     }
-    this->viewport()->update();
     viewport()->update();
 }

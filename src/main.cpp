@@ -1,3 +1,4 @@
+#include "QApplication"
 #include "gui/main_widget.hpp"
 #include "gui/themeColor.hpp"
 

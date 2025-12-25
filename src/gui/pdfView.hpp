@@ -10,7 +10,7 @@
 class PdfView final : public QPdfView {
     public:
         explicit PdfView (QWidget *parent = nullptr);
-        void setDocSize (QSizeF point);
+        QSizeF getDocSize(int page=0) const;
         void setCenterOn (bool center);
         void setColorTheme(bool darkTheme);
         void loadMappingData (const std::vector<std::vector<double>> &data);
@@ -34,7 +34,6 @@ class PdfView final : public QPdfView {
         bool centerOn{};
         bool isDark{};
         // 仿射变换
-        QSizeF docSize{-1, -1};
         AffineTransformer transformer{};
         bool transActive{false};
         // x-plane
