@@ -13,7 +13,7 @@ class PdfView final : public QPdfView {
         QSizeF getDocSize(int page=0) const;
         void setCenterOn (bool center);
         void setColorTheme(bool darkTheme);
-        void loadMappingData (const std::vector<std::vector<double>> &data);
+        void loadMappingData (const std::vector<std::vector<double>> &data, double rotate);
     private:
         // 地图缩放逻辑
         void wheelEvent (QWheelEvent *event) override;
@@ -22,8 +22,8 @@ class PdfView final : public QPdfView {
         void mouseMoveEvent (QMouseEvent *event) override;
         void mouseReleaseEvent (QMouseEvent *event) override;
         // 地图绘制逻辑
-        std::pair<double,double> trans(double latitude, double longitude);
         void paintEvent (QPaintEvent *event) override;
+        std::pair<double,double> trans(double latitude, double longitude);
         // x-plane逻辑
         void xpInfoUpdate ();
 
@@ -33,6 +33,7 @@ class PdfView final : public QPdfView {
         // 地图显示逻辑
         bool centerOn{};
         bool isDark{};
+        double rotate{};
         // 仿射变换
         AffineTransformer transformer{};
         bool transActive{false};

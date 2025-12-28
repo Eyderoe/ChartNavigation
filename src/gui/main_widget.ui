@@ -20,7 +20,14 @@
       <widget class="QLineEdit" name="chart_lineEdit"/>
      </item>
      <item>
-      <widget class="QSpinBox" name="pageNum_spinBox"/>
+      <widget class="QSpinBox" name="pageNum_spinBox">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>22</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QCheckBox" name="dark_checkBox">

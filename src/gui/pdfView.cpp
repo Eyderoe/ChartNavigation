@@ -39,8 +39,10 @@ void PdfView::setCenterOn (const bool center) {
 /**
  * @brief 加载仿射变换数据集
  * @param data [[lati,longi,x,y],...]
+ * @param rotateDegree 机模旋转角度 (显示=实际+rotateDegree)
  */
-void PdfView::loadMappingData (const std::vector<std::vector<double>> &data) {
+void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, const double rotateDegree) {
+    rotate = rotateDegree;
     transActive = transformer.loadData(data);
     if (!transActive)
         return;
@@ -56,9 +58,9 @@ void PdfView::wheelEvent (QWheelEvent *event) {
 
     double newZoom = oldZoom;
     if (event->angleDelta().y() > 0)
-        newZoom *= 1.1;
+        newZoom *= 1.2;
     else
-        newZoom *= 0.9;
+        newZoom *= 0.8;
     newZoom = qBound(0.2, newZoom, 4.0);
 
     setZoomFactor(newZoom);
@@ -94,6 +96,41 @@ void PdfView::mouseReleaseEvent (QMouseEvent *event) {
         unsetCursor();
     }
     QPdfView::mouseReleaseEvent(event);
+}
+
+void PdfView::paintEvent (QPaintEvent *event) {
+    QPdfView::paintEvent(event);
+    QPainter painter(viewport());
+    // 暗色模式逻辑
+    if (isDark) {
+        painter.save();
+        painter.setCompositionMode(QPainter::CompositionMode_Difference);
+        painter.fillRect(rect(), Qt::white);
+        painter.restore();
+    }
+
+    bool check{true};
+    if (!connected) // xp已连接
+        check = false;
+    if (plane.isNull()) // 图片不可用
+        check = false;
+    if (!transActive) // 仿射变换可用
+        check = false;
+    if (planeInfo.track == -999) // xp信息不可用
+        check = false;
+    // 飞机绘制逻辑
+    if (check) {
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        auto [x,y] = trans(planeInfo.lat, planeInfo.lon);
+        painter.save();
+        painter.translate(x, y);
+        const double direct = std::fmod(planeInfo.track + rotate + 360, 360);
+        painter.rotate(direct);
+        painter.scale(0.4, 0.4);
+        painter.drawPixmap(-plane.width() / 2, -plane.height() / 2, plane);
+        painter.restore();
+    }
 }
 
 /**
@@ -139,42 +176,10 @@ std::pair<double, double> PdfView::trans (const double latitude, const double lo
     return {finalX, finalY};
 }
 
-void PdfView::paintEvent (QPaintEvent *event) {
-    QPdfView::paintEvent(event);
-    QPainter painter(viewport());
-    // 暗色模式逻辑
-    if (isDark) {
-        painter.save();
-        painter.setCompositionMode(QPainter::CompositionMode_Difference);
-        painter.fillRect(rect(), Qt::white);
-        painter.restore();
-    }
-
-    bool check{true};
-    if (!connected) // xp已连接
-        check = false;
-    if (plane.isNull()) // 图片不可用
-        check = false;
-    if (!transActive) // 仿射变换可用
-        check = false;
-    if (planeInfo.track == -999) // xp信息不可用
-        check = false;
-    // 飞机绘制逻辑
-    if (check) {
-        painter.setRenderHint(QPainter::Antialiasing);
-        painter.setRenderHint(QPainter::SmoothPixmapTransform);
-        auto [x,y] = trans(planeInfo.lat, planeInfo.lon);
-        painter.save();
-        painter.translate(x, y);
-        const double direct = std::fmod(planeInfo.track + 360, 360);
-        painter.rotate(direct);
-        painter.scale(0.4, 0.4);
-        painter.drawPixmap(-plane.width() / 2, -plane.height() / 2, plane);
-        painter.restore();
-    }
-}
-
-
+/**
+ * @brief 设置色彩主题
+ * @param darkTheme 是否使用暗色主题
+ */
 void PdfView::setColorTheme (const bool darkTheme) {
     isDark = darkTheme;
 }
@@ -185,7 +190,7 @@ void PdfView::setColorTheme (const bool darkTheme) {
 void PdfView::xpInfoUpdate () {
     if (connected) {
         xp.getPlaneInfo(planeInfo);
-        if (centerOn) {
+        if (centerOn && !dragging) {
             auto [x,y] = trans(planeInfo.lat, planeInfo.lon);
             constexpr double edge{10};
             if ((x < -edge) || (x > viewport()->width() + edge))
