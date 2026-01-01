@@ -1,4 +1,5 @@
 #include "themeColor.hpp"
+
 #include "QStyle"
 
 // TODO 未完全解决Windows暗色主题 只能说很奇怪的跑起来了

@@ -17,7 +17,7 @@ find_package(Qt6 REQUIRED COMPONENTS
         PdfWidgets
         Pdf)
 
-add_executable(ChartNavigation WIN32
+add_executable(${PROJECT_NAME} WIN32
         resources.qrc
         resources/qdarkstyle/dark/darkstyle.qrc
         resources/qdarkstyle/light/lightstyle.qrc
@@ -29,22 +29,29 @@ add_executable(ChartNavigation WIN32
         src/utils/affineTransformer.hpp
         src/gui/pdfView.cpp
         src/gui/pdfView.hpp
-        src/gui/license.cpp
-        src/gui/license.hpp
-        src/gui/license.ui
         src/gui/themeColor.cpp
         src/gui/themeColor.hpp
+        src/tools/stringProcess.cpp
+        src/tools/stringProcess.hpp
+        src/gui/options_widget.cpp
+        src/gui/options_widget.hpp
+        src/gui/options_widget.ui
+        src/gui/enhancedTree.cpp
+        src/gui/enhancedTree.hpp
 )
 if (MINGW)
-    target_link_options(ChartNavigation PRIVATE
+    target_link_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:Debug>:-mconsole>
             $<$<CONFIG:RelWithDebInfo>:-mconsole>
             $<$<CONFIG:Release>:-mwindows>
     )
 endif ()
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Release>:QT_NO_DEBUG_OUTPUT>
+)
 
 set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
-target_precompile_headers(ChartNavigation PRIVATE
+target_precompile_headers(${PROJECT_NAME} PRIVATE
         <QtCore>
         <QtGui>
         <QtWidgets>
@@ -52,7 +59,7 @@ target_precompile_headers(ChartNavigation PRIVATE
         <QtPdfWidgets/QPdfView>
 )
 
-target_link_libraries(ChartNavigation PRIVATE
+target_link_libraries(${PROJECT_NAME} PRIVATE
         ${Boost_SYSTEM_LIBRARY} ws2_32
         Qt::Core
         Qt::Gui
@@ -60,7 +67,7 @@ target_link_libraries(ChartNavigation PRIVATE
         Qt::PdfWidgets
         Qt::Pdf
 )
-target_include_directories(ChartNavigation PRIVATE
+target_include_directories(${PROJECT_NAME} PRIVATE
         ${Boost_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/include

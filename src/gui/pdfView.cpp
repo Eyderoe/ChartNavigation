@@ -1,5 +1,7 @@
 #include "pdfView.hpp"
 
+#include "tools/stringProcess.hpp"
+
 PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setPageMode(PageMode::SinglePage);
     setZoomMode(ZoomMode::Custom);
@@ -46,8 +48,10 @@ void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, con
     transActive = transformer.loadData(data);
     if (!transActive)
         return;
-    auto [error,_] = transformer.evaluate();
-    qDebug() << std::format("RMS error: {:.2f}", error);
+    auto [error,errors] = transformer.evaluate();
+    // Debug输出
+    auto view = errors | std::views::transform([](double num) { return std::format("{:.2f}", num); });
+    qDebug() << std::format("RMS: {:.2f}, errors: [{}]", error, join(view, ", "));
 }
 
 void PdfView::wheelEvent (QWheelEvent *event) {

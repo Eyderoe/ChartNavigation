@@ -1,6 +1,8 @@
 #include "main_widget.hpp"
 #include "ui_main_widget.h"
 #include "json.hpp"
+#include "options_widget.hpp"
+#include "enhancedTree.hpp"
 
 using namespace nlohmann;
 
@@ -8,31 +10,30 @@ using namespace nlohmann;
  * @brief 读取和配置设置
  */
 void main_widget::readSettings () {
-    QSettings settings;
+    const QSettings settings;
     // 窗口布局
-    if (settings.contains("geometry"))
-        restoreGeometry(settings.value("geometry").toByteArray());
-    // 数据映射
-    if (!settings.contains("mapping"))
-        settings.setValue("mapping", "INOP");
+    if (settings.contains("main_widget_geometry"))
+        restoreGeometry(settings.value("main_widget_geometry").toByteArray());
+    if (settings.contains("main_splitter_state"))
+        ui->splitter->restoreState(settings.value("main_splitter_state").toByteArray());
     // 居中
-    bool center{};
-    if (settings.contains("center_on"))
-        center = settings.value("center_on").toBool();
-    if (center)
-        ui->follow_checkBox->setCheckState(Qt::Checked);
-    else
-        ui->follow_checkBox->setCheckState(Qt::Unchecked);
-    ui->pdf_widget->setCenterOn(center);
+    if (settings.contains("center_on")) {
+        const bool center = settings.value("center_on").toBool();
+        ui->follow_checkBox->setCheckState(center ? Qt::Checked : Qt::Unchecked);
+        ui->pdf_widget->setCenterOn(center);
+    }
     // 置顶
-    bool top{};
-    if (settings.contains("pin_top"))
-        top = settings.value("pin_top").toBool();
-    if (top)
-        ui->pin_checkBox->setCheckState(Qt::Checked);
-    else
-        ui->pin_checkBox->setCheckState(Qt::Unchecked);
-    on_pin_checkBox_clicked(top);
+    if (settings.contains("pin_top")) {
+        const bool top = settings.value("pin_top").toBool();
+        ui->pin_checkBox->setCheckState(top ? Qt::Checked : Qt::Unchecked);
+        on_pin_checkBox_clicked(top);
+    }
+    // 单文件输入框
+    ui->chart_lineEdit->setHidden(true);
+    if (settings.contains("singleFileDisable")) {
+        if (const bool singleFileDisable = settings.value("singleFileDisable").toBool(); !singleFileDisable)
+            ui->chart_lineEdit->setHidden(false);
+    }
 }
 
 /**
@@ -41,7 +42,8 @@ void main_widget::readSettings () {
 void main_widget::writeSettings () const {
     QSettings settings;
     // 窗口布局
-    settings.setValue("geometry", saveGeometry());
+    settings.setValue("main_widget_geometry", saveGeometry());
+    settings.setValue("main_splitter_state", ui->splitter->saveState());
     // 居中
     settings.setValue("center_on", ui->follow_checkBox->isChecked());
     // 置顶
@@ -58,6 +60,17 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     ui->pageNum_spinBox->setEnabled(false);
     // 设置
     readSettings();
+    // 构建目录
+    bool init{};
+    if (const QSettings settings; settings.contains("chartFolder")) {
+        if (const QDir chartFolder = settings.value("chartFolder").toString(); chartFolder.exists()) {
+            ui->treeWidget->setHeaderLabel(chartFolder.dirName());
+            traverseRead(chartFolder, ui->treeWidget);
+            init = true;
+        }
+    }
+    if (!init)
+        ui->treeWidget->setHeaderHidden(true);
 }
 
 main_widget::~main_widget () {
@@ -70,10 +83,10 @@ main_widget::~main_widget () {
  * @param pageNum 页码(1起始)
  * @return 存储的映射数据,旋转角度
  */
-std::pair<std::vector<std::vector<double>>, double> main_widget::loadData (const int pageNum) const {
+auto main_widget::loadData (const int pageNum) const -> std::pair<std::vector<std::vector<double>>, double> {
     // 文件夹可用性
     const QSettings settings;
-    const QString mappingFolder = settings.value("mapping").toString();
+    const QString mappingFolder = settings.value("mappingFolder").toString();
     const QDir mappingDir(mappingFolder);
     if (!mappingDir.exists())
         return {};
@@ -94,8 +107,7 @@ std::pair<std::vector<std::vector<double>>, double> main_widget::loadData (const
     const auto &fileConfig = airportConfig[baseName.toStdString()];
     const basic_json<> *availableData{nullptr};
     for (const auto &pageConfig : fileConfig) {
-        const auto &header = pageConfig[0];
-        if (header["page"] == pageNum - 1) {
+        if (const auto &header = pageConfig[0]; header["page"] == pageNum - 1) {
             availableData = &pageConfig;
             break;
         }
@@ -142,7 +154,7 @@ void main_widget::on_chart_lineEdit_editingFinished () {
 
 /**
  * @brief 设置色彩主题
- * @param colorScheme
+ * @param colorScheme 色彩主题
  */
 void main_widget::setTheme (const Qt::ColorScheme colorScheme) const {
     if (colorScheme == Qt::ColorScheme::Dark) {
@@ -172,7 +184,7 @@ void main_widget::on_dark_checkBox_clicked (const bool checked) const {
  * @brief 机模跟踪选中框
  * @param checked 是否选中
  */
-void main_widget::on_follow_checkBox_clicked (const bool checked) {
+void main_widget::on_follow_checkBox_clicked (const bool checked) const {
     ui->pdf_widget->setCenterOn(checked);
 }
 
@@ -208,4 +220,33 @@ void main_widget::on_pageNum_spinBox_valueChanged (const int pageNum) const {
     // 映射数据加载
     const auto [data, rotate] = loadData(pageNumCorrect);
     ui->pdf_widget->loadMappingData(data, rotate);
+}
+
+void main_widget::on_license_radioButton_clicked () {
+    const auto options = new options_widget(this);
+    options->setWindowFlags(Qt::Window);
+    options->show();
+    options->setAttribute(Qt::WA_DeleteOnClose);
+}
+
+void main_widget::on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int column) {
+    const Node *node = dynamic_cast<Node*>(item);
+    if (node->isFolder)
+        return;
+    // 先关闭文档
+    document->close();
+    pdfFilePath = "";
+    ui->pdf_widget->loadMappingData({}, 0);
+    ui->pageNum_spinBox->setValue(0);
+    ui->pageNum_spinBox->setEnabled(false);
+    // 再尝试加载
+    const auto pdfPath = node->baseDir;
+    if (!pdfPath.endsWith(".pdf", Qt::CaseInsensitive))
+        return;
+    if (const QFile file(pdfPath); !file.exists())
+        return;
+    pdfFilePath = pdfPath;
+    ui->pageNum_spinBox->setEnabled(true);
+    document->load(pdfPath);
+    on_pageNum_spinBox_valueChanged(0);
 }

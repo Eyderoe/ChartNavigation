@@ -1,5 +1,9 @@
 #include "affineTransformer.hpp"
 
+#include <algorithm>
+#include <format>
+#include <iostream>
+#include <ranges>
 
 double percentile (const Eigen::VectorXd &vec, const double q) {
     Eigen::VectorXd sorted{vec};
@@ -85,7 +89,7 @@ bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataLi
     if (!fitAffine())
         return false;
     auto [_, errors] = evaluate();
-    auto idxes = findAbnormal_IQR(errors);
+    auto idxes = findAbnormal_MAD(errors);
     // 第二次变换
     std::ranges::sort(idxes, std::ranges::greater{});
     for (const auto idx : idxes)

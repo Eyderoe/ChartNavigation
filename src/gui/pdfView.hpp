@@ -1,7 +1,6 @@
 #ifndef CHARTNAVIGATION_PDFVIEW_HPP
 #define CHARTNAVIGATION_PDFVIEW_HPP
 
-#include <QtPdf/QtPdf>
 #include <QtPdfWidgets/QPdfView>
 #include "XPlaneUDP.hpp"
 #include "utils/affineTransformer.hpp"
@@ -13,7 +12,7 @@ class PdfView final : public QPdfView {
         QSizeF getDocSize(int page=0) const;
         void setCenterOn (bool center);
         void setColorTheme(bool darkTheme);
-        void loadMappingData (const std::vector<std::vector<double>> &data, double rotate);
+        void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree);
     private:
         // 地图缩放逻辑
         void wheelEvent (QWheelEvent *event) override;

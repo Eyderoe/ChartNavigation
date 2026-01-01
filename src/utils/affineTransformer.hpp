@@ -2,11 +2,7 @@
 #define CHARTNAVIGATION_AFFINETRANSFORMER_HPP
 
 #include <vector>
-#include <iostream>
-#include <algorithm>
-#include <format>
 #include <Eigen/Dense>
-#include <ranges>
 
 
 class AffineTransformer {
