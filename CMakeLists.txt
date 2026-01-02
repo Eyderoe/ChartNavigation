@@ -7,7 +7,6 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 set(CMAKE_PREFIX_PATH "D:/Qt/Qt6/6.9.3/mingw_64")
-set(QT_FORCE_CMP0156_TO_VALUE NEW)
 
 find_package(Boost)
 find_package(Qt6 REQUIRED COMPONENTS
@@ -38,6 +37,8 @@ add_executable(${PROJECT_NAME} WIN32
         src/gui/options_widget.ui
         src/gui/enhancedTree.cpp
         src/gui/enhancedTree.hpp
+        src/tools/randomGen.cpp
+        src/tools/randomGen.hpp
 )
 if (MINGW)
     target_link_options(${PROJECT_NAME} PRIVATE

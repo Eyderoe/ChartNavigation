@@ -1,6 +1,7 @@
 #include "pdfView.hpp"
 
 #include "tools/stringProcess.hpp"
+#include "tools/randomGen.hpp"
 
 PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setPageMode(PageMode::SinglePage);
@@ -10,7 +11,7 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     // 地图绘制
     plane.load(":/map/resources/plane_small.png");
     // xplane
-    xp.addPlaneInfo();
+    xp.addPlaneInfo(spawnInt(1,30));
     xp.setCallback([this](const bool state) {
         this->connected = state;
         qDebug() << "XPlane change state: " << state;

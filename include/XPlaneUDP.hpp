@@ -12,8 +12,8 @@
 #include <cstring>
 #include <boost/pool/pool_alloc.hpp>
 
-namespace eyderoe {
-
+namespace eyderoe
+{
 #ifdef _WIN32
 constexpr bool IS_WIN = true;
 #else
@@ -89,8 +89,8 @@ class XPlaneUdp {
         XPlaneUdp& operator= (XPlaneUdp &&) = delete;
 
         void setCallback (const std::function<void  (bool)> &callbackFunc);
-        void reconnect (bool del=false);
-        void close();
+        void reconnect (bool del = false);
+        void close ();
 
         DatarefIndex addDataref (const std::string &dataref, int32_t freq = 1, int index = -1);
         DatarefIndex addDatarefArray (const std::string &dataref, int length, int32_t freq = 1);
@@ -268,20 +268,23 @@ inline void BufferPool::recycleBuffer (BufferPro *buffer) const {
 }
 
 inline XPlaneUdp::XPlaneUdp (const bool autoReConnect) : autoReconnect(autoReConnect),
-                                                  workGuard(asio::make_work_guard(io_context)),
-                                                  worker([this] () { io_context.run(); }) {
+                                                         workGuard(asio::make_work_guard(io_context)),
+                                                         worker([this] () { io_context.run(); }) {
     // 监听信标帧
+    // * 自身地址
     multicastSocket.open(ip::udp::v4());
     const asio::socket_base::reuse_address option(true);
     multicastSocket.set_option(option);
+    // * XPlane广播地址
     ip::udp::endpoint multicastEndpoint;
-    if (IS_WIN)
+    if constexpr (IS_WIN)
         multicastEndpoint = ip::udp::endpoint(ip::udp::v4(), MULTI_CAST_PORT);
     else
         multicastEndpoint = ip::udp::endpoint(ip::make_address(MULTI_CAST_GROUP), MULTI_CAST_PORT);
     multicastSocket.bind(multicastEndpoint);
-    const ip::address_v4 multicast_address = ip::make_address_v4(MULTI_CAST_GROUP);
-    multicastSocket.set_option(ip::multicast::join_group(multicast_address));
+    // * 加入多播组
+    const ip::address_v4 multicastAddress = ip::make_address_v4(MULTI_CAST_GROUP);
+    multicastSocket.set_option(ip::multicast::join_group(multicastAddress));
     detectBeacon();
 }
 
@@ -576,7 +579,7 @@ inline bool compareHead (const std::string &templateHead, const std::array<char,
 }
 
 inline void XPlaneUdp::receiveDataProcess (const std::shared_ptr<std::array<char, 1472>> &data, const size_t size,
-                                    const ip::udp::endpoint &sender) {
+                                           const ip::udp::endpoint &sender) {
     if (size <= HEADER_LENGTH) // 头部大小
         return;
     if (compareHead(DATAREF_GET_HEAD, *data)) { // dataref
@@ -610,7 +613,6 @@ inline void XPlaneUdp::receiveDataProcess (const std::shared_ptr<std::array<char
     // 手动擦除数据
     std::memset(data->data(), 0x00, size);
 }
-
 }
 
 #endif

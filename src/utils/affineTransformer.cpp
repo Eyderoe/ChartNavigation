@@ -1,9 +1,16 @@
 #include "affineTransformer.hpp"
+#include "tools/randomGen.hpp"
 
 #include <algorithm>
 #include <format>
 #include <iostream>
 #include <ranges>
+
+
+std::vector<int> findAbnormal_IQR (const std::vector<double> &values);
+std::vector<int> findAbnormal_MAD (const std::vector<double> &values);
+std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, double threshold = 10);
+
 
 double percentile (const Eigen::VectorXd &vec, const double q) {
     Eigen::VectorXd sorted{vec};
@@ -36,7 +43,7 @@ std::vector<int> findAbnormal_IQR (const std::vector<double> &values) {
     return abnormalValues;
 }
 
-double median(const Eigen::VectorXd& data) {
+double median (const Eigen::VectorXd &data) {
     Eigen::VectorXd sortedData = data;
     std::sort(sortedData.data(), sortedData.data() + sortedData.size());
     if (const long long size = sortedData.size(); size % 2 == 0) {
@@ -46,7 +53,7 @@ double median(const Eigen::VectorXd& data) {
     }
 }
 
-double mad(const Eigen::VectorXd& data) {
+double mad (const Eigen::VectorXd &data) {
     const double med = median(data);
     Eigen::VectorXd absDev(data.size());
     for (int i = 0; i < data.size(); ++i) {
@@ -60,7 +67,7 @@ double mad(const Eigen::VectorXd& data) {
  * @param values 值列表
  * @return 异常值位置列表
  */
-std::vector<int> findAbnormal_MAD(const std::vector<double>& values) {
+std::vector<int> findAbnormal_MAD (const std::vector<double> &values) {
     Eigen::VectorXd data(values.size());
     for (int i = 0; i < values.size(); ++i)
         data(i) = values[i];
@@ -79,6 +86,70 @@ std::vector<int> findAbnormal_MAD(const std::vector<double>& values) {
 }
 
 /**
+ * @brief 基于RANSAC算法筛选异常值
+ * @param values 原始值列表(非MAD/IRQ误差值列表)
+ * @param threshold 异常阈值
+ * @return 异常值位置列表
+ */
+std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, double threshold) {
+    const int n = static_cast<int>(values.size()); // 数据量
+    constexpr int iterations = 200; // 迭代次数
+    int maxInliersCount = -1;
+    std::vector<int> bestInlierIndices;
+    // 迭代循环
+    for (int i = 0; i < iterations; ++i) {
+        // 随机选择点作为样本
+        std::set<int> samples;
+        while (samples.size() < 3)
+            samples.insert(spawnInt(0, n - 1));
+        // 仿射变换
+        auto view = std::views::iota(size_t{0}, values.size())
+                | std::views::filter([&](size_t i) { return samples.contains(i); })
+                | std::views::transform([&](size_t i) -> std::vector<double>& { return values[i]; });
+        auto [pX,pY] = doAffine(view);
+
+        // 3. 验证所有点，计算内点数量
+        std::vector<int> currentInlierIndices;
+        for (int j = 0; j < n; ++j) {
+            double lon = values[j][1], lat = values[j][0];
+            double xT = values[j][2], yT = values[j][3];
+
+            double xP = pX(0) * lon + pX(1) * lat + pX(2);
+            double yP = pY(0) * lon + pY(1) * lat + pY(2);
+
+            double dist = std::sqrt(std::pow(xP - xT, 2) + std::pow(yP - yT, 2));
+            if (dist < threshold) {
+                currentInlierIndices.push_back(j);
+            }
+        }
+
+        // 4. 更新最优模型
+        if (static_cast<int>(currentInlierIndices.size()) > maxInliersCount) {
+            maxInliersCount = static_cast<int>(currentInlierIndices.size());
+            bestInlierIndices = currentInlierIndices;
+        }
+
+        // 如果已经覆盖了 95% 的点，认为已经找到最优解，提前退出
+        if (maxInliersCount > n * 0.95) break;
+    }
+
+    // 5. 找出所有的离群点索引
+    std::vector<int> abnormalValues;
+    std::vector<bool> isInlier(n, false);
+    for (int idx : bestInlierIndices) {
+        isInlier[idx] = true;
+    }
+
+    for (int i = 0; i < n; ++i) {
+        if (!isInlier[i]) {
+            abnormalValues.push_back(i);
+        }
+    }
+
+    return abnormalValues;
+}
+
+/**
  * @brief 加载数据
  * @param dataList [[纬度,经度,x,y], ...]
  * @return 数据是否可用
@@ -90,6 +161,7 @@ bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataLi
         return false;
     auto [_, errors] = evaluate();
     auto idxes = findAbnormal_MAD(errors);
+    // auto idxes = findAbnormal_RANSAC(data);
     // 第二次变换
     std::ranges::sort(idxes, std::ranges::greater{});
     for (const auto idx : idxes)
@@ -147,19 +219,10 @@ std::pair<double, std::vector<double>> AffineTransformer::evaluate (const bool p
  * @return 数据是否可用
  */
 bool AffineTransformer::fitAffine () {
-    const size_t n = data.size();
-    if (n < 3)
+    if (data.size() < 3)
         return false;
-    Eigen::MatrixXd A(n, 3);
-    Eigen::VectorXd B_x(n), B_y(n);
-    for (int i = 0; i < n; ++i) {
-        A(i, 0) = data[i][1];
-        A(i, 1) = data[i][0];
-        A(i, 2) = 1;
-        B_x(i) = data[i][2];
-        B_y(i) = data[i][3];
-    }
-    paramsX = A.colPivHouseholderQr().solve(B_x);
-    paramsY = A.colPivHouseholderQr().solve(B_y);
+    auto [x,y] = doAffine(data);
+    paramsX = x;
+    paramsY = y;
     return true;
 }

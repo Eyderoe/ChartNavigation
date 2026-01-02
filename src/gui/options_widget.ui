@@ -243,6 +243,11 @@
                  <widget class="QComboBox" name="comboBox">
                   <item>
                    <property name="text">
+                    <string>RANSAC</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
                     <string>MAD</string>
                    </property>
                   </item>
