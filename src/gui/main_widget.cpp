@@ -12,28 +12,19 @@ using namespace nlohmann;
 void main_widget::readSettings () {
     const QSettings settings;
     // 窗口布局
-    if (settings.contains("main_widget_geometry"))
-        restoreGeometry(settings.value("main_widget_geometry").toByteArray());
-    if (settings.contains("main_splitter_state"))
-        ui->splitter->restoreState(settings.value("main_splitter_state").toByteArray());
+    restoreGeometry(settings.value("main_widget_geometry").toByteArray());
+    ui->splitter->restoreState(settings.value("main_splitter_state").toByteArray());
     // 居中
-    if (settings.contains("center_on")) {
-        const bool center = settings.value("center_on").toBool();
-        ui->follow_checkBox->setCheckState(center ? Qt::Checked : Qt::Unchecked);
-        ui->pdf_widget->setCenterOn(center);
-    }
+    const bool center = settings.value("center_on", false).toBool();
+    ui->follow_checkBox->setCheckState(center ? Qt::Checked : Qt::Unchecked);
+    ui->pdf_widget->setCenterOn(center);
     // 置顶
-    if (settings.contains("pin_top")) {
-        const bool top = settings.value("pin_top").toBool();
-        ui->pin_checkBox->setCheckState(top ? Qt::Checked : Qt::Unchecked);
-        on_pin_checkBox_clicked(top);
-    }
+    const bool top = settings.value("pin_top", false).toBool();
+    ui->pin_checkBox->setCheckState(top ? Qt::Checked : Qt::Unchecked);
+    on_pin_checkBox_clicked(top);
     // 单文件输入框
-    ui->chart_lineEdit->setHidden(true);
-    if (settings.contains("singleFileDisable")) {
-        if (const bool singleFileDisable = settings.value("singleFileDisable").toBool(); !singleFileDisable)
-            ui->chart_lineEdit->setHidden(false);
-    }
+    const bool singleFileDisable = settings.value("singleFileDisable", true).toBool();
+    ui->chart_lineEdit->setHidden(singleFileDisable);
 }
 
 /**
@@ -50,6 +41,22 @@ void main_widget::writeSettings () const {
     settings.setValue("pin_top", ui->pin_checkBox->isChecked());
 }
 
+/**
+ * @brief 程序启动时初始化文件树和文件夹选择框
+ */
+void main_widget::initFileTree () const {
+    ui->treeWidget->clear();
+    // 文件夹选择框
+    const QSettings settings;
+    const QString chartText = settings.value("chartFolder","").toString();
+    for (auto chartFolders = chartText.split('*'); const auto &folder : chartFolders) {
+        QDir chartDir(folder);
+        if (!chartDir.exists())
+            continue;
+        ui->folder_comboBox->addItem(chartDir.dirName(), chartDir.absolutePath());
+    }
+}
+
 main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_widget) {
     // 构件初始化
     ui->setupUi(this);
@@ -61,16 +68,8 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     // 设置
     readSettings();
     // 构建目录
-    bool init{};
-    if (const QSettings settings; settings.contains("chartFolder")) {
-        if (const QDir chartFolder = settings.value("chartFolder").toString(); chartFolder.exists()) {
-            ui->treeWidget->setHeaderLabel(chartFolder.dirName());
-            traverseRead(chartFolder, ui->treeWidget);
-            init = true;
-        }
-    }
-    if (!init)
-        ui->treeWidget->setHeaderHidden(true);
+    ui->treeWidget->setHeaderHidden(true);
+    initFileTree();
 }
 
 main_widget::~main_widget () {
@@ -86,7 +85,7 @@ main_widget::~main_widget () {
 auto main_widget::loadData (const int pageNum) const -> std::pair<std::vector<std::vector<double>>, double> {
     // 文件夹可用性
     const QSettings settings;
-    const QString mappingFolder = settings.value("mappingFolder").toString();
+    const QString mappingFolder = settings.value("mappingFolder", "").toString();
     const QDir mappingDir(mappingFolder);
     if (!mappingDir.exists())
         return {};
@@ -222,6 +221,9 @@ void main_widget::on_pageNum_spinBox_valueChanged (const int pageNum) const {
     ui->pdf_widget->loadMappingData(data, rotate);
 }
 
+/**
+ * @brief 打开设置窗口
+ */
 void main_widget::on_license_radioButton_clicked () {
     const auto options = new options_widget(this);
     options->setWindowFlags(Qt::Window);
@@ -229,6 +231,11 @@ void main_widget::on_license_radioButton_clicked () {
     options->setAttribute(Qt::WA_DeleteOnClose);
 }
 
+/**
+ * @brief 双击文件树文件 -> 加载PDF文档
+ * @param item 树节点
+ * @param column 无用字段
+ */
 void main_widget::on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int column) {
     const Node *node = dynamic_cast<Node*>(item);
     if (node->isFolder)
@@ -249,4 +256,14 @@ void main_widget::on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int co
     ui->pageNum_spinBox->setEnabled(true);
     document->load(pdfPath);
     on_pageNum_spinBox_valueChanged(0);
+}
+
+/**
+ * @brief 切换文件树文件夹
+ * @param index 文件夹索引
+ */
+void main_widget::on_folder_comboBox_currentIndexChanged (const int index) const {
+    const QSettings settings;
+    ui->treeWidget->clear();
+    traverseRead(ui->folder_comboBox->itemData(index).toString(), ui->treeWidget, settings.value("onlyPdf", true).toBool());
 }

@@ -1,5 +1,4 @@
 #include "pdfView.hpp"
-
 #include "tools/stringProcess.hpp"
 #include "tools/randomGen.hpp"
 
@@ -11,13 +10,16 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     // 地图绘制
     plane.load(":/map/resources/plane_small.png");
     // xplane
-    xp.addPlaneInfo(spawnInt(1,30));
+    const QSettings settings;
+    const int xpFreq = settings.value("xp_freq", 1).toInt();
+    xp.addPlaneInfo(xpFreq);
     xp.setCallback([this](const bool state) {
         this->connected = state;
         qDebug() << "XPlane change state: " << state;
     });
     // 定时器
-    xpUpdateTimer.setInterval(1000);
+    const int centerFreq = settings.value("center_freq", 1).toInt();
+    xpUpdateTimer.setInterval(1000 / centerFreq);
     connect(&xpUpdateTimer, &QTimer::timeout, this, &PdfView::xpInfoUpdate);
     xpUpdateTimer.start();
 }

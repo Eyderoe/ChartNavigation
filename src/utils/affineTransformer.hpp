@@ -4,6 +4,10 @@
 #include <vector>
 #include <Eigen/Dense>
 
+template <typename R>
+concept DataContainer = std::ranges::forward_range<R> && std::same_as<
+    std::ranges::range_value_t<R>, std::vector<double>>;;
+
 
 template <typename DataContainer>
 std::pair<Eigen::Vector3d, Eigen::Vector3d> doAffine (DataContainer &&data);
@@ -29,11 +33,12 @@ class AffineTransformer {
  */
 template <typename DataContainer>
 std::pair<Eigen::Vector3d, Eigen::Vector3d> doAffine (DataContainer &&data) {
-    int n{0}, counter{0};
-    for (auto &temp : data)
-        ++n;
+    auto begin = data.begin();
+    auto end = data.end();
+    const int n = std::ranges::distance(begin, end);
     Eigen::MatrixXd A(n, 3);
     Eigen::VectorXd B_x(n), B_y(n);
+    int counter{0};
     for (auto &item : data) {
         A(counter, 0) = item[1];
         A(counter, 1) = item[0];
@@ -42,8 +47,8 @@ std::pair<Eigen::Vector3d, Eigen::Vector3d> doAffine (DataContainer &&data) {
         B_y(counter) = item[3];
         ++counter;
     }
-    auto x = A.colPivHouseholderQr().solve(B_x);
-    auto y = A.colPivHouseholderQr().solve(B_y);
+    Eigen::Vector3d x = A.colPivHouseholderQr().solve(B_x); // 必须显示声明 Debug模式下Eigen有额外类型检查
+    Eigen::Vector3d y = A.colPivHouseholderQr().solve(B_y);
     return {x, y};
 }
 

@@ -7,83 +7,8 @@
 #include <ranges>
 
 
-std::vector<int> findAbnormal_IQR (const std::vector<double> &values);
-std::vector<int> findAbnormal_MAD (const std::vector<double> &values);
 std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, double threshold = 10);
 
-
-double percentile (const Eigen::VectorXd &vec, const double q) {
-    Eigen::VectorXd sorted{vec};
-    std::sort(sorted.data(), sorted.data() + sorted.size());
-    const int idx = static_cast<int>(q * (static_cast<int>(sorted.size()) - 1));
-    return sorted(idx);
-}
-
-/**
- * @brief 采取IQR方法筛选异常值
- * @param values 值列表
- * @return 异常值位置列表
- */
-std::vector<int> findAbnormal_IQR (const std::vector<double> &values) {
-    Eigen::VectorXd data(values.size());
-    for (int i = 0; i < values.size(); ++i)
-        data(i) = values[i];
-    // 计算参数
-    const double Q1 = percentile(data, 0.25); // 第一四分位数
-    const double Q3 = percentile(data, 0.75); // 第三四分位数
-    const double IQR = Q3 - Q1;
-    const double lowerBound = Q1 - 1.5 * IQR;
-    const double upperBound = Q3 + 1.5 * IQR;
-    // 查找异常值的索引
-    std::vector<int> abnormalValues;
-    for (size_t i = 0; i < values.size(); ++i) {
-        if ((values[i] < lowerBound) || (values[i] > upperBound))
-            abnormalValues.emplace_back(i);
-    }
-    return abnormalValues;
-}
-
-double median (const Eigen::VectorXd &data) {
-    Eigen::VectorXd sortedData = data;
-    std::sort(sortedData.data(), sortedData.data() + sortedData.size());
-    if (const long long size = sortedData.size(); size % 2 == 0) {
-        return (sortedData(size / 2 - 1) + sortedData(size / 2)) / 2.0;
-    } else {
-        return sortedData(size / 2);
-    }
-}
-
-double mad (const Eigen::VectorXd &data) {
-    const double med = median(data);
-    Eigen::VectorXd absDev(data.size());
-    for (int i = 0; i < data.size(); ++i) {
-        absDev(i) = std::abs(data(i) - med);
-    }
-    return median(absDev);
-}
-
-/**
- * @brief 基于MAD算法筛选异常值
- * @param values 值列表
- * @return 异常值位置列表
- */
-std::vector<int> findAbnormal_MAD (const std::vector<double> &values) {
-    Eigen::VectorXd data(values.size());
-    for (int i = 0; i < values.size(); ++i)
-        data(i) = values[i];
-    // 计算 MAD 参数
-    const double med = median(data);
-    const double madValue = mad(data);
-    constexpr double threshold = 3.0;
-    // 查找异常值的索引
-    std::vector<int> abnormalValues;
-    for (size_t i = 0; i < values.size(); ++i) {
-        if (std::abs(values[i] - med) > threshold * madValue) {
-            abnormalValues.push_back(static_cast<int>(i));
-        }
-    }
-    return abnormalValues;
-}
 
 /**
  * @brief 基于RANSAC算法筛选异常值
@@ -91,61 +16,45 @@ std::vector<int> findAbnormal_MAD (const std::vector<double> &values) {
  * @param threshold 异常阈值
  * @return 异常值位置列表
  */
-std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, double threshold) {
-    const int n = static_cast<int>(values.size()); // 数据量
+std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, const double threshold) {
+    const size_t n = values.size(); // 数据量
     constexpr int iterations = 200; // 迭代次数
-    int maxInliersCount = -1;
-    std::vector<int> bestInlierIndices;
+    size_t maxInnerCount = 0; // 最大内点数量
+    std::set<int> bestInnerIdxes; // 最优内点索引
     // 迭代循环
     for (int i = 0; i < iterations; ++i) {
         // 随机选择点作为样本
         std::set<int> samples;
         while (samples.size() < 3)
-            samples.insert(spawnInt(0, n - 1));
+            samples.insert(spawnInt(0, static_cast<int>(n) - 1));
         // 仿射变换
-        auto view = std::views::iota(size_t{0}, values.size())
-                | std::views::filter([&](size_t i) { return samples.contains(i); })
-                | std::views::transform([&](size_t i) -> std::vector<double>& { return values[i]; });
+        auto view = samples | std::views::transform([&](const int j) -> std::vector<double>& { return values[j]; });
         auto [pX,pY] = doAffine(view);
-
-        // 3. 验证所有点，计算内点数量
-        std::vector<int> currentInlierIndices;
+        // 计算内点
+        std::set<int> currentInnerIdxes;
         for (int j = 0; j < n; ++j) {
-            double lon = values[j][1], lat = values[j][0];
-            double xT = values[j][2], yT = values[j][3];
-
-            double xP = pX(0) * lon + pX(1) * lat + pX(2);
-            double yP = pY(0) * lon + pY(1) * lat + pY(2);
-
-            double dist = std::sqrt(std::pow(xP - xT, 2) + std::pow(yP - yT, 2));
-            if (dist < threshold) {
-                currentInlierIndices.push_back(j);
-            }
+            const double lon = values[j][1], lat = values[j][0];
+            const double xT = values[j][2], yT = values[j][3];
+            const double xP = pX(0) * lon + pX(1) * lat + pX(2);
+            const double yP = pY(0) * lon + pY(1) * lat + pY(2);
+            if (std::sqrt(std::pow(xP - xT, 2) + std::pow(yP - yT, 2)) < threshold)
+                currentInnerIdxes.insert(j);
         }
-
-        // 4. 更新最优模型
-        if (static_cast<int>(currentInlierIndices.size()) > maxInliersCount) {
-            maxInliersCount = static_cast<int>(currentInlierIndices.size());
-            bestInlierIndices = currentInlierIndices;
+        // 更新最优
+        if (currentInnerIdxes.size() > maxInnerCount) {
+            maxInnerCount = currentInnerIdxes.size();
+            bestInnerIdxes = currentInnerIdxes;
         }
-
-        // 如果已经覆盖了 95% 的点，认为已经找到最优解，提前退出
-        if (maxInliersCount > n * 0.95) break;
+        // 覆盖95%
+        if (static_cast<double>(maxInnerCount) > static_cast<double>(n) * 0.95)
+            break;
     }
-
-    // 5. 找出所有的离群点索引
+    // 找出离群点索引
     std::vector<int> abnormalValues;
-    std::vector<bool> isInlier(n, false);
-    for (int idx : bestInlierIndices) {
-        isInlier[idx] = true;
-    }
-
     for (int i = 0; i < n; ++i) {
-        if (!isInlier[i]) {
+        if (!bestInnerIdxes.contains(i))
             abnormalValues.push_back(i);
-        }
     }
-
     return abnormalValues;
 }
 
@@ -159,9 +68,7 @@ bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataLi
     // 第一次变换
     if (!fitAffine())
         return false;
-    auto [_, errors] = evaluate();
-    auto idxes = findAbnormal_MAD(errors);
-    // auto idxes = findAbnormal_RANSAC(data);
+    auto idxes = findAbnormal_RANSAC(data);
     // 第二次变换
     std::ranges::sort(idxes, std::ranges::greater{});
     for (const auto idx : idxes)

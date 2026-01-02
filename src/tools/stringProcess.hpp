@@ -6,7 +6,7 @@
 template <typename T>
 concept StrT = std::convertible_to<T, std::string_view>;
 template <typename R>
-concept StrRangeT = std::ranges::input_range<R> && StrT<std::ranges::range_reference_t<R>>;
+concept StrRangeT = std::ranges::forward_range<R> && StrT<std::ranges::range_reference_t<R>>;
 
 template <StrRangeT R>
 std::string join (R &&range, std::string_view sep);
