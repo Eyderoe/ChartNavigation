@@ -3,6 +3,7 @@
 #include "json.hpp"
 #include "options_widget.hpp"
 #include "enhancedTree.hpp"
+#include "gui/themeColor.hpp"
 
 using namespace nlohmann;
 
@@ -48,7 +49,7 @@ void main_widget::initFileTree () const {
     ui->treeWidget->clear();
     // 文件夹选择框
     const QSettings settings;
-    const QString chartText = settings.value("chartFolder","").toString();
+    const QString chartText = settings.value("chartFolder", "").toString();
     for (auto chartFolders = chartText.split('*'); const auto &folder : chartFolders) {
         QDir chartDir(folder);
         if (!chartDir.exists())
@@ -78,11 +79,37 @@ main_widget::~main_widget () {
 }
 
 /**
+ * @brief 加载PDF文件
+ * @param filePath 文件路径
+ * @brief 两处调用(文本框编辑完/文件树结点点击)
+ */
+void main_widget::loadPdf (const QString &filePath) {
+    // 先关闭文档
+    document->close();
+    pdfFilePath = "";
+    ui->pdf_widget->loadMappingData({}, 0, 0);
+    ui->pageNum_spinBox->setValue(0);
+    ui->pageNum_spinBox->setEnabled(false);
+    // 再尝试加载
+    auto pdfPath = filePath;
+    if (pdfPath.startsWith("\"") && pdfPath.endsWith("\"") && (pdfPath.size() >= 2))
+        pdfPath = pdfPath.mid(1, pdfPath.length() - 2);
+    if (!pdfPath.endsWith(".pdf", Qt::CaseInsensitive))
+        return;
+    if (const QFile file(pdfPath); !file.exists())
+        return;
+    pdfFilePath = pdfPath;
+    ui->pageNum_spinBox->setEnabled(true);
+    document->load(pdfPath);
+    on_pageNum_spinBox_valueChanged(0);
+}
+
+/**
  * @brief 从映射文件中加载仿射变换数据
  * @param pageNum 页码(1起始)
- * @return 存储的映射数据,旋转角度
+ * @return 映射数据,旋转角度,阈值
  */
-auto main_widget::loadData (const int pageNum) const -> std::pair<std::vector<std::vector<double>>, double> {
+main_widget::MappingInfo main_widget::loadData (const int pageNum) {
     // 文件夹可用性
     const QSettings settings;
     const QString mappingFolder = settings.value("mappingFolder", "").toString();
@@ -90,7 +117,7 @@ auto main_widget::loadData (const int pageNum) const -> std::pair<std::vector<st
     if (!mappingDir.exists())
         return {};
     // 映射文件可用性 ZUCK.Tmap
-    const QString baseName = QFileInfo(pdfFilePath).baseName();
+    const QString baseName = QFileInfo(pdfFilePath).completeBaseName();
     const QString icao = baseName.left(4);
     const QString mappingFilePath = mappingDir.filePath(icao + ".Tmap");
     QFile mappingFile(mappingFilePath);
@@ -124,31 +151,16 @@ auto main_widget::loadData (const int pageNum) const -> std::pair<std::vector<st
         double d4 = mapData[3];
         data.push_back({d1, d2, d3, d4});
     }
-    return {data, (*availableData)[0]["rotate"]};
+    const bool isAirport = (*availableData)[0]["type"] == "parking"; // 机场图5 终端区10
+    fileData = std::move(airportConfig[baseName.toStdString()]); // 加载数据至内存
+    return {data, (*availableData)[0]["rotate"], isAirport ? 10.0 : 5.0};
 }
 
 /**
  * @brief 文件路径输入框 -> 加载PDF文档
  */
 void main_widget::on_chart_lineEdit_editingFinished () {
-    // 先关闭文档
-    document->close();
-    pdfFilePath = "";
-    ui->pdf_widget->loadMappingData({}, 0);
-    ui->pageNum_spinBox->setValue(0);
-    ui->pageNum_spinBox->setEnabled(false);
-    // 再尝试加载
-    auto pdfPath = ui->chart_lineEdit->text();
-    if (pdfPath.startsWith("\"") && pdfPath.endsWith("\"") && (pdfPath.size() >= 2))
-        pdfPath = pdfPath.mid(1, pdfPath.length() - 2);
-    if (!pdfPath.endsWith(".pdf", Qt::CaseInsensitive))
-        return;
-    if (const QFile file(pdfPath); !file.exists())
-        return;
-    pdfFilePath = pdfPath;
-    ui->pageNum_spinBox->setEnabled(true);
-    document->load(pdfPath);
-    on_pageNum_spinBox_valueChanged(0);
+    loadPdf(ui->chart_lineEdit->text());
 }
 
 /**
@@ -203,7 +215,7 @@ void main_widget::on_pin_checkBox_clicked (const bool checked) {
  * @brief PDF文档页数切换
  * @param pageNum 页数(起始为1)
  */
-void main_widget::on_pageNum_spinBox_valueChanged (const int pageNum) const {
+void main_widget::on_pageNum_spinBox_valueChanged (const int pageNum) {
     // 数选框
     const int totalPages = ui->pdf_widget->document()->pageCount();
     if (totalPages == 0)
@@ -217,8 +229,8 @@ void main_widget::on_pageNum_spinBox_valueChanged (const int pageNum) const {
     const auto pdf = ui->pdf_widget;
     pdf->pageNavigator()->jump(pageNumCorrect - 1, {0, 0}); // 不是很懂这个location
     // 映射数据加载
-    const auto [data, rotate] = loadData(pageNumCorrect);
-    ui->pdf_widget->loadMappingData(data, rotate);
+    const auto [data, rotate,threshold] = loadData(pageNumCorrect);
+    ui->pdf_widget->loadMappingData(data, rotate, threshold);
 }
 
 /**
@@ -240,22 +252,7 @@ void main_widget::on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int co
     const Node *node = dynamic_cast<Node*>(item);
     if (node->isFolder)
         return;
-    // 先关闭文档
-    document->close();
-    pdfFilePath = "";
-    ui->pdf_widget->loadMappingData({}, 0);
-    ui->pageNum_spinBox->setValue(0);
-    ui->pageNum_spinBox->setEnabled(false);
-    // 再尝试加载
-    const auto pdfPath = node->baseDir;
-    if (!pdfPath.endsWith(".pdf", Qt::CaseInsensitive))
-        return;
-    if (const QFile file(pdfPath); !file.exists())
-        return;
-    pdfFilePath = pdfPath;
-    ui->pageNum_spinBox->setEnabled(true);
-    document->load(pdfPath);
-    on_pageNum_spinBox_valueChanged(0);
+    loadPdf(node->baseDir);
 }
 
 /**
@@ -265,5 +262,6 @@ void main_widget::on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int co
 void main_widget::on_folder_comboBox_currentIndexChanged (const int index) const {
     const QSettings settings;
     ui->treeWidget->clear();
-    traverseRead(ui->folder_comboBox->itemData(index).toString(), ui->treeWidget, settings.value("onlyPdf", true).toBool());
+    traverseRead(ui->folder_comboBox->itemData(index).toString(), ui->treeWidget,
+                 settings.value("onlyPdf", true).toBool());
 }

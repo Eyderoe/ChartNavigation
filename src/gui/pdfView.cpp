@@ -45,10 +45,12 @@ void PdfView::setCenterOn (const bool center) {
  * @brief 加载仿射变换数据集
  * @param data [[lati,longi,x,y],...]
  * @param rotateDegree 机模旋转角度 (显示=实际+rotateDegree)
+ * @param threshold 筛选阈值
  */
-void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, const double rotateDegree) {
+void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, const double rotateDegree,
+                               const double threshold) {
     rotate = rotateDegree;
-    transActive = transformer.loadData(data);
+    transActive = transformer.loadData(data, threshold);
     if (!transActive)
         return;
     auto [error,errors] = transformer.evaluate();

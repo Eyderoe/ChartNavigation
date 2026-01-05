@@ -7,14 +7,15 @@
 #include <ranges>
 
 
-std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, double threshold = 10);
+std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, double threshold);
 
 
 /**
  * @brief 基于RANSAC算法筛选异常值
- * @param values 原始值列表(非MAD/IRQ误差值列表)
+ * @param values 原始值列表
  * @param threshold 异常阈值
  * @return 异常值位置列表
+ * @note 迭代次数增加意义较小,且在release下耗时较少
  */
 std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, const double threshold) {
     const size_t n = values.size(); // 数据量
@@ -37,7 +38,7 @@ std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, 
             const double xT = values[j][2], yT = values[j][3];
             const double xP = pX(0) * lon + pX(1) * lat + pX(2);
             const double yP = pY(0) * lon + pY(1) * lat + pY(2);
-            if (std::sqrt(std::pow(xP - xT, 2) + std::pow(yP - yT, 2)) < threshold)
+            if (std::pow(xP - xT, 2) + std::pow(yP - yT, 2) < std::pow(threshold, 2))
                 currentInnerIdxes.insert(j);
         }
         // 更新最优
@@ -61,14 +62,15 @@ std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, 
 /**
  * @brief 加载数据
  * @param dataList [[纬度,经度,x,y], ...]
+ * @param threshold
  * @return 数据是否可用
  */
-bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataList) {
+bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataList, double threshold) {
     data = dataList;
     // 第一次变换
     if (!fitAffine())
         return false;
-    auto idxes = findAbnormal_RANSAC(data);
+    auto idxes = findAbnormal_RANSAC(data, threshold);
     // 第二次变换
     std::ranges::sort(idxes, std::ranges::greater{});
     for (const auto idx : idxes)

@@ -2,8 +2,10 @@
 #include "gui/main_widget.hpp"
 #include "gui/themeColor.hpp"
 
-// TODO 多个实例时只有一个实例能更新数据,要么改XPlaneUDP要么改程序为单例或者再用websocket写一个试试
-// TODO 更合理的暗色逻辑,必须在QPdfView下实现
+// TODO 考虑在加载文件时直接读取一个文件的json数据(大改整个加载逻辑)
+// TODO 根据文档类型设置阈值,程序5,机场10(或者在设置里面实现)
+// TODO 多个实例时只有一个程序实例能更新数据,要么改XPlaneUDP要么改程序为单例或者再用websocket写一个试试
+// TODO 更合理的暗色逻辑,且必须在QPdfView下实现
 // TODO 切换时,页面相对位置锁定
 // TODO 其他玩家/AI飞机
 int main (int argc, char *argv[]) {

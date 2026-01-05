@@ -5,8 +5,8 @@
 #include <Eigen/Dense>
 
 template <typename R>
-concept DataContainer = std::ranges::forward_range<R> && std::same_as<
-    std::ranges::range_value_t<R>, std::vector<double>>;;
+concept DataContainer = std::ranges::forward_range<R> &&
+        std::same_as<std::ranges::range_value_t<R>, std::vector<double>>;
 
 
 template <typename DataContainer>
@@ -14,7 +14,7 @@ std::pair<Eigen::Vector3d, Eigen::Vector3d> doAffine (DataContainer &&data);
 
 class AffineTransformer {
     public:
-        bool loadData (const std::vector<std::vector<double>> &dataList);
+        bool loadData (const std::vector<std::vector<double>> &dataList, double threshold);
         std::pair<double, double> transform (double latitude, double longitude);
         std::pair<double, std::vector<double>> evaluate (bool print = false);
     private:
