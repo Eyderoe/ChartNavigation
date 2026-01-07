@@ -39,6 +39,7 @@ add_executable(${PROJECT_NAME} WIN32
         src/gui/enhancedTree.hpp
         src/tools/randomGen.cpp
         src/tools/randomGen.hpp
+        src/tools/constValue.hpp
 )
 if (MINGW)
     target_link_options(${PROJECT_NAME} PRIVATE

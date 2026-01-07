@@ -1,6 +1,6 @@
 #include "pdfView.hpp"
 #include "tools/stringProcess.hpp"
-#include "tools/randomGen.hpp"
+#include "tools/constValue.hpp"
 
 PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setPageMode(PageMode::SinglePage);
@@ -9,15 +9,11 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     // 地图绘制
     plane.load(":/map/resources/plane_small.png");
+    otherPlane.load(":/map/resources/plane_small_2.png");
     // xplane
-    const QSettings settings;
-    const int xpFreq = settings.value("xp_freq", 1).toInt();
-    xp.addPlaneInfo(xpFreq);
-    xp.setCallback([this](const bool state) {
-        this->connected = state;
-        qDebug() << "XPlane change state: " << state;
-    });
+    xpInit();
     // 定时器
+    const QSettings settings;
     const int centerFreq = settings.value("center_freq", 1).toInt();
     xpUpdateTimer.setInterval(1000 / centerFreq);
     connect(&xpUpdateTimer, &QTimer::timeout, this, &PdfView::xpInfoUpdate);
@@ -131,14 +127,12 @@ void PdfView::paintEvent (QPaintEvent *event) {
     if (check) {
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setRenderHint(QPainter::SmoothPixmapTransform);
-        auto [x,y] = trans(planeInfo.lat, planeInfo.lon);
-        painter.save();
-        painter.translate(x, y);
-        const double direct = std::fmod(planeInfo.track + rotate + 360, 360);
-        painter.rotate(direct);
-        painter.scale(0.4, 0.4);
-        painter.drawPixmap(-plane.width() / 2, -plane.height() / 2, plane);
-        painter.restore();
+        // 自身
+        drawPlane(painter);
+        // 其他飞机
+        const size_t count = std::ranges::count_if(multiIdVal, [](const float value) { return value != 0.0f; });
+        for (int i = 1; i < count; ++i)
+            drawPlane(painter, i);
     }
 }
 
@@ -186,6 +180,53 @@ std::pair<double, double> PdfView::trans (const double latitude, const double lo
 }
 
 /**
+ * @brief 绘制自身/其他飞机
+ * @param painter 画笔
+ * @param idx 飞机索引(0为自身)
+ */
+void PdfView::drawPlane (QPainter &painter, const int idx) {
+    const bool isSelf = (idx == 0);
+    painter.save();
+    // 变量声明
+    const double latitude{multiLatVal[idx]}, longitude{multiLonVal[idx]}, vs{multiVsVal[idx]}, alt{multiAltVal[idx]};
+    double trk{multiTrkVal[idx]};
+    // 移动坐标系
+    auto [x,y] = trans(latitude, longitude);
+    painter.translate(x, y);
+    trk = std::fmod(trk + rotate + 360, 360);
+    // 绘制信息
+    if (!isSelf) {
+        QFont font;
+        font.setBold(true);
+        painter.setFont(font);
+        // 航班信息
+        // 高度信息
+        int deltaAlt = static_cast<int>(std::round((alt - planeInfo.alt) * m2ft / 100));
+        QString delta;
+        if (deltaAlt >= 0)
+            delta = QString::fromStdString(std::format("{:02d}", deltaAlt));
+        else
+            delta = QString::fromStdString(std::format("-{:02d}", -deltaAlt));
+        if (vs >= 500)
+            delta += "↑";
+        else if (vs <= -500)
+            delta += "↓";
+        if (std::abs(deltaAlt) >= 1)
+            painter.drawText(10, 15, delta);
+    }
+    // 绘制飞机
+    painter.rotate(trk);
+    if (isSelf) {
+        painter.scale(0.4, 0.4);
+        painter.drawPixmap(-plane.width() / 2, -plane.height() / 2, plane);
+    } else {
+        painter.scale(0.3, 0.3);
+        painter.drawPixmap(-otherPlane.width() / 2, -otherPlane.height() / 2, otherPlane);
+    }
+    painter.restore();
+}
+
+/**
  * @brief 设置色彩主题
  * @param darkTheme 是否使用暗色主题
  */
@@ -197,31 +238,65 @@ void PdfView::setColorTheme (const bool darkTheme) {
  * @brief 更新机模的基本信息
  */
 void PdfView::xpInfoUpdate () {
-    if (connected) {
-        xp.getPlaneInfo(planeInfo);
-        if (centerOn && !dragging) {
-            auto [x,y] = trans(planeInfo.lat, planeInfo.lon);
-            constexpr double edge{10};
-            if ((x < -edge) || (x > viewport()->width() + edge))
-                return;
-            if ((y < -edge) || (y > viewport()->height() + edge))
-                return;
-            const auto vertBar = verticalScrollBar(), horzBar = horizontalScrollBar();
-            // 水平
-            if (horzBar->minimum() != horzBar->maximum()) {
-                const int deltaX = static_cast<int>(x) - viewport()->width() / 2;
-                const int newPos = horzBar->value() + deltaX;
-                horzBar->setValue(qBound(horzBar->minimum(), newPos, horzBar->maximum()));
-            }
-            // 垂直
-            if (vertBar->minimum() != vertBar->maximum()) {
-                const int deltaY = static_cast<int>(y) - viewport()->height() / 2;
-                const int newPos = vertBar->value() + deltaY;
-                vertBar->setValue(qBound(vertBar->minimum(), newPos, vertBar->maximum()));
-            }
-        }
-    } else {
+    if (!connected) {
         planeInfo.track = -999;
+        viewport()->update();
+        return;
+    }
+    xp.getPlaneInfo(planeInfo);
+    xp.getDataref(multiId, multiIdVal);
+    xp.getDataref(multiLat, multiLatVal);
+    xp.getDataref(multiLon, multiLonVal);
+    xp.getDataref(multiAlt, multiAltVal);
+    xp.getDataref(multiTrk, multiTrkVal);
+    xp.getDataref(multiVs, multiVsVal);
+    xp.getDataref(multiFlightId, multiFlightIdVal);
+    if (!centerOn || dragging) {
+        viewport()->update();
+        return;
+    }
+
+    auto [x,y] = trans(planeInfo.lat, planeInfo.lon);
+    constexpr double edge{10};
+    if ((x < -edge) || (x > viewport()->width() + edge))
+        return;
+    if ((y < -edge) || (y > viewport()->height() + edge))
+        return;
+    const auto vertBar = verticalScrollBar(), horzBar = horizontalScrollBar();
+    // 水平
+    if (horzBar->minimum() != horzBar->maximum()) {
+        const int deltaX = static_cast<int>(x) - viewport()->width() / 2;
+        const int newPos = horzBar->value() + deltaX;
+        horzBar->setValue(qBound(horzBar->minimum(), newPos, horzBar->maximum()));
+    }
+    // 垂直
+    if (vertBar->minimum() != vertBar->maximum()) {
+        const int deltaY = static_cast<int>(y) - viewport()->height() / 2;
+        const int newPos = vertBar->value() + deltaY;
+        vertBar->setValue(qBound(vertBar->minimum(), newPos, vertBar->maximum()));
     }
     viewport()->update();
+}
+
+/**
+ * @brief 初始化xp的一些东西
+ */
+void PdfView::xpInit () {
+    const QSettings settings;
+    const int xpFreq = settings.value("xp_freq", 1).toInt();
+    // 玩家
+    xp.addPlaneInfo(xpFreq);
+    // AI或多人
+    multiId = xp.addDatarefArray("sim/cockpit2/tcas/targets/modeS_id", 64, xpFreq);
+    multiLat = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/lat", 64, xpFreq);
+    multiLon = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/lon", 64, xpFreq);
+    multiAlt = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/ele", 64, xpFreq);
+    multiTrk = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/psi", 64, xpFreq);
+    multiVs = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/vertical_speed", 64, xpFreq);
+    multiFlightId = xp.addDatarefArray("sim/cockpit2/tcas/targets/flight_id", 512, xpFreq);
+    // 回调
+    xp.setCallback([this](const bool state) {
+        this->connected = state;
+        qDebug() << "XPlane change state: " << state;
+    });
 }

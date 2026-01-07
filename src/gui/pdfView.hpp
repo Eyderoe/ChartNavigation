@@ -9,22 +9,23 @@
 class PdfView final : public QPdfView {
     public:
         explicit PdfView (QWidget *parent = nullptr);
-        QSizeF getDocSize(int page=0) const;
+        QSizeF getDocSize (int page = 0) const;
         void setCenterOn (bool center);
-        void setColorTheme(bool darkTheme);
+        void setColorTheme (bool darkTheme);
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
     private:
-        // 地图缩放逻辑
+        // 重载事件部分
         void wheelEvent (QWheelEvent *event) override;
-        // 地图拖动逻辑
         void mousePressEvent (QMouseEvent *event) override;
         void mouseMoveEvent (QMouseEvent *event) override;
         void mouseReleaseEvent (QMouseEvent *event) override;
-        // 地图绘制逻辑
         void paintEvent (QPaintEvent *event) override;
-        std::pair<double,double> trans(double latitude, double longitude);
-        // x-plane逻辑
+        // x-plane部分
+        std::pair<double, double> trans (double latitude, double longitude);
+        void drawPlane (QPainter &painter,
+                        int idx = 0);
         void xpInfoUpdate ();
+        void xpInit ();
 
         // 地图拖动逻辑
         bool dragging{};
@@ -37,8 +38,12 @@ class PdfView final : public QPdfView {
         AffineTransformer transformer{};
         bool transActive{false};
         // x-plane
-        QPixmap plane;
+        QPixmap plane, otherPlane;
         eyderoe::XPlaneUdp xp;
+        eyderoe::XPlaneUdp::DatarefIndex multiId{}, multiLat{}, multiLon{}, multiAlt{}, multiTrk{}, multiVs{},
+                                         multiFlightId{};
+        std::array<float, 64> multiIdVal{}, multiLatVal{}, multiLonVal{}, multiAltVal{}, multiTrkVal{}, multiVsVal{};
+        std::array<float, 512> multiFlightIdVal{};
         eyderoe::XPlaneUdp::PlaneInfo planeInfo{.track = -999};
         bool connected{false};
         // 定时器

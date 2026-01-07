@@ -83,8 +83,9 @@ main_widget::~main_widget () {
  * @param filePath 文件路径
  * @brief 两处调用(文本框编辑完/文件树结点点击)
  */
-void main_widget::loadPdf (const QString &filePath) {
+void main_widget::loadPdfFile (const QString &filePath) {
     // 先关闭文档
+    ui->pdf_widget->pageNavigator()->jump(0, {0, 0});
     document->close();
     pdfFilePath = "";
     ui->pdf_widget->loadMappingData({}, 0, 0);
@@ -101,45 +102,59 @@ void main_widget::loadPdf (const QString &filePath) {
     pdfFilePath = pdfPath;
     ui->pageNum_spinBox->setEnabled(true);
     document->load(pdfPath);
+    loadPdfFileMapping();
     on_pageNum_spinBox_valueChanged(0);
 }
 
 /**
- * @brief 从映射文件中加载仿射变换数据
- * @param pageNum 页码(1起始)
- * @return 映射数据,旋转角度,阈值
+ * @brief 从映射文件中加载仿射变换数据(一个机场文件的数据)
  */
-main_widget::MappingInfo main_widget::loadData (const int pageNum) {
+void main_widget::loadPdfFileMapping () {
     // 文件夹可用性
     const QSettings settings;
     const QString mappingFolder = settings.value("mappingFolder", "").toString();
     const QDir mappingDir(mappingFolder);
-    if (!mappingDir.exists())
-        return {};
+    if (!mappingDir.exists()) {
+        fileData = {};
+        return;
+    }
     // 映射文件可用性 ZUCK.Tmap
     const QString baseName = QFileInfo(pdfFilePath).completeBaseName();
     const QString icao = baseName.left(4);
     const QString mappingFilePath = mappingDir.filePath(icao + ".Tmap");
     QFile mappingFile(mappingFilePath);
-    if (!mappingFile.exists())
-        return {};
+    if (!mappingFile.exists()) {
+        fileData = {};
+        return;
+    }
     // 航图文件可用性 ZUCK-3P-01
     mappingFile.open(QIODevice::ReadOnly);
     QTextStream stream(&mappingFile);
     auto airportConfig = json::parse(stream.readAll().toUtf8().constData());
-    if (const auto it = airportConfig.find(baseName.toStdString()); it == airportConfig.end())
-        return {};
-    // 页码可用性 1
-    const auto &fileConfig = airportConfig[baseName.toStdString()];
+    const auto it = airportConfig.find(baseName.toStdString());
+    if (it == airportConfig.end()) {
+        fileData = {};
+        return;
+    }
+    fileData = std::move(it.value());
+}
+
+/**
+ * @brief 从缓存中加载仿射变换数据(一页的数据)
+ * @param pageNum 页码
+ * @brief {映射数据,旋转角度,阈值}
+ */
+main_widget::MappingInfo main_widget::loadPdfPageMapping (const int pageNum) {
+    // 页码可用性
     const basic_json<> *availableData{nullptr};
-    for (const auto &pageConfig : fileConfig) {
+    for (const auto &pageConfig : fileData) {
         if (const auto &header = pageConfig[0]; header["page"] == pageNum - 1) {
             availableData = &pageConfig;
             break;
         }
     }
     if (availableData == nullptr)
-        return {};
+        return {{}, 0, 0};
     // 装载数据
     std::vector<std::vector<double>> data;
     data.reserve(availableData->size() - 1);
@@ -151,8 +166,7 @@ main_widget::MappingInfo main_widget::loadData (const int pageNum) {
         double d4 = mapData[3];
         data.push_back({d1, d2, d3, d4});
     }
-    const bool isAirport = (*availableData)[0]["type"] == "parking"; // 机场图5 终端区10
-    fileData = std::move(airportConfig[baseName.toStdString()]); // 加载数据至内存
+    const bool isAirport = (*availableData)[0]["type"] == "parking"; // 机场图10 终端区5
     return {data, (*availableData)[0]["rotate"], isAirport ? 10.0 : 5.0};
 }
 
@@ -160,7 +174,7 @@ main_widget::MappingInfo main_widget::loadData (const int pageNum) {
  * @brief 文件路径输入框 -> 加载PDF文档
  */
 void main_widget::on_chart_lineEdit_editingFinished () {
-    loadPdf(ui->chart_lineEdit->text());
+    loadPdfFile(ui->chart_lineEdit->text());
 }
 
 /**
@@ -221,7 +235,7 @@ void main_widget::on_pageNum_spinBox_valueChanged (const int pageNum) {
     if (totalPages == 0)
         return;
     const int pageNumCorrect = qBound(1, pageNum, totalPages);
-    if (pageNumCorrect != pageNum) { // 说明页码经过修正
+    if (pageNumCorrect != pageNum) {
         ui->pageNum_spinBox->setValue(pageNumCorrect);
         return;
     }
@@ -229,7 +243,7 @@ void main_widget::on_pageNum_spinBox_valueChanged (const int pageNum) {
     const auto pdf = ui->pdf_widget;
     pdf->pageNavigator()->jump(pageNumCorrect - 1, {0, 0}); // 不是很懂这个location
     // 映射数据加载
-    const auto [data, rotate,threshold] = loadData(pageNumCorrect);
+    const auto [data, rotate,threshold] = loadPdfPageMapping(pageNumCorrect);
     ui->pdf_widget->loadMappingData(data, rotate, threshold);
 }
 
@@ -252,7 +266,7 @@ void main_widget::on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int co
     const Node *node = dynamic_cast<Node*>(item);
     if (node->isFolder)
         return;
-    loadPdf(node->baseDir);
+    loadPdfFile(node->baseDir);
 }
 
 /**

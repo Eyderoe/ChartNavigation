@@ -30,10 +30,11 @@ class main_widget final : public QWidget {
         Ui::main_widget *ui;
         QPdfDocument *document;
         QString pdfFilePath{};
-        nlohmann::json fileData;
+        nlohmann::json fileData{};
 
-        void loadPdf (const QString &filePath);
-        [[nodiscard]] MappingInfo loadData (int pageNum) ;
+        void loadPdfFile (const QString &filePath);
+        void loadPdfFileMapping();
+        MappingInfo loadPdfPageMapping (int pageNum);
         void readSettings ();
         void writeSettings () const;
         void initFileTree () const;

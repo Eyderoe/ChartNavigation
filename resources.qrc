@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/map">
         <file>resources/plane_small.png</file>
+        <file>resources/plane_small_2.png</file>
     </qresource>
     <qresource prefix="/icon">
         <file>resources/navi16.ico</file>

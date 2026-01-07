@@ -73,7 +73,7 @@ class BufferPool {
 class XPlaneUdp {
     public:
         struct DatarefIndex {
-            const size_t idx;
+            size_t idx;
         };
         struct PlaneInfo {
             double lon, lat, alt; // 经纬度 高度
@@ -88,7 +88,7 @@ class XPlaneUdp {
         XPlaneUdp (XPlaneUdp &&) = delete;
         XPlaneUdp& operator= (XPlaneUdp &&) = delete;
 
-        void setCallback (const std::function<void  (bool)> &callbackFunc);
+        void setCallback (const std::function<void (bool)> &callbackFunc);
         void reconnect (bool del = false);
         void close ();
 
@@ -221,7 +221,15 @@ bool XPlaneUdp::getDataref (const DatarefIndex &dataref, T &container, float def
         std::ranges::fill(container | std::views::take(size), defaultValue);
         return false;
     }
-    auto source = values | std::views::drop(ref.start) | std::views::take(std::min(size, container.size()));
+    size_t containerCapacity; // 容器能塞多少元素
+    if constexpr (requires { container.capacity(); }) { // vector等
+        containerCapacity = container.capacity();
+    } else if constexpr (requires { container.size()(); }) { // array等
+        containerCapacity = container.size();
+    } else {
+        static_assert("cant specify container size !");
+    }
+    auto source = values | std::views::drop(ref.start) | std::views::take(std::min(size, containerCapacity));
     std::ranges::copy(source, container.begin());
     return true;
 }

@@ -1,0 +1,10 @@
+其他玩家/AI飞机 可以用TCAS实现(sim/cockpit2/tcas/targets/modeS_id)
+可能的添加TCAS标识：相对高度↑↓
+根据文档类型设置阈值,程序5,机场10(或者在设置里面实现)
+更合理的暗色逻辑,且必须在QPdfView下实现
+切换时,页面相对位置锁定
+多个实例时只有一个程序实例能更新数据,要么改XPlaneUDP要么改程序为单例或者再用websocket写一个试试
+文档页码切换那块可以改,改成基于控件[min,max]实现,这样on_pageNum_spinBox_valueChanged就不会调用多次
+三级TCAS显示：所有，30NM(9900ft)，6NM(1200ft)
+描边的改进
+闲的蛋疼可以把涉及PlaneInfo的都删了，因为multi都有相关信息(注意检查自身行不行)
