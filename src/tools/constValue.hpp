@@ -2,5 +2,6 @@
 #define CHARTNAVIGATION_CONSTVALUE_HPP
 
 constexpr double m2ft = 3.28084;
+constexpr double nm2m = 1852;
 
 #endif //CHARTNAVIGATION_CONSTVALUE_HPP

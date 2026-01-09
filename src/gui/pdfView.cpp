@@ -55,6 +55,10 @@ void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, con
     qDebug() << std::format("RMS: {:.2f}, errors: [{}]", error, join(view, ", "));
 }
 
+void PdfView::closeXp () {
+    xp.close();
+}
+
 void PdfView::wheelEvent (QWheelEvent *event) {
     const double oldZoom = zoomFactor();
     const QPointF mousePos = event->position();
@@ -120,8 +124,6 @@ void PdfView::paintEvent (QPaintEvent *event) {
     if (plane.isNull()) // 图片不可用
         check = false;
     if (!transActive) // 仿射变换可用
-        check = false;
-    if (planeInfo.track == -999) // xp信息不可用
         check = false;
     // 飞机绘制逻辑
     if (check) {
@@ -199,9 +201,23 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         QFont font;
         font.setBold(true);
         painter.setFont(font);
+        const QPen outlinePen(Qt::black, 0.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        const QBrush textBrush(Qt::white);
+        auto drawStrokedText = [&](const int x_, const int y_, const QString &text) {
+            QPainterPath path;
+            path.addText(x_, y_, font, text);
+            painter.setPen(outlinePen);
+            painter.setBrush(textBrush);
+            painter.drawPath(path);
+        };
         // 航班信息
+        QString flightId;
+        flightId.reserve(7);
+        for (int i = 8 * idx; i < 8 * (idx + 1) - 1; ++i)
+            if (multiFlightIdVal[i] != 0)
+                flightId.append(QChar(static_cast<char>(multiFlightIdVal[i])));
         // 高度信息
-        int deltaAlt = static_cast<int>(std::round((alt - planeInfo.alt) * m2ft / 100));
+        int deltaAlt = static_cast<int>(std::round((alt - multiAltVal[0]) * m2ft / 100));
         QString delta;
         if (deltaAlt >= 0)
             delta = QString::fromStdString(std::format("{:02d}", deltaAlt));
@@ -211,8 +227,9 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
             delta += "↑";
         else if (vs <= -500)
             delta += "↓";
-        if (std::abs(deltaAlt) >= 1)
-            painter.drawText(10, 15, delta);
+        drawStrokedText(10, 15, flightId);
+        if (std::abs(deltaAlt) >= 2)
+            drawStrokedText(10, 25, delta);
     }
     // 绘制飞机
     painter.rotate(trk);
@@ -238,12 +255,10 @@ void PdfView::setColorTheme (const bool darkTheme) {
  * @brief 更新机模的基本信息
  */
 void PdfView::xpInfoUpdate () {
-    if (!connected) {
-        planeInfo.track = -999;
+    if (!connected || !transActive) {
         viewport()->update();
         return;
     }
-    xp.getPlaneInfo(planeInfo);
     xp.getDataref(multiId, multiIdVal);
     xp.getDataref(multiLat, multiLatVal);
     xp.getDataref(multiLon, multiLonVal);
@@ -256,7 +271,7 @@ void PdfView::xpInfoUpdate () {
         return;
     }
 
-    auto [x,y] = trans(planeInfo.lat, planeInfo.lon);
+    auto [x,y] = trans(multiLatVal[0], multiLonVal[0]);
     constexpr double edge{10};
     if ((x < -edge) || (x > viewport()->width() + edge))
         return;
@@ -284,8 +299,6 @@ void PdfView::xpInfoUpdate () {
 void PdfView::xpInit () {
     const QSettings settings;
     const int xpFreq = settings.value("xp_freq", 1).toInt();
-    // 玩家
-    xp.addPlaneInfo(xpFreq);
     // AI或多人
     multiId = xp.addDatarefArray("sim/cockpit2/tcas/targets/modeS_id", 64, xpFreq);
     multiLat = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/lat", 64, xpFreq);

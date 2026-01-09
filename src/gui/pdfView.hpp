@@ -13,6 +13,7 @@ class PdfView final : public QPdfView {
         void setCenterOn (bool center);
         void setColorTheme (bool darkTheme);
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
+        void closeXp();
     private:
         // 重载事件部分
         void wheelEvent (QWheelEvent *event) override;
@@ -22,8 +23,7 @@ class PdfView final : public QPdfView {
         void paintEvent (QPaintEvent *event) override;
         // x-plane部分
         std::pair<double, double> trans (double latitude, double longitude);
-        void drawPlane (QPainter &painter,
-                        int idx = 0);
+        void drawPlane (QPainter &painter,int idx = 0);
         void xpInfoUpdate ();
         void xpInit ();
 
@@ -44,7 +44,6 @@ class PdfView final : public QPdfView {
                                          multiFlightId{};
         std::array<float, 64> multiIdVal{}, multiLatVal{}, multiLonVal{}, multiAltVal{}, multiTrkVal{}, multiVsVal{};
         std::array<float, 512> multiFlightIdVal{};
-        eyderoe::XPlaneUdp::PlaneInfo planeInfo{.track = -999};
         bool connected{false};
         // 定时器
         QTimer xpUpdateTimer;
