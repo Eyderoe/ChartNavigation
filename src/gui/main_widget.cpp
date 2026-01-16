@@ -26,6 +26,9 @@ void main_widget::readSettings () {
     // 单文件输入框
     const bool singleFileDisable = settings.value("singleFileDisable", true).toBool();
     ui->chart_lineEdit->setHidden(singleFileDisable);
+    // TCAS 范围
+    const int tacsMode=settings.value("tcas",0).toInt();
+    ui->pdf_widget->setTcasMode(static_cast<TcasMode>(tacsMode));
 }
 
 /**

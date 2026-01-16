@@ -1,6 +1,7 @@
 #include "pdfView.hpp"
 #include "tools/stringProcess.hpp"
 #include "tools/constValue.hpp"
+#include "utils/geographic.hpp"
 
 PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setPageMode(PageMode::SinglePage);
@@ -210,6 +211,32 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
             painter.setBrush(textBrush);
             painter.drawPath(path);
         };
+        // tcas 判断
+        const double _distance = distanceSimple(latitude, longitude, multiLatVal[0], multiLonVal[0]);
+        qDebug()<<_distance;
+        const double _alt = std::abs(alt - multiAltVal[0]);
+        bool check{false};
+        switch (tcasMode) {
+            case TcasMode::none:
+                check = true;
+                break;
+            case TcasMode::nm30:
+                if (_distance > nm2m * 30 || _alt > 9900) {
+                    check = true;
+                    break;
+                }
+            case TcasMode::nm6:
+                if (_distance > nm2m * 6 || _alt > 1200) {
+                    check = true;
+                    break;
+                }
+            default:
+                ;
+        }
+        if (check) {
+            painter.restore();
+            return;
+        }
         // 航班信息
         QString flightId;
         flightId.reserve(7);
@@ -249,6 +276,14 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
  */
 void PdfView::setColorTheme (const bool darkTheme) {
     isDark = darkTheme;
+}
+
+/**
+ * @brief 设置TCAS模式
+ * @param mode 模式
+ */
+void PdfView::setTcasMode (const TcasMode mode) {
+    tcasMode = mode;
 }
 
 /**

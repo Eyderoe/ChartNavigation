@@ -4,25 +4,38 @@
 #include <boost/system.hpp>
 #include <boost/asio.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/pool/pool_alloc.hpp>
 #include <format>
 #include <iostream>
 #include <ranges>
 #include <memory>
 #include <array>
 #include <shared_mutex>
+#include <boost/pool/pool_alloc.hpp>
 
+
+namespace eyderoe
+{
 #ifdef _WIN32
 constexpr bool IS_WIN = true;
 #else
 constexpr bool IS_WIN = false;
 #endif
 
-
-namespace eyderoe
-{
 static constexpr std::string MULTI_CAST_GROUP{"239.255.1.1"};
 static constexpr unsigned short MULTI_CAST_PORT{49707};
+
+template <typename T>
+concept Container = std::ranges::random_access_range<T> &&
+        std::ranges::sized_range<T> &&
+        std::is_assignable_v<std::ranges::range_reference_t<T>, float> && requires(T contain) {
+            contain.size();
+        } ;
+template <typename T>
+concept CharArray = requires(T contain) {
+    requires std::is_same_v<typename T::value_type, char> ||
+    std::is_same_v<typename T::value_type, std::byte> ||
+    std::is_same_v<typename T::value_type, uint8_t>;
+};
 
 constexpr int HEADER_LENGTH{5}; // 指令头部长度 4字母+1空
 const static std::string DATAREF_GET_HEAD{'R', 'R', 'E', 'F', '\x00'};
@@ -34,84 +47,17 @@ namespace sys = boost::system;
 namespace asio = boost::asio;
 namespace ip = asio::ip;
 
-template <typename T>
-concept Container = std::ranges::random_access_range<T> &&
-        std::ranges::sized_range<T> &&
-        std::is_assignable_v<std::ranges::range_reference_t<T>, float> && requires(T contain) {
-            contain.size();
-        } ;
-template <typename T>
-concept CharContainer = requires(T contain) {
-    requires std::same_as<typename T::value_type, char>;
-    contain.data();
-};
+class XPlaneUdp;
+class BufferPool;
 
 template <typename T, typename... Rests>
     requires (std::same_as<std::string, T> || std::is_fundamental_v<T>)
 size_t packSize (size_t offset, const T &first, const Rests &... rest);
-template <typename T1, typename T2, typename... Rests>
+template <CharArray T1, typename T2, typename... Rests>
     requires (std::same_as<std::string, T2> || std::is_fundamental_v<T2>)
 size_t pack (T1 &container, size_t offset, const T2 &first, const Rests &... rest);
-
-/**
- * @brief 解包一串字符数据
- * @param container 容器
- * @param offset 偏移字节
- */
-template <typename CharContainer, typename First, typename... Rests>
-void unpack (const CharContainer &container, size_t offset, First &first, Rests &... rest) {
-    memcpy(&first, container.data() + offset, sizeof(First));
-    if constexpr (sizeof...(rest) > 0)
-        unpack(container, offset + sizeof(First), rest...);
-}
-
-
-/**
- * @brief 打包字符数量
- * @param offset 偏移量
- * @param first string,基本类型
- * @return 打包数据量
- */
-template <typename T, typename... Rests>
-    requires (std::same_as<std::string, T> || std::is_fundamental_v<T>)
-size_t packSize (const size_t offset, const T &first, const Rests &... rest) {
-    if constexpr (std::same_as<std::string, T>) { // string
-        if constexpr (sizeof...(rest) > 0)
-            return packSize(offset + first.size(), rest...);
-        else
-            return offset + first.size();
-    } else { // 基本类型
-        if constexpr (sizeof...(rest) > 0)
-            return packSize(offset + sizeof(T), rest...);
-        else
-            return offset + sizeof(T);
-    }
-}
-
-/**
- * @brief 打包为字符数组
- * @param container 容器
- * @param offset 偏移量
- * @param first string,基本类型
- * @return 打包数据量
- */
-template <typename T1, typename T2, typename... Rests>
-    requires (std::same_as<std::string, T2> || std::is_fundamental_v<T2>)
-size_t pack (T1 &container, const size_t offset, const T2 &first, const Rests &... rest) {
-    if constexpr (std::same_as<std::string, T2>) { // string
-        memcpy(container.data() + offset, first.data(), first.size());
-        if constexpr (sizeof...(rest) > 0)
-            return pack(container, offset + first.size(), rest...);
-        else
-            return offset + first.size();
-    } else { // 基本类型
-        memcpy(container.data() + offset, &first, sizeof(T2));
-        if constexpr (sizeof...(rest) > 0)
-            return pack(container, offset + sizeof(T2), rest...);
-        else
-            return offset + sizeof(T2);
-    }
-}
+template <CharArray CharList, typename First, typename... Rests>
+void unpack (const CharList &container, size_t offset, First &first, Rests &... rest);
 
 class BufferPool {
     struct BufferPro {
@@ -120,37 +66,11 @@ class BufferPool {
         BufferPro () : length(0) { std::memset(data.data(), 0x00, data.size()); }
     };
     public:
-        BufferPool () = default;
-        [[nodiscard]] std::shared_ptr<std::array<char, 1472>> getBuffer (size_t length) const;
+        static std::shared_ptr<std::array<char, 1472>> getBuffer (size_t length);
     private:
         boost::pool_allocator<BufferPro> allocator;
-        void recycleBuffer (BufferPro *buffer) const;
+        static void recycleBuffer (BufferPro *buffer);
 };
-
-/**
- * @brief 获取一个 array<char, 1472>
- * @param length 会使用的长度
- * @return 智能指针包含的数组
- */
-inline std::shared_ptr<std::array<char, 1472>> BufferPool::getBuffer (const size_t length) const {
-    BufferPro *buffer = allocator.allocate(1);
-    new(buffer) BufferPro();
-    buffer->length = length;
-    std::memset(buffer->data.data(), 0x00, buffer->data.size());
-    auto deleter = [this](std::array<char, 1472> *ptr) {
-        BufferPro *buffer_ = reinterpret_cast<BufferPro*>(ptr);
-        this->recycleBuffer(buffer_);
-    };
-    return {&buffer->data, deleter};
-}
-
-inline void BufferPool::recycleBuffer (BufferPro *buffer) const {
-    if (buffer) {
-        std::memset(buffer->data.data(), 0x00, buffer->length);
-        buffer->~BufferPro();
-        allocator.deallocate(buffer, 1);
-    }
-}
 
 class XPlaneUdp {
     public:
@@ -227,7 +147,6 @@ class XPlaneUdp {
 
         void setState (bool newState);
         size_t findSpace (size_t length);
-        void extendSpace ();
         void detectBeacon ();
         asio::awaitable<void> detect ();
         void sendData (const std::shared_ptr<std::array<char, 1472>> &data, size_t size);
@@ -237,6 +156,138 @@ class XPlaneUdp {
         void receiveDataProcess (const std::shared_ptr<std::array<char, 1472>> &data, size_t size,
                                  const ip::udp::endpoint &sender);
 };
+
+/**
+ * @brief 解包一串字符数据
+ * @param container 容器
+ * @param offset 偏移字节
+ */
+template <CharArray CharList, typename First, typename... Rests>
+void unpack (const CharList &container, size_t offset, First &first, Rests &... rest) {
+    assert(container.size() >= offset + sizeof(First) && "not enough to unpack !");
+    memcpy(&first, container.data() + offset, sizeof(First));
+    if constexpr (sizeof...(rest) > 0)
+        unpack(container, offset + sizeof(First), rest...);
+}
+
+
+/**
+ * @brief 打包字符数量
+ * @param offset 偏移量
+ * @param first string,基本类型
+ * @return 打包数据量
+ */
+template <typename T, typename... Rests>
+    requires (std::same_as<std::string, T> || std::is_fundamental_v<T>)
+size_t packSize (const size_t offset, const T &first, const Rests &... rest) {
+    if constexpr (std::same_as<std::string, T>) { // string
+        if constexpr (sizeof...(rest) > 0)
+            return packSize(offset + first.size(), rest...);
+        else
+            return offset + first.size();
+    } else { // 基本类型
+        if constexpr (sizeof...(rest) > 0)
+            return packSize(offset + sizeof(T), rest...);
+        else
+            return offset + sizeof(T);
+    }
+}
+
+/**
+ * @brief 打包为字符数组
+ * @param container 容器
+ * @param offset 偏移量
+ * @param first string,基本类型
+ * @return 打包数据量
+ */
+template <CharArray T1, typename T2, typename... Rests>
+    requires (std::same_as<std::string, T2> || std::is_fundamental_v<T2>)
+size_t pack (T1 &container, const size_t offset, const T2 &first, const Rests &... rest) {
+    if constexpr (std::same_as<std::string, T2>) { // string
+        assert(container.size() >= offset + first.size() && "not enough to pack !");
+        memcpy(container.data() + offset, first.data(), first.size());
+        if constexpr (sizeof...(rest) > 0)
+            return pack(container, offset + first.size(), rest...);
+        else
+            return offset + first.size();
+    } else { // 基本类型
+        assert(container.size() >= offset + sizeof(T2) && "not enough to pack !");
+        memcpy(container.data() + offset, &first, sizeof(T2));
+        if constexpr (sizeof...(rest) > 0)
+            return pack(container, offset + sizeof(T2), rest...);
+        else
+            return offset + sizeof(T2);
+    }
+}
+
+/**
+ * @brief 获取 dataref 最新值
+ * @param dataref 标识
+ * @param container 容器
+ * @param defaultValue 默认值
+ * @return 值可用
+ */
+template <Container T>
+bool XPlaneUdp::getDataref (const DatarefIndex &dataref, T &container, float defaultValue) {
+    std::shared_lock lock(dataMutex);
+    const auto &ref = dataRefs.at(dataref.getIdx());
+    const size_t size = ref.end - ref.start + 1;
+    if (!ref.available) {
+        std::ranges::fill(container | std::views::take(size), defaultValue);
+        return false;
+    }
+    size_t containerCapacity; // 容器能塞多少元素
+    if constexpr (requires { container.capacity(); }) { // vector等
+        containerCapacity = container.capacity();
+    } else if constexpr (requires { container.size(); }) { // array等
+        containerCapacity = container.size();
+    } else {
+        static_assert("cant specify container size !");
+    }
+    auto source = values | std::views::drop(ref.start) | std::views::take(std::min(size, containerCapacity));
+    std::ranges::copy(source, container.begin());
+    return true;
+}
+
+/**
+ * @brief 设置某组 dataref 值
+ * @param dataref dataref 名称
+ * @param value 容器
+ */
+template <Container T>
+void XPlaneUdp::setDataref (const std::string &dataref, const T &value) {
+    for (int i = 0; i < value.size(); ++i) {
+        const size_t bufferSize = packSize(0, DATAREF_SET_HEAD, value[i], std::format("{}[{}]", dataref, i), '\x00');
+        const auto buffer = BufferPool::getBuffer(bufferSize);
+        pack(*buffer, 0, DATAREF_SET_HEAD, value[i], std::format("{}[{}]", dataref, i), '\x00');
+        sendData(buffer, 509);
+    }
+}
+
+/**
+ * @brief 获取一个 array<char, 1472>
+ * @param length 会使用的长度
+ * @return 智能指针包含的数组
+ */
+inline std::shared_ptr<std::array<char, 1472>> BufferPool::getBuffer (const size_t length) {
+    BufferPro *buffer = boost::pool_allocator<BufferPro>::allocate(1);
+    new(buffer) BufferPro();
+    buffer->length = length;
+    std::memset(buffer->data.data(), 0x00, buffer->data.size());
+    auto deleter = [](std::array<char, 1472> *ptr) {
+        auto *buffer_ = reinterpret_cast<BufferPro*>(ptr);
+        recycleBuffer(buffer_);
+    };
+    return {&buffer->data, deleter};
+}
+
+inline void BufferPool::recycleBuffer (BufferPro *buffer) {
+    if (buffer) {
+        std::memset(buffer->data.data(), 0x00, buffer->length);
+        buffer->~BufferPro();
+        boost::pool_allocator<BufferPro>::deallocate(buffer, 1);
+    }
+}
 
 inline XPlaneUdp::XPlaneUdp (const bool autoReConnect) : autoReconnect(autoReConnect),
                                                          workGuard(asio::make_work_guard(io_context)),
@@ -282,7 +333,7 @@ inline void XPlaneUdp::reconnect (const bool del) {
         for (int i = start; i <= end; ++i) {
             std::string combine = isArray ? std::format("{}[{}]", name, i - start) : name;
             const size_t size = packSize(0, DATAREF_GET_HEAD, del ? 0 : freq, i, combine);
-            auto buffer = pool.getBuffer(size);
+            auto buffer = BufferPool::getBuffer(size);
             pack(*buffer, 0, DATAREF_GET_HEAD, freq, i, combine);
             sendData(buffer, 413);
         }
@@ -291,7 +342,7 @@ inline void XPlaneUdp::reconnect (const bool del) {
     if (infoFreq == 0)
         return;
     const std::string sentence = std::format("{}{}\x00", BASIC_INFO_HEAD, del ? 0 : infoFreq);
-    const auto buffer2 = pool.getBuffer(sentence.size());
+    const auto buffer2 = BufferPool::getBuffer(sentence.size());
     pack(*buffer2, 0, sentence);
     sendData(buffer2, sentence.size());
 }
@@ -311,16 +362,14 @@ inline void XPlaneUdp::close () {
     if (closed)
         return;
     closed = true;
-    asio::post(io_context, [this] {
-        boost::system::error_code ec, result;
-        if (xpSocket.is_open()) {
-            result = xpSocket.cancel(ec);
-            result = xpSocket.close(ec);
-        }
-        result = multicastSocket.cancel(ec);
-        result = multicastSocket.close(ec);
-        workGuard.reset();
-    });
+    if (xpSocket.is_open()) {
+        xpSocket.cancel();
+        xpSocket.close();
+    }
+    multicastSocket.cancel();
+    multicastSocket.close();
+    workGuard.reset();
+    io_context.stop();
     if (worker.joinable())
         worker.join();
 }
@@ -340,7 +389,7 @@ inline XPlaneUdp::DatarefIndex XPlaneUdp::addDataref (const std::string &dataref
     size_t start = findSpace(1);
     dataRefs.emplace_back(name, start, start, freq, true, false);
     const size_t size = packSize(0, DATAREF_GET_HEAD, freq, start, name);
-    const auto buffer = pool.getBuffer(size);
+    const auto buffer = BufferPool::getBuffer(size);
     pack(*buffer, 0, DATAREF_GET_HEAD, freq, start, name);
     sendData(buffer, 413);
     exist[name] = dataRefs.size() - 1;
@@ -363,7 +412,7 @@ inline XPlaneUdp::DatarefIndex XPlaneUdp::addDatarefArray (const std::string &da
     for (int i = 0; i < length; ++i) {
         std::string name = std::format("{}[{}]", dataref, i);
         const size_t size{packSize(0, DATAREF_GET_HEAD, freq, start + i, name)};
-        auto buffer = pool.getBuffer(size);
+        auto buffer = BufferPool::getBuffer(size);
         pack(*buffer, 0, DATAREF_GET_HEAD, freq, start + i, name);
         sendData(buffer, 413);
     }
@@ -379,12 +428,12 @@ inline XPlaneUdp::DatarefIndex XPlaneUdp::addDatarefArray (const std::string &da
  * @return 值可用
  */
 inline bool XPlaneUdp::getDataref (const DatarefIndex &dataref, float &value, const float defaultValue) const {
-    if (!dataRefs[dataref.getIdx()].available) {
+    if (!dataRefs.at(dataref.getIdx()).available) {
         value = defaultValue;
         return false;
     }
     std::shared_lock lock(dataMutex);
-    value = values[dataRefs[dataref.getIdx()].start];
+    value = values.at(dataRefs.at(dataref.getIdx()).start);
     return true;
 }
 
@@ -394,7 +443,7 @@ inline bool XPlaneUdp::getDataref (const DatarefIndex &dataref, float &value, co
  * @param freq 频率
  */
 inline void XPlaneUdp::changeDatarefFreq (const DatarefIndex &dataref, const float freq) {
-    auto &ref = dataRefs[dataref.getIdx()];
+    auto &ref = dataRefs.at(dataref.getIdx());
     const int size = ref.end - ref.start + 1;
     if (freq == 0) { // 停止接收
         if (!ref.available)
@@ -412,14 +461,14 @@ inline void XPlaneUdp::changeDatarefFreq (const DatarefIndex &dataref, const flo
         // 再发送
         if (!ref.isArray) {
             const size_t bufferSize = packSize(0, DATAREF_GET_HEAD, freq, ref.start, ref.name);
-            const auto buffer = pool.getBuffer(bufferSize);
+            const auto buffer = BufferPool::getBuffer(bufferSize);
             pack(*buffer, 0, DATAREF_GET_HEAD, freq, ref.start, ref.name);
             sendData(buffer, 413);
         } else {
             for (size_t i = 0; i < size; ++i) {
                 const size_t bufferSize = packSize(0, DATAREF_GET_HEAD, freq, ref.start,
                                                    std::format("{}[{}]", ref.name, i));
-                const auto buffer = pool.getBuffer(bufferSize);
+                const auto buffer = BufferPool::getBuffer(bufferSize);
                 pack(*buffer, 0, DATAREF_GET_HEAD, freq, ref.start + i, std::format("{}[{}]", ref.name, i));
                 sendData(buffer, 413);
             }
@@ -436,7 +485,7 @@ inline void XPlaneUdp::changeDatarefFreq (const DatarefIndex &dataref, const flo
 inline void XPlaneUdp::setDataref (const std::string &dataref, const float value, int index) {
     const std::string name = (index == -1) ? dataref : std::format("{}[{}]", dataref, index);
     const size_t bufferSize = packSize(0, DATAREF_SET_HEAD, value, name, '\x00');
-    const auto buffer = pool.getBuffer(bufferSize);
+    const auto buffer = BufferPool::getBuffer(bufferSize);
     pack(*buffer, 0, DATAREF_SET_HEAD, value, name, '\x00');
     sendData(buffer, 509);
 }
@@ -449,7 +498,7 @@ inline void XPlaneUdp::addPlaneInfo (int freq) {
     infoFreq = freq;
     const std::string sentence = std::format("{}{}\x00", BASIC_INFO_HEAD, freq);
     const size_t bufferSize = packSize(0, sentence);
-    const auto buffer = pool.getBuffer(bufferSize);
+    const auto buffer = BufferPool::getBuffer(bufferSize);
     pack(*buffer, 0, sentence);
     sendData(buffer, bufferSize);
 }
@@ -479,35 +528,35 @@ inline void XPlaneUdp::setState (const bool newState) {
 /**
  * @brief 找到一段连续可用的空间
  * @param length 长度
- * @return 初始位置
+ * @return 起始位置
  */
 inline size_t XPlaneUdp::findSpace (const size_t length) {
-    size_t start{}, count{};
-    for (size_t i = 0; i < space.size(); ++i) {
-        if (!space[i]) {
-            if (count == 0)
-                start = i;
-            ++count;
-            if (count >= length) {
-                space.set(start, start + length, true);
-                extendSpace();
-                return start;
+    const size_t currentSize = space.size();
+    // 尝试在现有空间中寻找
+    if (currentSize >= length) {
+        size_t i = 0;
+        const size_t searchLimit = currentSize - length;
+        while (i <= searchLimit) {
+            size_t j;
+            for (j = 0; j < length; ++j) {
+                if (space.test(i + j))
+                    break;
             }
-        } else {
-            count = 0;
+            if (j == length) {
+                space.set(i, length, true);
+                return i;
+            }
+            i += j + 1;
         }
     }
-    // 补充
-    for (int i = 0; i < length; ++i)
-        space.push_back(true);
-    extendSpace();
-    return space.size() - length;
-}
-
-inline void XPlaneUdp::extendSpace () {
+    // 再次尝试分配一块空间
+    const size_t newStart = currentSize;
+    space.resize(currentSize + length, false);
+    space.set(newStart, length, true);
+    // 预留values
     std::unique_lock lock(dataMutex);
-    for (int i = 0; i < (space.size() - values.size()); ++i)
-        values.emplace_back();
+    values.resize(space.size());
+    return newStart;
 }
 
 /**
@@ -521,7 +570,7 @@ inline asio::awaitable<void> XPlaneUdp::detect () {
     ip::udp::endpoint senderEndpoint;
     asio::steady_timer timer(co_await asio::this_coro::executor);
     while (true) {
-        auto buffer = pool.getBuffer(0);
+        auto buffer = BufferPool::getBuffer(0);
         timer.expires_after(std::chrono::seconds(2));
         timer.async_wait([this](const auto &ec) { if (!ec)setState(false); });
         size_t receiveBytes = co_await multicastSocket.async_receive_from(
@@ -557,7 +606,7 @@ inline void XPlaneUdp::receiveData () {
 inline asio::awaitable<void> XPlaneUdp::receive () {
     ip::udp::endpoint temp;
     while (xpSocket.is_open()) {
-        auto buffer = pool.getBuffer(0);
+        auto buffer = BufferPool::getBuffer(0);
         size_t receiveBytes = co_await xpSocket.async_receive_from(
             asio::buffer(*buffer), temp, asio::use_awaitable);
         receiveDataProcess(buffer, receiveBytes, temp);
@@ -580,11 +629,10 @@ inline void XPlaneUdp::receiveDataProcess (const std::shared_ptr<std::array<char
             int index;
             float value;
             unpack(*data, i, index, value);
-            values[index] = value;
+            // 这里访问越界,并导致了最终析构时的错误.很难想象这里会运行时无异常,导致析构时异常,并且debug/release/Qt下异常行为不同
+            values.at(index) = value;
         }
     } else if (compareHead(BASIC_INFO_HEAD, *data)) { // 基本信息
-        if (((size - 5) % 64 != 0) || (size <= 6))
-            return;
         std::unique_lock lock(dataMutex);
         unpack(*data, HEADER_LENGTH, info);
     } else if (compareHead(BECON_HEAD, *data)) { // 信标
@@ -605,50 +653,6 @@ inline void XPlaneUdp::receiveDataProcess (const std::shared_ptr<std::array<char
     // 手动擦除数据
     std::memset(data->data(), 0x00, size);
 }
-
-/**
- * @brief 获取 dataref 最新值
- * @param dataref 标识
- * @param container 容器
- * @param defaultValue 默认值
- * @return 值可用
- */
-template <Container T>
-bool XPlaneUdp::getDataref (const DatarefIndex &dataref, T &container, float defaultValue) {
-    std::shared_lock lock(dataMutex);
-    const auto &ref = dataRefs[dataref.getIdx()];
-    const size_t size = ref.end - ref.start + 1;
-    if (!ref.available) {
-        std::ranges::fill(container | std::views::take(size), defaultValue);
-        return false;
-    }
-    size_t containerCapacity; // 容器能塞多少元素
-    if constexpr (requires { container.capacity(); }) { // vector等
-        containerCapacity = container.capacity();
-    } else if constexpr (requires { container.size(); }) { // array等
-        containerCapacity = container.size();
-    } else {
-        static_assert("cant specify container size !");
-    }
-    auto source = values | std::views::drop(ref.start) | std::views::take(std::min(size, containerCapacity));
-    std::ranges::copy(source, container.begin());
-    return true;
 }
 
-/**
- * @brief 设置某组 dataref 值
- * @param dataref dataref 名称
- * @param value 容器
- */
-template <Container T>
-void XPlaneUdp::setDataref (const std::string &dataref, const T &value) {
-    for (int i = 0; i < value.size(); ++i) {
-        const size_t bufferSize = packSize(0, DATAREF_SET_HEAD, value[i], std::format("{}[{}]", dataref, i), '\x00');
-        const auto buffer = pool.getBuffer(bufferSize);
-        pack(*buffer, 0, DATAREF_SET_HEAD, value[i], std::format("{}[{}]", dataref, i), '\x00');
-        sendData(buffer, 509);
-    }
-}
-} // namespace eyderoe
-
-#endif
+#endif // XPLANEUDP_HPP

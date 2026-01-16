@@ -6,7 +6,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_PREFIX_PATH "D:/Qt/Qt6/6.9.3/mingw_64")
+if(WIN32)
+    set(CMAKE_PREFIX_PATH "D:/Qt/Qt6/6.9.3/mingw_64")
+elseif(APPLE)
+    set(CMAKE_PREFIX_PATH "/Users/eyderoe/Qt/6.9.3/macos/lib/cmake")
+endif ()
 
 find_package(Boost)
 find_package(Qt6 REQUIRED COMPONENTS
@@ -40,6 +44,8 @@ add_executable(${PROJECT_NAME} WIN32
         src/tools/randomGen.cpp
         src/tools/randomGen.hpp
         src/tools/constValue.hpp
+        src/utils/geographic.cpp
+        src/utils/geographic.hpp
 )
 if (MINGW)
     target_link_options(${PROJECT_NAME} PRIVATE
@@ -62,13 +68,17 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-        ${Boost_SYSTEM_LIBRARY} ws2_32
+        ${Boost_SYSTEM_LIBRARY}
         Qt::Core
         Qt::Gui
         Qt::Widgets
         Qt::PdfWidgets
         Qt::Pdf
 )
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32)
+endif ()
+
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${Boost_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}/src

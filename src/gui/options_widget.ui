@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>842</width>
-    <height>563</height>
+    <width>862</width>
+    <height>630</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -96,8 +96,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>731</width>
-            <height>525</height>
+            <width>751</width>
+            <height>592</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -125,7 +125,7 @@
                 <item>
                  <widget class="QLabel" name="label">
                   <property name="text">
-                   <string>航图文件夹：</string>
+                   <string>⚪ 航图文件夹：</string>
                   </property>
                  </widget>
                 </item>
@@ -136,8 +136,13 @@
               </item>
               <item>
                <widget class="QLabel" name="label_5">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
                 <property name="text">
-                 <string>⚪ 放置航图的文件夹，多个文件夹以*间隔，程序启动时会遍历其中所有文件。</string>
+                 <string>放置航图的文件夹，多个文件夹以*间隔，程序启动时会遍历其中所有文件。</string>
                 </property>
                </widget>
               </item>
@@ -146,7 +151,7 @@
                 <item>
                  <widget class="QLabel" name="label_2">
                   <property name="text">
-                   <string>映射数据文件夹：</string>
+                   <string>⚪ 映射数据文件夹：</string>
                   </property>
                  </widget>
                 </item>
@@ -157,8 +162,13 @@
               </item>
               <item>
                <widget class="QLabel" name="label_6">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
                 <property name="text">
-                 <string>⚪ 放置映射文件的文件夹，文件以机场为单位名称为ICAO.Tmap，具体参照example目录下示例。</string>
+                 <string>放置映射文件的文件夹，文件以机场为单位名称为ICAO.Tmap，具体参照example目录下示例。</string>
                 </property>
                </widget>
               </item>
@@ -167,7 +177,7 @@
                 <item>
                  <widget class="QLabel" name="label_26">
                   <property name="text">
-                   <string>仅PDF文件：</string>
+                   <string>⚪ 仅PDF文件：</string>
                   </property>
                  </widget>
                 </item>
@@ -182,8 +192,13 @@
               </item>
               <item>
                <widget class="QLabel" name="label_27">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
                 <property name="text">
-                 <string>⚪ 启用后文件树中仅会显示PDF文件。</string>
+                 <string>启用后文件树中仅会显示PDF文件。</string>
                 </property>
                </widget>
               </item>
@@ -192,7 +207,7 @@
                 <item>
                  <widget class="QLabel" name="label_22">
                   <property name="text">
-                   <string>单文件支持：</string>
+                   <string>⚪ 单文件支持：</string>
                   </property>
                  </widget>
                 </item>
@@ -207,8 +222,13 @@
               </item>
               <item>
                <widget class="QLabel" name="label_23">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
                 <property name="text">
-                 <string>⚪ 启用后支持输入框中输入单个文件路径，而不需要文件夹整体。</string>
+                 <string>启用后支持输入框中输入单个文件路径，而不需要文件夹整体。</string>
                 </property>
                </widget>
               </item>
@@ -232,7 +252,7 @@
                 <item>
                  <widget class="QLabel" name="label_3">
                   <property name="text">
-                   <string>XPlane刷新率：</string>
+                   <string>⚪ XPlane刷新率：</string>
                   </property>
                  </widget>
                 </item>
@@ -250,8 +270,60 @@
               </item>
               <item>
                <widget class="QLabel" name="label_7">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
                 <property name="text">
-                 <string>⚪ 更新机模数据的频率，上限为XPlane自身帧率。</string>
+                 <string>更新机模数据的频率，上限为XPlane自身帧率。</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_11">
+                <item>
+                 <widget class="QLabel" name="label_28">
+                  <property name="text">
+                   <string>⚪ AI与多人飞行器：</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="tcas_comboBox">
+                  <item>
+                   <property name="text">
+                    <string>30NM±9900ft</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>6NM±1200ft</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>不显示</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>显示所有</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_29">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>启用后会显示一定范围内的其他飞行器，数据来源为模拟器。</string>
                 </property>
                </widget>
               </item>
@@ -260,7 +332,7 @@
                 <item>
                  <widget class="QLabel" name="label_24">
                   <property name="text">
-                   <string>居中同步频率：</string>
+                   <string>⚪ 居中同步频率：</string>
                   </property>
                  </widget>
                 </item>
@@ -278,8 +350,13 @@
               </item>
               <item>
                <widget class="QLabel" name="label_25">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
                 <property name="text">
-                 <string>⚪ 启用居中机模后，尝试居中的频率。</string>
+                 <string>启用居中机模后，尝试居中的频率。</string>
                 </property>
                </widget>
               </item>
@@ -288,7 +365,7 @@
                 <item>
                  <widget class="QLabel" name="label_4">
                   <property name="text">
-                   <string>异常值算法：</string>
+                   <string>⚪ 异常值算法：</string>
                   </property>
                  </widget>
                 </item>
@@ -305,8 +382,13 @@
               </item>
               <item>
                <widget class="QLabel" name="label_8">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
                 <property name="text">
-                 <string>⚪ 筛选映射文件中的异常值，只会在加载时筛选，不会修改文件。</string>
+                 <string>筛选映射文件中的异常值，只会在加载时筛选，不会修改文件。</string>
                 </property>
                </widget>
               </item>
@@ -344,8 +426,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>731</width>
-            <height>525</height>
+            <width>302</width>
+            <height>246</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">

@@ -1,5 +1,6 @@
 #include "options_widget.hpp"
 #include "ui_options_widget.h"
+#include "pdfView.hpp"
 
 
 options_widget::options_widget (QWidget *parent) : QWidget(parent), ui(new Ui::options_widget) {
@@ -28,6 +29,9 @@ void options_widget::readSettings () {
     ui->xpFreq_spinBox->setValue(xpFreq);
     const int centerFreq = settings.value("center_freq", 1).toInt();
     ui->centerFreq_spinBox->setValue(centerFreq);
+    // TCAS 范围
+    const int tacsMode = settings.value("tcas", 0).toInt();
+    ui->tcas_comboBox->setCurrentIndex(tacsMode);
 }
 
 void options_widget::writeSettings () const {
@@ -43,6 +47,8 @@ void options_widget::writeSettings () const {
     // 映射
     settings.setValue("xp_freq", ui->xpFreq_spinBox->value());
     settings.setValue("center_freq", ui->centerFreq_spinBox->value());
+    // TCAS 范围
+    settings.setValue("tcas", ui->tcas_comboBox->currentIndex());
 }
 
 void options_widget::on_header_listWidget_currentRowChanged (const int currentRow) const {

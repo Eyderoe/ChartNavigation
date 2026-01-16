@@ -1,7 +1,6 @@
 #include "enhancedTree.hpp"
 
-Node::Node (QString baseDir, const QString &name, const bool isFolder) : baseDir(std::move(baseDir)),
-                                                                         isFolder(isFolder) {
+Node::Node (QString baseDir, const QString &name, const bool isFolder) : baseDir(std::move(baseDir)),isFolder(isFolder) {
     setText(0, name);
     if (isFolder)
         setForeground(0, QBrush(QColor(92, 145, 232))); // 很好看的蓝色

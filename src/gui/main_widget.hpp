@@ -24,7 +24,6 @@ class main_widget final : public QWidget {
     public:
         explicit main_widget (QWidget *parent = nullptr);
         ~main_widget () override;
-    public Q_SLOTS:
         void setTheme (Qt::ColorScheme colorScheme) const;
     private:
         Ui::main_widget *ui;

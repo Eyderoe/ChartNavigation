@@ -4,8 +4,7 @@
 3 修改/备份代码
 
 # 现有问题
-debug下程序结束,XPlaneUDP析构会引发Qt段错误(work_guard, io_content, socket, 任务)也可能是接收函数的问题不确定
-release下有概率收不到包(暂时不会)
+XPlaneUDP,在Qt下析构还是会炸,需要进一步检查和确定
 XPlaneUDP,设置了TCAS那一堆以后,原来的info没有了.是XP不发了?还是处理哪里有问题(需要进一步验证与复现)
 其他飞机航向有点小问题(待进一步确认)
 TCAS相对高度好像有点问题
