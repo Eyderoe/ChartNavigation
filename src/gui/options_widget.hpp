@@ -20,6 +20,7 @@ class options_widget final : public QWidget {
 
         void readSettings ();
         void writeSettings () const;
+        void setFontSize () const;
     private Q_SLOTS:
         void on_header_listWidget_currentRowChanged(int currentRow) const;
 };

@@ -46,14 +46,15 @@ add_executable(${PROJECT_NAME} WIN32
         src/tools/constValue.hpp
         src/utils/geographic.cpp
         src/utils/geographic.hpp
+        src/utils/XPlane.cpp
+        src/utils/XPlane.hpp
 )
-if (MINGW)
-    target_link_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:Debug>:-mconsole>
-            $<$<CONFIG:RelWithDebInfo>:-mconsole>
-            $<$<CONFIG:Release>:-mwindows>
-    )
-endif ()
+
+target_link_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Debug>:-mconsole>
+        $<$<CONFIG:RelWithDebInfo>:-mconsole>
+        $<$<CONFIG:Release>:-mwindows>
+)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Release>:QT_NO_DEBUG_OUTPUT>
 )

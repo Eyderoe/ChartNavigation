@@ -6,7 +6,7 @@ concept NodeT = std::is_base_of_v<QTreeWidgetItem, T> || std::is_base_of_v<QTree
 
 class Node;
 template <typename NodeT>
-void traverseRead (const QDir &folder, NodeT *parentNode, bool delNonePdf);
+void traverseRead (const QDir &folder, NodeT *parentNode, bool delNonePdf, int depth = 0);
 
 
 class Node final : public QTreeWidgetItem {
@@ -24,9 +24,12 @@ class Node final : public QTreeWidgetItem {
  * @param folder 父文件夹
  * @param parentNode 父节点
  * @param delNonePdf 是否丢弃非PDF文件
+ * @param depth 当前深度,最大深度4
  */
 template <typename NodeT>
-void traverseRead (const QDir &folder, NodeT *parentNode, const bool delNonePdf) {
+void traverseRead (const QDir &folder, NodeT *parentNode, const bool delNonePdf, const int depth) {
+    if (depth > 4)
+        return;
     // 获取子文件夹/文件
     QStringList files = folder.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
     std::vector<Node*> nodes;
@@ -51,7 +54,7 @@ void traverseRead (const QDir &folder, NodeT *parentNode, const bool delNonePdf)
     // 遍历
     for (const auto node : nodes) {
         if (node->isFolder)
-            traverseRead(node->baseDir, node, delNonePdf);
+            traverseRead(node->baseDir, node, delNonePdf, depth + 1);
     }
 }
 

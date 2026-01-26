@@ -26,8 +26,11 @@ void main_widget::readSettings () {
     // 单文件输入框
     const bool singleFileDisable = settings.value("singleFileDisable", true).toBool();
     ui->chart_lineEdit->setHidden(singleFileDisable);
+    // 缩放比条
+    const bool scaleBarEnable = settings.value("scaleBarEnable", false).toBool();
+    ui->scale_verticalSlider->setHidden(!scaleBarEnable);
     // TCAS 范围
-    const int tacsMode=settings.value("tcas",0).toInt();
+    const int tacsMode = settings.value("tcas", 0).toInt();
     ui->pdf_widget->setTcasMode(static_cast<TcasMode>(tacsMode));
 }
 

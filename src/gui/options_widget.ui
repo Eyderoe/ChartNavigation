@@ -34,12 +34,6 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>10</pointsize>
-          <bold>false</bold>
-         </font>
-        </property>
         <property name="styleSheet">
          <string notr="true"/>
         </property>
@@ -96,16 +90,75 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>751</width>
-            <height>592</height>
+            <width>704</width>
+            <height>698</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
-            <widget class="QLabel" name="label_21">
+            <widget class="QLabel" name="label_master_caution">
              <property name="text">
               <string>修改设置后，重启生效。</string>
              </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="common_groupBox">
+             <property name="title">
+              <string>常规</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_8">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <item>
+                 <widget class="QLabel" name="label_22">
+                  <property name="text">
+                   <string>⚪ 单文件路径输入框：</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="singleFileDisable_checkBox">
+                  <property name="text">
+                   <string>禁用</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_remark_5">
+                <property name="text">
+                 <string>启用后显示输入框，通过文件路径浏览单文件。</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_12">
+                <item>
+                 <widget class="QLabel" name="label_5">
+                  <property name="text">
+                   <string>⚪ PDF浏览缩放条：</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="pdfScaleBar_checkBox">
+                  <property name="text">
+                   <string>启用</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_remark_9">
+                <property name="text">
+                 <string>启用后显示比例条，控制PDF缩放。</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </widget>
            </item>
            <item>
@@ -135,12 +188,7 @@
                </layout>
               </item>
               <item>
-               <widget class="QLabel" name="label_5">
-                <property name="font">
-                 <font>
-                  <pointsize>8</pointsize>
-                 </font>
-                </property>
+               <widget class="QLabel" name="label_remark_7">
                 <property name="text">
                  <string>放置航图的文件夹，多个文件夹以*间隔，程序启动时会遍历其中所有文件。</string>
                 </property>
@@ -161,12 +209,7 @@
                </layout>
               </item>
               <item>
-               <widget class="QLabel" name="label_6">
-                <property name="font">
-                 <font>
-                  <pointsize>8</pointsize>
-                 </font>
-                </property>
+               <widget class="QLabel" name="label_remark_8">
                 <property name="text">
                  <string>放置映射文件的文件夹，文件以机场为单位名称为ICAO.Tmap，具体参照example目录下示例。</string>
                 </property>
@@ -191,44 +234,9 @@
                </layout>
               </item>
               <item>
-               <widget class="QLabel" name="label_27">
-                <property name="font">
-                 <font>
-                  <pointsize>8</pointsize>
-                 </font>
-                </property>
+               <widget class="QLabel" name="label_remark_6">
                 <property name="text">
                  <string>启用后文件树中仅会显示PDF文件。</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_8">
-                <item>
-                 <widget class="QLabel" name="label_22">
-                  <property name="text">
-                   <string>⚪ 单文件支持：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="singleFileDisable_checkBox">
-                  <property name="text">
-                   <string>禁用</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_23">
-                <property name="font">
-                 <font>
-                  <pointsize>8</pointsize>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>启用后支持输入框中输入单个文件路径，而不需要文件夹整体。</string>
                 </property>
                </widget>
               </item>
@@ -269,12 +277,7 @@
                </layout>
               </item>
               <item>
-               <widget class="QLabel" name="label_7">
-                <property name="font">
-                 <font>
-                  <pointsize>8</pointsize>
-                 </font>
-                </property>
+               <widget class="QLabel" name="label_remark_2">
                 <property name="text">
                  <string>更新机模数据的频率，上限为XPlane自身帧率。</string>
                 </property>
@@ -316,12 +319,7 @@
                </layout>
               </item>
               <item>
-               <widget class="QLabel" name="label_29">
-                <property name="font">
-                 <font>
-                  <pointsize>8</pointsize>
-                 </font>
-                </property>
+               <widget class="QLabel" name="label_remark_4">
                 <property name="text">
                  <string>启用后会显示一定范围内的其他飞行器，数据来源为模拟器。</string>
                 </property>
@@ -349,12 +347,7 @@
                </layout>
               </item>
               <item>
-               <widget class="QLabel" name="label_25">
-                <property name="font">
-                 <font>
-                  <pointsize>8</pointsize>
-                 </font>
-                </property>
+               <widget class="QLabel" name="label_remark">
                 <property name="text">
                  <string>启用居中机模后，尝试居中的频率。</string>
                 </property>
@@ -381,12 +374,7 @@
                </layout>
               </item>
               <item>
-               <widget class="QLabel" name="label_8">
-                <property name="font">
-                 <font>
-                  <pointsize>8</pointsize>
-                 </font>
-                </property>
+               <widget class="QLabel" name="label_remark_3">
                 <property name="text">
                  <string>筛选映射文件中的异常值，只会在加载时筛选，不会修改文件。</string>
                 </property>
@@ -426,8 +414,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>302</width>
-            <height>246</height>
+            <width>350</width>
+            <height>279</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">

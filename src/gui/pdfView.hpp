@@ -4,6 +4,7 @@
 #include <QtPdfWidgets/QPdfView>
 #include "XPlaneUDP.hpp"
 #include "utils/affineTransformer.hpp"
+#include "utils/XPlane.hpp"
 
 enum class TcasMode:int {
     nm30, nm6, none, all // 30NM9900,6NM1200ft,none,all

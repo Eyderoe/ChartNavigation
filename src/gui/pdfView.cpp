@@ -61,17 +61,18 @@ void PdfView::closeXp () {
 }
 
 void PdfView::wheelEvent (QWheelEvent *event) {
+    // 缩放计算
     const double oldZoom = zoomFactor();
-    const QPointF mousePos = event->position();
-    const double logicX = (horizontalScrollBar()->value() + mousePos.x()) / oldZoom;
-    const double logicY = (verticalScrollBar()->value() + mousePos.y()) / oldZoom;
-
     double newZoom = oldZoom;
     if (event->angleDelta().y() > 0)
         newZoom *= 1.2;
     else
         newZoom *= 0.8;
-    newZoom = qBound(0.2, newZoom, 4.0);
+    newZoom = qBound(zoomMin, newZoom, zoomMax);
+    // 画布缩放
+    const QPointF mousePos = event->position();
+    const double logicX = (horizontalScrollBar()->value() + mousePos.x()) / oldZoom;
+    const double logicY = (verticalScrollBar()->value() + mousePos.y()) / oldZoom;
 
     setZoomFactor(newZoom);
     const int newScrollX = static_cast<int>(logicX * newZoom - mousePos.x());
