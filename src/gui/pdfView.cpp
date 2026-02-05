@@ -11,6 +11,8 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     // 地图绘制
     plane.load(":/map/resources/plane_small.png");
     otherPlane.load(":/map/resources/plane_small_2.png");
+    // 接收器切换
+    xp = std::make_unique<xpAdapter>();
     // xplane
     xpInit();
     // 定时器
@@ -22,12 +24,12 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
 }
 
 /**
- * @brief 获取PDF文档某一页尺寸
- * @param page 页数
+ * @brief 获取PDF文档当前页面尺寸
  * @return (长,宽) 单位:点(1/72英寸)
  */
-QSizeF PdfView::getDocSize (const int page) const {
-    return document()->pagePointSize(page);
+QSizeF PdfView::getDocSize () const {
+    const auto navigator = pageNavigator();
+    return document()->pagePointSize(navigator->currentPage());
 }
 
 /**
@@ -57,7 +59,7 @@ void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, con
 }
 
 void PdfView::closeXp () {
-    xp.close();
+    xp->close();
 }
 
 void PdfView::wheelEvent (QWheelEvent *event) {
@@ -214,7 +216,7 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         };
         // tcas 判断
         const double _distance = distanceSimple(latitude, longitude, multiLatVal[0], multiLonVal[0]);
-        qDebug()<<_distance;
+        qDebug() << _distance;
         const double _alt = std::abs(alt - multiAltVal[0]);
         bool check{false};
         switch (tcasMode) {
@@ -295,13 +297,13 @@ void PdfView::xpInfoUpdate () {
         viewport()->update();
         return;
     }
-    xp.getDataref(multiId, multiIdVal);
-    xp.getDataref(multiLat, multiLatVal);
-    xp.getDataref(multiLon, multiLonVal);
-    xp.getDataref(multiAlt, multiAltVal);
-    xp.getDataref(multiTrk, multiTrkVal);
-    xp.getDataref(multiVs, multiVsVal);
-    xp.getDataref(multiFlightId, multiFlightIdVal);
+    xp->getDataref(multiId, multiIdVal);
+    xp->getDataref(multiLat, multiLatVal);
+    xp->getDataref(multiLon, multiLonVal);
+    xp->getDataref(multiAlt, multiAltVal);
+    xp->getDataref(multiTrk, multiTrkVal);
+    xp->getDataref(multiVs, multiVsVal);
+    xp->getDataref(multiFlightId, multiFlightIdVal);
     if (!centerOn || dragging) {
         viewport()->update();
         return;
@@ -336,15 +338,15 @@ void PdfView::xpInit () {
     const QSettings settings;
     const int xpFreq = settings.value("xp_freq", 1).toInt();
     // AI或多人
-    multiId = xp.addDatarefArray("sim/cockpit2/tcas/targets/modeS_id", 64, xpFreq);
-    multiLat = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/lat", 64, xpFreq);
-    multiLon = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/lon", 64, xpFreq);
-    multiAlt = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/ele", 64, xpFreq);
-    multiTrk = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/psi", 64, xpFreq);
-    multiVs = xp.addDatarefArray("sim/cockpit2/tcas/targets/position/vertical_speed", 64, xpFreq);
-    multiFlightId = xp.addDatarefArray("sim/cockpit2/tcas/targets/flight_id", 512, xpFreq);
+    multiId = xp->addDatarefArray("id", xpFreq);
+    multiLat = xp->addDatarefArray("lat", xpFreq);
+    multiLon = xp->addDatarefArray("lon", xpFreq);
+    multiAlt = xp->addDatarefArray("alt", xpFreq);
+    multiTrk = xp->addDatarefArray("trk", xpFreq);
+    multiVs = xp->addDatarefArray("vs", xpFreq);
+    multiFlightId = xp->addDatarefArray("flightId", xpFreq);
     // 回调
-    xp.setCallback([this](const bool state) {
+    xp->setCallback([this](const bool state) {
         this->connected = state;
         qDebug() << "XPlane change state: " << state;
     });

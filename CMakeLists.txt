@@ -6,9 +6,9 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-if(WIN32)
+if (WIN32)
     set(CMAKE_PREFIX_PATH "D:/Qt/Qt6/6.9.3/mingw_64")
-elseif(APPLE)
+elseif (APPLE)
     set(CMAKE_PREFIX_PATH "/Users/eyderoe/Qt/6.9.3/macos/lib/cmake")
 endif ()
 
@@ -19,6 +19,14 @@ find_package(Qt6 REQUIRED COMPONENTS
         Widgets
         PdfWidgets
         Pdf)
+
+find_package(Protobuf REQUIRED)
+if (APPLE)
+    find_package(absl REQUIRED)
+endif ()
+include_directories(${Protobuf_INCLUDE_DIRS})
+set(PROTO_FILES src/connector/plane.proto)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 
 add_executable(${PROJECT_NAME} WIN32
         resources.qrc
@@ -46,8 +54,15 @@ add_executable(${PROJECT_NAME} WIN32
         src/tools/constValue.hpp
         src/utils/geographic.cpp
         src/utils/geographic.hpp
-        src/utils/XPlane.cpp
-        src/utils/XPlane.hpp
+        src/connector/interface.hpp
+        src/connector/xpStd.cpp
+        src/connector/xpStd.hpp
+        src/connector/wlan.cpp
+        src/connector/wlan.hpp
+        src/connector/msfs.cpp
+        src/connector/msfs.hpp
+        src/connector/allAdapter.hpp
+        ${PROTO_SRCS} ${PROTO_HDRS}
 )
 
 target_link_options(${PROJECT_NAME} PRIVATE
@@ -70,6 +85,7 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         ${Boost_SYSTEM_LIBRARY}
+        ${Protobuf_LIBRARIES}
         Qt::Core
         Qt::Gui
         Qt::Widgets
@@ -78,10 +94,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32)
+elseif (APPLE)
+    target_link_libraries(${PROJECT_NAME} PRIVATE absl::log_internal_message absl::log_internal_check_op)
 endif ()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${Boost_INCLUDE_DIRS}
+        ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/include

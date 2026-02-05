@@ -4,7 +4,7 @@
 #include <QtPdfWidgets/QPdfView>
 #include "XPlaneUDP.hpp"
 #include "utils/affineTransformer.hpp"
-#include "utils/XPlane.hpp"
+#include "connector/allAdapter.hpp"
 
 enum class TcasMode:int {
     nm30, nm6, none, all // 30NM9900,6NM1200ft,none,all
@@ -32,7 +32,7 @@ class PdfView final : public QPdfView {
         void xpInfoUpdate ();
         void xpInit ();
         // 杂
-        QSizeF getDocSize (int page = 0) const;
+        QSizeF getDocSize () const;
 
         // 地图拖动逻辑
         bool dragging{};
@@ -47,9 +47,8 @@ class PdfView final : public QPdfView {
         bool transActive{false};
         // x-plane
         QPixmap plane, otherPlane;
-        eyderoe::XPlaneUdp xp;
-        eyderoe::XPlaneUdp::DatarefIndex multiId{}, multiLat{}, multiLon{}, multiAlt{}, multiTrk{}, multiVs{},
-                                         multiFlightId{};
+        std::unique_ptr<InterfaceSimu> xp;
+        DatarefIdx multiId{}, multiLat{}, multiLon{}, multiAlt{}, multiTrk{}, multiVs{},multiFlightId{};
         std::array<float, 64> multiIdVal{}, multiLatVal{}, multiLonVal{}, multiAltVal{}, multiTrkVal{}, multiVsVal{};
         std::array<float, 512> multiFlightIdVal{};
         bool connected{false};
