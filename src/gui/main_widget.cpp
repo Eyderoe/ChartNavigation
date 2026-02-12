@@ -285,3 +285,9 @@ void main_widget::on_folder_comboBox_currentIndexChanged (const int index) const
     traverseRead(ui->folder_comboBox->itemData(index).toString(), ui->treeWidget,
                  settings.value("onlyPdf", true).toBool());
 }
+
+void main_widget::on_scale_verticalSlider_valueChanged(int value)
+{
+
+}
+

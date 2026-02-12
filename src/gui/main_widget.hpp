@@ -46,6 +46,7 @@ class main_widget final : public QWidget {
         void on_license_radioButton_clicked (); // 打开设置
         void on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int column); // 文件树选择 -> 加载PDF文档
         void on_folder_comboBox_currentIndexChanged (int index) const; // 更换航图文件夹
+        void on_scale_verticalSlider_valueChanged(int value);
 };
 
 

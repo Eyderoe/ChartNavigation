@@ -16,8 +16,8 @@ class InterfaceSimu {
         virtual void setCallback (const std::function<void  (bool)> &callbackFunc) =0;
         virtual void close () =0;
 
-        virtual DatarefIdx addDatarefArray (const std::string &dataref, int32_t freq = 1) =0;
-        virtual bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue = 0) =0;
+        virtual DatarefIdx addDatarefArray (const std::string &dataref, int32_t freq) =0;
+        virtual bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) =0;
 };
 
 #endif //CHARTNAVIGATION_INTERFACE_HPP

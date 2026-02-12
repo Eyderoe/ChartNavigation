@@ -32,6 +32,8 @@ void options_widget::readSettings () {
     const QSettings settings;
     // 窗口布局
     restoreGeometry(settings.value("option_widget_geometry").toByteArray());
+    // 数据源
+    ui->dataSource_comboBox->setCurrentIndex(settings.value("data_source", 0).toInt());
     // 文件夹
     ui->chartFolder_lineEdit->setText(settings.value("chartFolder", "").toString());
     ui->mappingFoler_lineEdit->setText(settings.value("mappingFolder", "").toString());
@@ -56,6 +58,8 @@ void options_widget::writeSettings () const {
     QSettings settings;
     // 窗口布局
     settings.setValue("option_widget_geometry", saveGeometry());
+    // 数据源
+    settings.setValue("data_source", ui->dataSource_comboBox->currentIndex());
     // 文件夹
     settings.setValue("chartFolder", ui->chartFolder_lineEdit->text());
     settings.setValue("mappingFolder", ui->mappingFoler_lineEdit->text());
@@ -63,7 +67,7 @@ void options_widget::writeSettings () const {
     // 单文件输入框
     settings.setValue("singleFileDisable", ui->singleFileDisable_checkBox->isChecked());
     // 缩放比条
-    settings.setValue("scaleBarEnable",ui->pdfScaleBar_checkBox->isChecked());
+    settings.setValue("scaleBarEnable", ui->pdfScaleBar_checkBox->isChecked());
     // 映射
     settings.setValue("xp_freq", ui->xpFreq_spinBox->value());
     settings.setValue("center_freq", ui->centerFreq_spinBox->value());
