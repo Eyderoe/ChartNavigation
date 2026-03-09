@@ -16,7 +16,8 @@ class AffineTransformer {
     public:
         bool loadData (const std::vector<std::vector<double>> &dataList, double threshold);
         std::pair<double, double> transform (double latitude, double longitude);
-        std::pair<double, std::vector<double>> evaluate (bool print = false);
+        std::pair<double, std::vector<double>> accEvaluate (bool print = false);
+        std::vector<double> singularEvaluate ();
     private:
         bool fitAffine ();
 

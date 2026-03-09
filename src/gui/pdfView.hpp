@@ -29,7 +29,7 @@ class PdfView final : public QPdfView {
         // x-plane部分
         std::pair<double, double> trans (double latitude, double longitude);
         void drawPlane (QPainter &painter, int idx = 0);
-        void xpInfoUpdate ();
+        void simuInfoUpdate ();
         void xpInit ();
         // 杂
         [[nodiscard]] QSizeF getDocSize () const;
@@ -53,7 +53,7 @@ class PdfView final : public QPdfView {
         std::array<float, 512> multiFlightIdVal{};
         bool connected{false};
         // 定时器
-        QTimer xpUpdateTimer;
+        QTimer simuUpdateTimer;
 };
 
 #endif //CHARTNAVIGATION_PDFVIEW_HPP

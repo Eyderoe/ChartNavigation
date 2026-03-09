@@ -3,6 +3,9 @@
 #include "tools/constValue.hpp"
 #include "utils/geographic.hpp"
 
+#include <ranges>
+
+
 PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setPageMode(PageMode::SinglePage);
     setZoomMode(ZoomMode::Custom);
@@ -14,7 +17,7 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     otherPlane.load(":/map/resources/plane_small_2.png");
     // 接收器切换
     const int dataSource = settings.value("data_source", 0).toInt();
-    qDebug()<<"data source: "<<dataSource;
+    qDebug() << "data source: " << dataSource;
     if (dataSource == 0)
         connector = std::make_unique<xpAdapter>();
     else if (dataSource == 2)
@@ -25,9 +28,9 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     xpInit();
     // 定时器
     const int centerFreq = settings.value("center_freq", 1).toInt();
-    xpUpdateTimer.setInterval(1000 / centerFreq);
-    connect(&xpUpdateTimer, &QTimer::timeout, this, &PdfView::xpInfoUpdate);
-    xpUpdateTimer.start();
+    simuUpdateTimer.setInterval(1000 / centerFreq);
+    connect(&simuUpdateTimer, &QTimer::timeout, this, &PdfView::simuInfoUpdate);
+    simuUpdateTimer.start();
 }
 
 /**
@@ -59,7 +62,8 @@ void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, con
     transActive = transformer.loadData(data, threshold);
     if (!transActive)
         return;
-    auto [error,errors] = transformer.evaluate();
+    auto [error,errors] = transformer.accEvaluate();
+    auto singulars = transformer.singularEvaluate();
     // Debug输出
     auto view = errors | std::views::transform([](double num) { return std::format("{:.2f}", num); });
     qDebug() << std::format("RMS: {:.2f}, errors: [{}]", error, join(view, ", "));
@@ -230,15 +234,13 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
                 check = true;
                 break;
             case TcasMode::nm30:
-                if (_distance > nm2m * 30 || _alt > 9900) {
+                if (_distance > nm2m * 30 || _alt > 9900)
                     check = true;
-                    break;
-                }
+                break;
             case TcasMode::nm6:
-                if (_distance > nm2m * 6 || _alt > 1200) {
+                if (_distance > nm2m * 6 || _alt > 1200)
                     check = true;
-                    break;
-                }
+                break;
             default:
                 ;
         }
@@ -264,8 +266,7 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         else if (vs <= -500)
             delta += "↓";
         drawStrokedText(10, 15, flightId);
-        if (std::abs(deltaAlt) >= 2)
-            drawStrokedText(10, 25, delta);
+        drawStrokedText(10, 25, delta);
     }
     // 绘制飞机
     painter.rotate(trk);
@@ -298,11 +299,9 @@ void PdfView::setTcasMode (const TcasMode mode) {
 /**
  * @brief 更新机模的基本信息
  */
-void PdfView::xpInfoUpdate () {
-    if (!connected || !transActive) {
-        viewport()->update();
+void PdfView::simuInfoUpdate () {
+    if (!connected || !transActive) // 未连接到模拟器或者映射不可用
         return;
-    }
     connector->getDataref(multiId, multiIdVal, 0);
     connector->getDataref(multiLat, multiLatVal, 0);
     connector->getDataref(multiLon, multiLonVal, 0);
@@ -315,6 +314,7 @@ void PdfView::xpInfoUpdate () {
         return;
     }
 
+    // 自身居中逻辑
     auto [x,y] = trans(multiLatVal[0], multiLonVal[0]);
     constexpr double edge{10};
     if ((x < -edge) || (x > viewport()->width() + edge))

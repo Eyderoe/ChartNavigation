@@ -2,6 +2,8 @@
 
 #include <ranges>
 
+#include "tools/stringProcess.hpp"
+
 #ifdef _WIN32
 constexpr bool IS_WIN = true;
 #else
@@ -116,13 +118,14 @@ void wlanUdp::receiveDataProcess (const std::shared_ptr<std::array<char, 1472>> 
         return;
 
     if (std::ranges::equal(magicHead, *data | std::views::take(4))) {
+        // qDebug() << toHex(data->data(), size);
         setState(true);
-        available = static_cast<int>(static_cast<unsigned int>((*data)[5]));
+        available = static_cast<int>(static_cast<unsigned int>((*data)[4])); // 难绷 之前取的 [5]
         Planes planes_;
         if (!planes_.ParseFromArray(data->data() + 5, static_cast<int>(size) - 5))
             return;
         for (const auto &plane : planes_.planes())
-            planes[plane.id()] = plane;
+            planes[plane.id()] = plane; // id确实是从0开始
     }
 }
 

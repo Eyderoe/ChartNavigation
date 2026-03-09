@@ -46,8 +46,8 @@ std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, 
             maxInnerCount = currentInnerIdxes.size();
             bestInnerIdxes = currentInnerIdxes;
         }
-        // 覆盖95%
-        if (static_cast<double>(maxInnerCount) > static_cast<double>(n) * 0.95)
+        // 覆盖90%
+        if (static_cast<double>(maxInnerCount) > static_cast<double>(n) * 0.9)
             break;
     }
     // 找出离群点索引
@@ -95,7 +95,7 @@ std::pair<double, double> AffineTransformer::transform (const double latitude, c
  * @param print 是否输出至控制台
  * @return 均方根误差,误差列表
  */
-std::pair<double, std::vector<double>> AffineTransformer::evaluate (const bool print) {
+std::pair<double, std::vector<double>> AffineTransformer::accEvaluate (const bool print) {
     double totalError{}, sumSquaredError{}, maxError{};
     double minError = std::numeric_limits<double>::infinity();
     const int n = static_cast<int>(data.size());
@@ -121,6 +121,19 @@ std::pair<double, std::vector<double>> AffineTransformer::evaluate (const bool p
         std::cout << std::format("error range: ({:.2f}, {:.2f})", minError, maxError) << std::endl;
     }
     return {rmsError, errors};
+}
+
+/**
+ * @brief 计算仿射变换矩阵的奇异值
+ * @return 奇异值列表
+ * @note 尺度不一致造成该方法不可用,储备代码(好的变换最大奇异除最小奇异约为一).不如实际构造正方形后转换
+ */
+std::vector<double> AffineTransformer::singularEvaluate () {
+    Eigen::Matrix2d linearMatrix;
+    linearMatrix << paramsX(0), paramsX(1), paramsY(0), paramsY(1);
+    const Eigen::JacobiSVD<Eigen::Matrix2d> svd(linearMatrix);
+    Eigen::Vector2d sv = svd.singularValues();
+    return {sv(0), sv(1)};
 }
 
 /**

@@ -286,8 +286,4 @@ void main_widget::on_folder_comboBox_currentIndexChanged (const int index) const
                  settings.value("onlyPdf", true).toBool());
 }
 
-void main_widget::on_scale_verticalSlider_valueChanged(int value)
-{
-
-}
-
+void main_widget::on_scale_verticalSlider_valueChanged (int value) {}
