@@ -3,6 +3,7 @@
 #include "json.hpp"
 #include "options_widget.hpp"
 #include "enhancedTree.hpp"
+#include "../../cmake-build-release/ChartNavigation_autogen/include/ui_main_widget.h"
 #include "gui/themeColor.hpp"
 
 using namespace nlohmann;
@@ -29,9 +30,10 @@ void main_widget::readSettings () {
     // 缩放比条
     const bool scaleBarEnable = settings.value("scaleBarEnable", false).toBool();
     ui->scale_verticalSlider->setHidden(!scaleBarEnable);
-    // TCAS 范围
-    const int tacsMode = settings.value("tcas", 0).toInt();
-    ui->pdf_widget->setTcasMode(static_cast<TcasMode>(tacsMode));
+    // TCAS 范围、高度显示
+    const int tacsMode = settings.value("tcasMode", 0).toInt();
+    const int altMode = settings.value("altMode", 0).toInt();
+    ui->pdf_widget->setTcasInfo(static_cast<TcasMode>(tacsMode), static_cast<AltMode>(altMode));
 }
 
 /**
@@ -75,6 +77,7 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     // 设置
     readSettings();
     // 构建目录
+    ui->treeWidget->setIconSize(QSize(48, 64));
     ui->treeWidget->setHeaderHidden(true);
     initFileTree();
 }
@@ -281,9 +284,9 @@ void main_widget::on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int co
  */
 void main_widget::on_folder_comboBox_currentIndexChanged (const int index) const {
     const QSettings settings;
-    ui->treeWidget->clear();
-    traverseRead(ui->folder_comboBox->itemData(index).toString(), ui->treeWidget,
-                 settings.value("onlyPdf", true).toBool());
+    const auto tree = static_cast<Tree*>(ui->treeWidget);
+    tree->switchFolder(ui->folder_comboBox->itemData(index).toString(),
+                       static_cast<DisplayFile>(settings.value("displayFile", 0).toInt()));
 }
 
 void main_widget::on_scale_verticalSlider_valueChanged (int value) {}

@@ -9,6 +9,9 @@
 enum class TcasMode:int {
     nm30, nm6, none, all // 30NM9900,6NM1200ft,none,all
 };
+enum class AltMode:int {
+    none,feet,meter
+};
 
 // https://doc-snapshots.qt.io/qt6-6.9/qtpdf-index.html
 class PdfView final : public QPdfView {
@@ -16,7 +19,7 @@ class PdfView final : public QPdfView {
         explicit PdfView (QWidget *parent = nullptr);
         void setCenterOn (bool center);
         void setColorTheme (bool darkTheme);
-        void setTcasMode (TcasMode mode);
+        void setTcasInfo (TcasMode tcas, AltMode alt);
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
         void closeXp ();
     private:
@@ -42,6 +45,7 @@ class PdfView final : public QPdfView {
         bool isDark{};
         double rotate{};
         TcasMode tcasMode{TcasMode::nm30};
+        AltMode altMode{AltMode::none};
         // 仿射变换
         AffineTransformer transformer{};
         bool transActive{false};

@@ -70,7 +70,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="common_page">
       <property name="sizePolicy">
@@ -91,7 +91,7 @@
             <x>0</x>
             <y>0</y>
             <width>716</width>
-            <height>764</height>
+            <height>774</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -267,15 +267,34 @@
                 <item>
                  <widget class="QLabel" name="label_26">
                   <property name="text">
-                   <string>⚪ 仅PDF文件：</string>
+                   <string>⚪ 文件显示选项：</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="onlyPdf_checkBox">
+                 <widget class="QCheckBox" name="thumb_checkBox">
                   <property name="text">
-                   <string>启用</string>
+                   <string>显示缩略图</string>
                   </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="onlyPdf_comboBox">
+                  <item>
+                   <property name="text">
+                    <string>仅PDF</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>PDF和图片</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>所有文件</string>
+                   </property>
+                  </item>
                  </widget>
                 </item>
                </layout>
@@ -283,7 +302,7 @@
               <item>
                <widget class="QLabel" name="label_remark_6">
                 <property name="text">
-                 <string>启用后文件树中仅会显示PDF文件。</string>
+                 <string>文件树中对文件类型的筛选。</string>
                 </property>
                </widget>
               </item>
@@ -335,7 +354,7 @@
                 <item>
                  <widget class="QLabel" name="label_28">
                   <property name="text">
-                   <string>⚪ AI与多人飞行器：</string>
+                   <string>⚪ TCAS以及原始高度：</string>
                   </property>
                  </widget>
                 </item>
@@ -363,12 +382,31 @@
                   </item>
                  </widget>
                 </item>
+                <item>
+                 <widget class="QComboBox" name="alt_comboBox">
+                  <item>
+                   <property name="text">
+                    <string>不显示原始高度</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>英制高度(ft)</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>米制高度(米)</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
                </layout>
               </item>
               <item>
                <widget class="QLabel" name="label_remark_4">
                 <property name="text">
-                 <string>启用后会显示一定范围内的其他飞行器，数据来源为模拟器。</string>
+                 <string>TCAS启用后显示其他飞行器的范围，以及是否显示原始高度。</string>
                 </property>
                </widget>
               </item>

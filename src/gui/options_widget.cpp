@@ -1,7 +1,7 @@
 #include "options_widget.hpp"
 #include "ui_options_widget.h"
 #include "pdfView.hpp"
-
+#include "enhancedTree.hpp"
 
 void options_widget::setFontSize () const {
     // 标准大小
@@ -37,7 +37,8 @@ void options_widget::readSettings () {
     // 文件夹
     ui->chartFolder_lineEdit->setText(settings.value("chartFolder", "").toString());
     ui->mappingFoler_lineEdit->setText(settings.value("mappingFolder", "").toString());
-    ui->onlyPdf_checkBox->setCheckState(settings.value("onlyPdf", true).toBool() ? Qt::Checked : Qt::Unchecked);
+    const int displayFile = settings.value("displayFile", 0).toInt();
+    ui->onlyPdf_comboBox->setCurrentIndex(displayFile);
     // 单文件输入框
     const bool singleFileDisable = settings.value("singleFileDisable", true).toBool();
     ui->singleFileDisable_checkBox->setCheckState(singleFileDisable ? Qt::Checked : Qt::Unchecked);
@@ -49,9 +50,11 @@ void options_widget::readSettings () {
     ui->xpFreq_spinBox->setValue(xpFreq);
     const int centerFreq = settings.value("center_freq", 1).toInt();
     ui->centerFreq_spinBox->setValue(centerFreq);
-    // TCAS 范围
-    const int tacsMode = settings.value("tcas", 0).toInt();
+    // TCAS 范围、高度显示
+    const int tacsMode = settings.value("tcasMode", 0).toInt();
+    const int altMode = settings.value("altMode", 0).toInt();
     ui->tcas_comboBox->setCurrentIndex(tacsMode);
+    ui->alt_comboBox->setCurrentIndex(altMode);
 }
 
 void options_widget::writeSettings () const {
@@ -63,7 +66,7 @@ void options_widget::writeSettings () const {
     // 文件夹
     settings.setValue("chartFolder", ui->chartFolder_lineEdit->text());
     settings.setValue("mappingFolder", ui->mappingFoler_lineEdit->text());
-    settings.setValue("onlyPdf", ui->onlyPdf_checkBox->isChecked());
+    settings.setValue("displayFile", ui->onlyPdf_comboBox->currentIndex());
     // 单文件输入框
     settings.setValue("singleFileDisable", ui->singleFileDisable_checkBox->isChecked());
     // 缩放比条
@@ -72,7 +75,8 @@ void options_widget::writeSettings () const {
     settings.setValue("xp_freq", ui->xpFreq_spinBox->value());
     settings.setValue("center_freq", ui->centerFreq_spinBox->value());
     // TCAS 范围
-    settings.setValue("tcas", ui->tcas_comboBox->currentIndex());
+    settings.setValue("tcasMode", ui->tcas_comboBox->currentIndex());
+    settings.setValue("altMode", ui->alt_comboBox->currentIndex());
 }
 
 void options_widget::on_header_listWidget_currentRowChanged (const int currentRow) const {

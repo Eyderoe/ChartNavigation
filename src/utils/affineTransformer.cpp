@@ -8,26 +8,74 @@
 
 
 std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, double threshold);
+constexpr int combination (int n);
+std::vector<std::array<int, 3>> spawnByCombine (int num);
+std::vector<std::array<int, 3>> spawnByRandom (int num);
 
+/**
+ * @brief 计算组合数 C(n,3)
+ * @return 组合数
+ */
+constexpr int combination (const int n) {
+    return n < 3 ? 0 : n * (n - 1) * (n - 2) / 6;
+}
+
+/**
+ * @brief 返回组合数对应可能组合 C(num,3)
+ * @param num 元素个数
+ * @return 组合
+ */
+std::vector<std::array<int, 3>> spawnByCombine (const int num) {
+    std::vector<std::array<int, 3>> results;
+    results.reserve(combination(num));
+    for (int i = 0; i < num - 2; ++i)
+        for (int j = i + 1; j < num - 1; ++j)
+            for (int k = j + 1; k < num; ++k)
+                results.push_back({{i, j, k}});
+    return results;
+}
+
+/**
+ * @brief 随机生成200个组合
+ * @param num 元素个数
+ * @return 组合
+ */
+std::vector<std::array<int, 3>> spawnByRandom (const int num) {
+    std::vector<std::array<int, 3>> combines;
+    combines.reserve(200);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, num - 1);
+    while (combines.size() < 200) {
+        const int a = dist(gen);
+        const int b = dist(gen);
+        const int c = dist(gen);
+        if (a == b || b == c || a == c)
+            continue;
+        combines.push_back({a, b, c});
+    }
+    return combines;
+}
 
 /**
  * @brief 基于RANSAC算法筛选异常值
  * @param values 原始值列表
  * @param threshold 异常阈值
  * @return 异常值位置列表
- * @note 迭代次数增加意义较小,且在release下耗时较少
  */
 std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, const double threshold) {
+    if (values.size() < 3)
+        return {};
     const size_t n = values.size(); // 数据量
-    constexpr int iterations = 200; // 迭代次数
     size_t maxInnerCount = 0; // 最大内点数量
     std::set<int> bestInnerIdxes; // 最优内点索引
-    // 迭代循环
-    for (int i = 0; i < iterations; ++i) {
-        // 随机选择点作为样本
-        std::set<int> samples;
-        while (samples.size() < 3)
-            samples.insert(spawnInt(0, static_cast<int>(n) - 1));
+    // 获取可能组合
+    std::vector<std::array<int, 3>> idxPairs;
+    if (values.size() <= 14)
+        idxPairs = spawnByCombine(static_cast<int>(values.size()));
+    else
+        idxPairs = spawnByRandom(static_cast<int>(values.size()));
+    for (const auto &samples : idxPairs) {
         // 仿射变换
         auto view = samples | std::views::transform([&](const int j) -> std::vector<double>& { return values[j]; });
         auto [pX,pY] = doAffine(view);
@@ -46,7 +94,7 @@ std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, 
             maxInnerCount = currentInnerIdxes.size();
             bestInnerIdxes = currentInnerIdxes;
         }
-        // 覆盖90%
+        // 高覆盖率
         if (static_cast<double>(maxInnerCount) > static_cast<double>(n) * 0.9)
             break;
     }

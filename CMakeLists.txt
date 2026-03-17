@@ -13,6 +13,7 @@ elseif (APPLE)
 endif ()
 
 find_package(Boost)
+find_package(QCoro6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS
         Core
         Gui
@@ -91,6 +92,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::Widgets
         Qt::PdfWidgets
         Qt::Pdf
+        QCoro6::Core
 )
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32)

@@ -227,24 +227,24 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         };
         // tcas 判断
         const double _distance = distanceSimple(latitude, longitude, multiLatVal[0], multiLonVal[0]);
-        const double _alt = std::abs(alt - multiAltVal[0]);
-        bool check{false};
+        const double _alt = std::abs(alt - multiAltVal[0]) * m2ft;
+        bool notDisplay{false};
         switch (tcasMode) {
             case TcasMode::none:
-                check = true;
+                notDisplay = true;
                 break;
             case TcasMode::nm30:
                 if (_distance > nm2m * 30 || _alt > 9900)
-                    check = true;
+                    notDisplay = true;
                 break;
             case TcasMode::nm6:
                 if (_distance > nm2m * 6 || _alt > 1200)
-                    check = true;
+                    notDisplay = true;
                 break;
             default:
-                ;
+                assert("inop tcas mode");
         }
-        if (check) {
+        if (notDisplay) {
             painter.restore();
             return;
         }
@@ -256,17 +256,31 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
                 flightId.append(QChar(static_cast<char>(multiFlightIdVal[i])));
         // 高度信息
         int deltaAlt = static_cast<int>(std::round((alt - multiAltVal[0]) * m2ft / 100));
-        QString delta;
-        if (deltaAlt >= 0)
-            delta = QString::fromStdString(std::format("{:02d}", deltaAlt));
+        QString altDescribe;
+        if (deltaAlt >= 0) // 高度差
+            altDescribe = QString::fromStdString(std::format("+{:02d}", deltaAlt));
         else
-            delta = QString::fromStdString(std::format("-{:02d}", -deltaAlt));
-        if (vs >= 500)
-            delta += "↑";
+            altDescribe = QString::fromStdString(std::format("-{:02d}", -deltaAlt));
+        if (vs >= 500) // 高度趋势
+            altDescribe += "↑";
         else if (vs <= -500)
-            delta += "↓";
+            altDescribe += "↓";
+        else
+            altDescribe += " ";
+        switch (altMode) { // 原始高度
+            case AltMode::none:
+                break;
+            case AltMode::feet:
+                altDescribe += QString("(%1 ft)").arg(static_cast<int>(alt * m2ft));
+                break;
+            case AltMode::meter:
+                altDescribe += QString("(%1 米)").arg(static_cast<int>(alt));
+                break;
+            default:
+                assert("inop alt mode");
+        }
         drawStrokedText(10, 15, flightId);
-        drawStrokedText(10, 25, delta);
+        drawStrokedText(10, 25, altDescribe);
     }
     // 绘制飞机
     painter.rotate(trk);
@@ -289,11 +303,13 @@ void PdfView::setColorTheme (const bool darkTheme) {
 }
 
 /**
- * @brief 设置TCAS模式
- * @param mode 模式
+ * @brief 设置TCAS和高度模式
+ * @param tcas 模式
+ * @param alt 模式
  */
-void PdfView::setTcasMode (const TcasMode mode) {
-    tcasMode = mode;
+void PdfView::setTcasInfo (const TcasMode tcas, const AltMode alt) {
+    tcasMode = tcas;
+    altMode = alt;
 }
 
 /**

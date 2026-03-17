@@ -74,7 +74,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QTreeWidget" name="treeWidget">
+        <widget class="Tree" name="treeWidget">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -246,6 +246,11 @@
    <extends>QWidget</extends>
    <header>gui/pdfView.hpp</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Tree</class>
+   <extends>QTreeWidget</extends>
+   <header>gui/enhancedTree.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>
