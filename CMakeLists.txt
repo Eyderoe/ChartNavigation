@@ -64,6 +64,9 @@ add_executable(${PROJECT_NAME} WIN32
         src/connector/msfs.cpp
         src/connector/msfs.hpp
         src/connector/allAdapter.hpp
+        src/gui/main_window.hpp
+        src/gui/main_window.cpp
+        src/gui/main_window.ui
         ${PROTO_SRCS} ${PROTO_HDRS}
 )
 

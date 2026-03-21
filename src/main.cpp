@@ -2,6 +2,7 @@
 #include "XPlaneUDP.hpp"
 #include "gui/main_widget.hpp"
 #include "gui/themeColor.hpp"
+#include "gui/main_window.hpp"
 
 int main (int argc, char *argv[]) {
     QApplication app(argc, argv);
@@ -17,6 +18,9 @@ int main (int argc, char *argv[]) {
     ico.addFile(":/icon/resources/navi.png", QSize(256, 256));
     QApplication::setWindowIcon(ico);
     // 窗口
+    main_window window;
+    window.show();
+    return QApplication::exec();
     main_widget widget;
     widget.setTheme(QApplication::styleHints()->colorScheme());
     widget.show();
