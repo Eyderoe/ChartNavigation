@@ -19,7 +19,8 @@ find_package(Qt6 REQUIRED COMPONENTS
         Gui
         Widgets
         PdfWidgets
-        Pdf)
+        Pdf
+        Concurrent)
 
 find_package(Protobuf REQUIRED)
 if (APPLE)
@@ -92,6 +93,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::Widgets
         Qt::PdfWidgets
         Qt::Pdf
+        Qt::Concurrent
         QCoro6::Core
 )
 if (WIN32)

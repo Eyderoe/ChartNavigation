@@ -1,4 +1,6 @@
 #include "enhancedTree.hpp"
+#include <QtConcurrent>
+#include <QTemporaryDir>
 
 /**
  * @brief 检查是否需要该文件
@@ -10,11 +12,9 @@ bool shouldRetain (const QString &path, const DisplayFile displayMode) {
             if (!path.endsWith(".pdf", Qt::CaseInsensitive))
                 return true;
         case DisplayFile::pdfWithPic:
-            for (const auto &suffix : picFormat) {
-                if (path.endsWith(suffix, Qt::CaseInsensitive))
-                    return false;
-            }
-            return true;
+            return std::ranges::none_of(picFormat, [&](const auto &suffix) {
+                return path.endsWith(suffix, Qt::CaseInsensitive);
+            });
         case DisplayFile::all:
             return false;
         default:
@@ -35,10 +35,15 @@ Node::Node (QString baseDir, const QString &name, const bool isFolder) : baseDir
     }
 }
 
+Tree::Tree () {
+    tempDir.setAutoRemove(false);
+}
+
 Tree::Tree (QWidget *parent) : QTreeWidget(parent) {
+    tempDir.setAutoRemove(false);
     connect(this, &Tree::itemExpanded, this, [this](const QTreeWidgetItem *item) {
         for (int i = 0; i < item->childCount(); ++i) {
-            const auto node = static_cast<Node*>(item->child(i));
+            const auto node = dynamic_cast<Node*>(item->child(i));
             if (node->isFolder)
                 continue;
             loadThumb(node);
@@ -68,32 +73,34 @@ void Tree::switchFolder (const QString &folder, const DisplayFile mode) {
  * @param item 节点
  */
 QCoro::Task<> Tree::loadThumb (QTreeWidgetItem *item) const {
-    const auto node = static_cast<Node*>(item);
-    bool supportThumb{false};
-    for (auto &suffix : picFormat) {
-        if (node->baseDir.endsWith(suffix)) {
-            supportThumb = true;
-            break;
-        }
-    }
+    co_return;
+    const auto node = dynamic_cast<Node*>(item);
+    const bool supportThumb = std::ranges::any_of(picFormat, [&](const auto &suffix) {
+        return node->baseDir.endsWith(suffix, Qt::CaseInsensitive);
+    });
     if (!supportThumb)
         co_return;
 
-    auto pic = [](const QString &path) -> QCoro::Task<QIcon> {
+    auto renderTask = [](const QString &path) -> QImage {
+        constexpr QSize size{144, 192};
         if (path.endsWith(".pdf", Qt::CaseInsensitive)) {
             QPdfDocument doc;
             doc.load(path);
-            const auto img=doc.render(0,QSize(48,64));
-            co_return QIcon(QPixmap::fromImage(img));
-        } else { // 正常图片
-            const QPixmap originalPixmap(path);
-            const QPixmap scaledPixmap = originalPixmap.scaled(QSize(48, 64), Qt::IgnoreAspectRatio,
-                                                               Qt::SmoothTransformation);
-            co_return QIcon(scaledPixmap);
+            const QImage transparentImg = doc.render(0, size);
+            QImage finalImg(size, QImage::Format_RGB32);
+            finalImg.fill(Qt::white);
+            QPainter painter(&finalImg);
+            painter.drawImage(0, 0, transparentImg);
+            painter.end();
+            return finalImg;
+        } else {
+            const QImage img(path);
+            return img.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         }
     };
-    const auto result = co_await pic(node->baseDir);
-    if (const bool stillAvailable = children.contains(item); !stillAvailable)
+    const QImage resultImage = co_await QtConcurrent::run(renderTask, node->baseDir);
+    if (resultImage.isNull() || !children.contains(item)) {
         co_return;
-    item->setIcon(0, QIcon(result));
+    }
+    item->setIcon(0, QIcon(QPixmap::fromImage(resultImage)));
 }

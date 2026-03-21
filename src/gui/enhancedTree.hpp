@@ -32,12 +32,12 @@ class Node final : public QTreeWidgetItem {
 };
 
 class Tree final : public QTreeWidget {
-        Q_OBJECT
     public:
-        Tree () = default;
+        Tree ();
         explicit Tree (QWidget *parent = nullptr);
         void switchFolder(const QString &folder,DisplayFile mode);
     private:
+        QTemporaryDir tempDir;
         std::set<QTreeWidgetItem*> children;
 
         QCoro::Task<> loadThumb (QTreeWidgetItem *item) const;
