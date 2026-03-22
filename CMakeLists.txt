@@ -68,6 +68,8 @@ add_executable(${PROJECT_NAME} WIN32
         src/gui/main_window.cpp
         src/gui/main_window.ui
         ${PROTO_SRCS} ${PROTO_HDRS}
+        src/utils/settingManage.cpp
+        src/utils/settingManage.hpp
 )
 
 target_link_options(${PROJECT_NAME} PRIVATE

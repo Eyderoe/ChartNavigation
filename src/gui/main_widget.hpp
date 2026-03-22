@@ -27,7 +27,6 @@ class main_widget final : public QWidget {
     public:
         explicit main_widget (QWidget *parent = nullptr);
         ~main_widget () override;
-        void setTheme (Qt::ColorScheme colorScheme) const;
     private:
         Ui::main_widget *ui;
         QPdfDocument *document;

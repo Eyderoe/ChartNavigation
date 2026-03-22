@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>main_window</string>
+   <string>Chart Navigation</string>
   </property>
   <widget class="QWidget" name="centralwidget"/>
   <widget class="QMenuBar" name="menubar">
@@ -27,7 +27,8 @@
     <property name="title">
      <string>文件</string>
     </property>
-    <addaction name="action_load"/>
+    <addaction name="action_load_file"/>
+    <addaction name="action_load_folder"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -35,6 +36,8 @@
     </property>
     <addaction name="action_top"/>
     <addaction name="action_dark"/>
+    <addaction name="action_show_thumb"/>
+    <addaction name="action_scale"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -48,9 +51,23 @@
    <addaction name="menu_3"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="action_load">
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="action_follow"/>
+   <addaction name="action_add"/>
+   <addaction name="action_switch"/>
+  </widget>
+  <action name="action_load_file">
    <property name="text">
-    <string>加载</string>
+    <string>打开文件</string>
    </property>
   </action>
   <action name="action_top">
@@ -77,6 +94,78 @@
    </property>
    <property name="text">
     <string>暗色</string>
+   </property>
+  </action>
+  <action name="action_follow">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentSend"/>
+   </property>
+   <property name="text">
+    <string>跟踪</string>
+   </property>
+   <property name="toolTip">
+    <string>跟踪飞行器</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_add">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MailAttachment"/>
+   </property>
+   <property name="text">
+    <string>添加</string>
+   </property>
+   <property name="toolTip">
+    <string>添加航图至航路</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_switch">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::SyncSynchronizing"/>
+   </property>
+   <property name="text">
+    <string>切换</string>
+   </property>
+   <property name="toolTip">
+    <string>切换窗口</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_show_thumb">
+   <property name="text">
+    <string>缩略图</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_scale">
+   <property name="text">
+    <string>缩放条</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_load_folder">
+   <property name="text">
+    <string>加载文件夹</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
  </widget>

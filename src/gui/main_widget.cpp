@@ -3,7 +3,6 @@
 #include "json.hpp"
 #include "options_widget.hpp"
 #include "enhancedTree.hpp"
-#include "../../cmake-build-release/ChartNavigation_autogen/include/ui_main_widget.h"
 #include "gui/themeColor.hpp"
 
 using namespace nlohmann;
@@ -17,16 +16,16 @@ void main_widget::readSettings () {
     restoreGeometry(settings.value("main_widget_geometry").toByteArray());
     ui->splitter->restoreState(settings.value("main_splitter_state").toByteArray());
     // 居中
-    const bool center = settings.value("center_on", false).toBool();
-    ui->follow_checkBox->setCheckState(center ? Qt::Checked : Qt::Unchecked);
-    ui->pdf_widget->setCenterOn(center);
-    // 置顶
-    const bool top = settings.value("pin_top", false).toBool();
-    ui->pin_checkBox->setCheckState(top ? Qt::Checked : Qt::Unchecked);
-    on_pin_checkBox_clicked(top);
-    // 单文件输入框
-    const bool singleFileDisable = settings.value("singleFileDisable", true).toBool();
-    ui->chart_lineEdit->setHidden(singleFileDisable);
+    // const bool center = settings.value("center_on", false).toBool();
+    // ui->follow_checkBox->setCheckState(center ? Qt::Checked : Qt::Unchecked);
+    // ui->pdf_widget->setCenterOn(center);
+    // // 置顶
+    // const bool top = settings.value("pin_top", false).toBool();
+    // ui->pin_checkBox->setCheckState(top ? Qt::Checked : Qt::Unchecked);
+    // on_pin_checkBox_clicked(top);
+    // // 单文件输入框
+    // const bool singleFileDisable = settings.value("singleFileDisable", true).toBool();
+    // ui->chart_lineEdit->setHidden(singleFileDisable);
     // 缩放比条
     const bool scaleBarEnable = settings.value("scaleBarEnable", false).toBool();
     ui->scale_verticalSlider->setHidden(!scaleBarEnable);
@@ -44,10 +43,10 @@ void main_widget::writeSettings () const {
     // 窗口布局
     settings.setValue("main_widget_geometry", saveGeometry());
     settings.setValue("main_splitter_state", ui->splitter->saveState());
-    // 居中
-    settings.setValue("center_on", ui->follow_checkBox->isChecked());
-    // 置顶
-    settings.setValue("pin_top", ui->pin_checkBox->isChecked());
+    // // 居中
+    // settings.setValue("center_on", ui->follow_checkBox->isChecked());
+    // // 置顶
+    // settings.setValue("pin_top", ui->pin_checkBox->isChecked());
 }
 
 /**
@@ -183,23 +182,7 @@ main_widget::MappingInfo main_widget::loadPdfPageMapping (const int pageNum) {
  * @brief 文件路径输入框 -> 加载PDF文档
  */
 void main_widget::on_chart_lineEdit_editingFinished () {
-    loadPdfFile(ui->chart_lineEdit->text());
-}
-
-/**
- * @brief 设置色彩主题
- * @param colorScheme 色彩主题
- */
-void main_widget::setTheme (const Qt::ColorScheme colorScheme) const {
-    if (colorScheme == Qt::ColorScheme::Dark) {
-        setDarkTheme();
-        ui->pdf_widget->setColorTheme(true);
-        ui->dark_checkBox->setCheckState(Qt::Checked);
-    } else {
-        setLightTheme();
-        ui->pdf_widget->setColorTheme(false);
-        ui->dark_checkBox->setCheckState(Qt::Unchecked);
-    }
+    // loadPdfFile(ui->chart_lineEdit->text());
 }
 
 /**
@@ -207,11 +190,11 @@ void main_widget::setTheme (const Qt::ColorScheme colorScheme) const {
  * @param checked 是否选中
  */
 void main_widget::on_dark_checkBox_clicked (const bool checked) const {
-    if (checked || (QApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark)) {
-        setTheme(Qt::ColorScheme::Dark);
-        ui->dark_checkBox->setCheckState(Qt::Checked);
-    } else
-        setTheme(Qt::ColorScheme::Light);
+    // if (checked || (QApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark)) {
+    //     setTheme(Qt::ColorScheme::Dark);
+    //     ui->dark_checkBox->setCheckState(Qt::Checked);
+    // } else
+    //     setTheme(Qt::ColorScheme::Light);
 }
 
 /**

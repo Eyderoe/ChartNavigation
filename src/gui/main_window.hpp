@@ -17,8 +17,11 @@ class main_window : public QMainWindow {
     public:
         explicit main_window (QWidget *parent = nullptr);
         ~main_window () override;
+        void setTheme (Qt::ColorScheme colorScheme) const;
     private:
         Ui::main_window *ui;
+
+        void initSetting();
 };
 
 
