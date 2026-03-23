@@ -10,9 +10,9 @@ class SettingsManager : public QObject {
         Q_OBJECT
     public:
         enum ConfigKey {
-            inopEnumItem, // 谁写的钩子代码
-            MainWindowGeo, // 主窗口尺寸
-            isDarkTheme, // 暗色主题
+            inopEnumItem, // 兜底的怪东西
+            MainWindowGeo, // 主窗口尺寸 ByteArray
+            isDarkTheme, // 暗色主题 bool
         };
         Q_ENUM(ConfigKey)
 
@@ -20,6 +20,7 @@ class SettingsManager : public QObject {
         void set (ConfigKey key, const QVariant &value);
         QVariant get (ConfigKey key, const QVariant &defult = QVariant());
         void broadcast ();
+        void writeSetting ();
     private:
         SettingsManager ();
         QSettings settings;
@@ -27,7 +28,6 @@ class SettingsManager : public QObject {
 
         static QString key2String (ConfigKey key);
         static ConfigKey string2Key (const QString &keyStr);
-        void writeSetting ();
     signals:
         void settingChanged (ConfigKey key, const QVariant &value);
 };

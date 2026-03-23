@@ -20,7 +20,8 @@ find_package(Qt6 REQUIRED COMPONENTS
         Widgets
         PdfWidgets
         Pdf
-        Concurrent)
+        Concurrent
+        Positioning)
 
 find_package(Protobuf REQUIRED)
 if (APPLE)
@@ -70,6 +71,8 @@ add_executable(${PROJECT_NAME} WIN32
         ${PROTO_SRCS} ${PROTO_HDRS}
         src/utils/settingManage.cpp
         src/utils/settingManage.hpp
+        src/connector/real.cpp
+        src/connector/real.hpp
 )
 
 target_link_options(${PROJECT_NAME} PRIVATE
@@ -99,6 +102,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::PdfWidgets
         Qt::Pdf
         Qt::Concurrent
+        Qt::Positioning
         QCoro6::Core
 )
 if (WIN32)

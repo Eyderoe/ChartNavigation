@@ -3,5 +3,6 @@
 
 #include "xpStd.hpp"
 #include "wlan.hpp"
+#include "real.hpp"
 
 #endif //CHARTNAVIGATION_ALLADAPTER_HPP

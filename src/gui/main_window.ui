@@ -75,7 +75,10 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>置顶</string>
+    <string>置顶窗口</string>
+   </property>
+   <property name="toolTip">
+    <string>置顶窗口</string>
    </property>
   </action>
   <action name="action_setting">
@@ -93,7 +96,10 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>暗色</string>
+    <string>暗色主题</string>
+   </property>
+   <property name="toolTip">
+    <string>暗色主题</string>
    </property>
   </action>
   <action name="action_follow">
@@ -146,7 +152,10 @@
   </action>
   <action name="action_show_thumb">
    <property name="text">
-    <string>缩略图</string>
+    <string>显示缩略图</string>
+   </property>
+   <property name="toolTip">
+    <string>显示缩略图</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
@@ -154,7 +163,10 @@
   </action>
   <action name="action_scale">
    <property name="text">
-    <string>缩放条</string>
+    <string>显示缩放条</string>
+   </property>
+   <property name="toolTip">
+    <string>显示缩放条</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
