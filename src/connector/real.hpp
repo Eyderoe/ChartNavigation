@@ -4,12 +4,20 @@
 #include "interface.hpp"
 #include <QtPositioning>
 
-class real : public QObject {
+class realPos : public QObject {
         Q_OBJECT
     public:
-        real ();
+        realPos ();
+        void setCallback (const std::function<void  (bool)> &callbackFunc);
+        bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) const;
+        void setFrequency (int32_t freq) const;
     private:
         QGeoPositionInfoSource *source{nullptr};
+        double lat, lon,alt, trk;
+        bool state{false};
+        std::function<void  (bool)> callback{nullptr};
+
+        void setState (bool newState);
 };
 
 class realAdapter : public InterfaceSimu {
@@ -19,6 +27,9 @@ class realAdapter : public InterfaceSimu {
         void close () override;
         DatarefIdx addDatarefArray (const std::string &dataref, int32_t freq) override;
         bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) override;
+    private:
+        realPos realPosition;
+        std::map<std::string,int> datarefMap;
 };
 
 #endif //CHARTNAVIGATION_REAL_HPP

@@ -8,16 +8,19 @@
 
 main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::main_window) {
     ui->setupUi(this);
+    setCentralWidget(new main_widget(this));
     // 连接信号
     initConnect();
-    // 设置其他的
-    setCentralWidget(new main_widget(this));
+    // 初始化动作组
+    initAction();
     // 更新所有设置
-    SettingsManager::instance().broadcast();
-    restoreGeometry(SettingsManager::instance().get(SettingsManager::MainWindowGeo, {}).toByteArray()); // 窗口尺寸
+    SettingsManager &ins = SettingsManager::instance();
+    ins.broadcast();
+    restoreGeometry(ins.get(SettingsManager::MainWindowGeo, {}).toByteArray()); // 窗口尺寸
     const bool isDark = QApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark; // 暗色模式以及按钮
-    SettingsManager::instance().set(SettingsManager::isDarkTheme, isDark);
+    ins.set(SettingsManager::isDarkTheme, isDark);
     ui->action_dark->setChecked(isDark);
+    ins.set(SettingsManager::dataSource, ins.get(SettingsManager::dataSource, 0));
 }
 
 main_window::~main_window () {
@@ -44,10 +47,10 @@ void main_window::closeEvent (QCloseEvent *event) {
 }
 
 void main_window::initConnect () {
-    // 设置
     const auto &setting = SettingsManager::instance();
-    connect(&setting, &SettingsManager::settingChanged, this,
-            [this](const SettingsManager::ConfigKey key, const QVariant &val) {
+    // 存储设置
+    connect(&setting, &SettingsManager::constSettingChanged, this,
+            [this](const SettingsManager::ConstKey key, const QVariant &val) {
                 switch (key) {
                     case SettingsManager::inopEnumItem: break;
                     case SettingsManager::MainWindowGeo: break;
@@ -56,10 +59,20 @@ void main_window::initConnect () {
                         setTheme(isDark ? Qt::ColorScheme::Dark : Qt::ColorScheme::Light);
                         break;
                     }
+                    case SettingsManager::dataSource: break;
                     default:
                         assert(false && "need to update switch case. [main_window::initConnect]");
                 }
             });
+    // 临时设置
+}
+
+void main_window::initAction () {
+    const auto sourceGroup = new QActionGroup(this);
+    sourceGroup->setExclusive(true);
+    sourceGroup->addAction(ui->action_source_XPlane);
+    sourceGroup->addAction(ui->action_source_wlan);
+    sourceGroup->addAction(ui->action_source_real);
 }
 
 void main_window::on_action_dark_triggered (const bool checked) {

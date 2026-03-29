@@ -2,6 +2,7 @@
 #include "tools/stringProcess.hpp"
 #include "tools/constValue.hpp"
 #include "utils/geographic.hpp"
+#include "utils/settingManage.hpp"
 
 #include <ranges>
 
@@ -71,6 +72,35 @@ void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, con
 
 void PdfView::closeXp () {
     connector->close();
+}
+
+void PdfView::initConnect () {
+    const auto &setting = SettingsManager::instance();
+    connect(&setting, &SettingsManager::constSettingChanged, this,
+            [this](const SettingsManager::ConstKey key, const QVariant &val) {
+                switch (key) {
+                    case SettingsManager::inopEnumItem: break;
+                    case SettingsManager::MainWindowGeo: break;
+                    case SettingsManager::isDarkTheme: break;
+                    case SettingsManager::dataSource: {
+                        switch (val.toInt()) {
+                            case 0:
+                                connector = std::make_unique<xpAdapter>();
+                                break;
+                            case 1:
+                                connector = std::make_unique<wlanAdapter>();
+                                break;
+                            case 2:
+                                connector = std::make_unique<realAdapter>();
+                                break;
+                            default:
+                                assert(false && "need to update switch case. [PdfView::initConnect]");
+                        }
+                    }
+                    default:
+                        assert(false && "need to update switch case. [PdfView::initConnect]");
+                }
+            });
 }
 
 void PdfView::wheelEvent (QWheelEvent *event) {

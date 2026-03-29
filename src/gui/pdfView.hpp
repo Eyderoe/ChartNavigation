@@ -23,6 +23,7 @@ class PdfView final : public QPdfView {
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
         void closeXp ();
     private:
+        void initConnect();
         // 重载事件部分
         void wheelEvent (QWheelEvent *event) override;
         void mousePressEvent (QMouseEvent *event) override;

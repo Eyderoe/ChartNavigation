@@ -10,12 +10,12 @@ SettingsManager& SettingsManager::instance () {
 }
 
 /**
- * @brief 设置键值对
+ * @brief 设置键值对(存储值)
  * @param key 键
  * @param value 值
  */
-void SettingsManager::set (const ConfigKey key, const QVariant &value) {
-    const QString keyName = key2String(key);
+void SettingsManager::set (const ConstKey key, const QVariant &value) {
+    const QString keyName = key2String_const(key);
     const auto it = cache.find(keyName);
     if (it != cache.end()) {
         if (it.value() == value)
@@ -24,17 +24,17 @@ void SettingsManager::set (const ConfigKey key, const QVariant &value) {
     } else {
         cache[keyName] = value;
     }
-    emit settingChanged(key, value);
+    emit constSettingChanged(key, value);
 }
 
 /**
- * @brief 获取键值对
+ * @brief 获取键值对(存储值)
  * @param key 键
  * @param defult 默认值
  * @return 值
  */
-QVariant SettingsManager::get (const ConfigKey key, const QVariant &defult) {
-    const QString keyName = key2String(key);
+QVariant SettingsManager::get (const ConstKey key, const QVariant &defult) {
+    const QString keyName = key2String_const(key);
     const auto it = cache.find(keyName);
     if (it == cache.end()) {
         cache[keyName] = defult;
@@ -45,14 +45,14 @@ QVariant SettingsManager::get (const ConfigKey key, const QVariant &defult) {
 }
 
 /**
- * @brief 广播一次所有键值对
+ * @brief 广播一次所有键值对(存储值)
  */
 void SettingsManager::broadcast () {
     for (auto [key, value] : cache.asKeyValueRange()) {
-        const ConfigKey enumItem = string2Key(key);
-        if (enumItem == ConfigKey::inopEnumItem)
+        const ConstKey enumItem = string2Key_const(key);
+        if (enumItem == ConstKey::inopEnumItem)
             continue;
-        emit settingChanged(enumItem, value);
+        emit constSettingChanged(enumItem, value);
     }
 }
 
@@ -61,27 +61,31 @@ SettingsManager::SettingsManager () {
         cache[key] = settings.value(key);
 }
 
+SettingsManager::~SettingsManager () {
+    writeSetting();
+}
+
 /**
- * @brief 利用元系统将枚举变为字符串
+ * @brief 利用元系统将枚举变为字符串(存储值)
  * @param key 键
  * @return 字符串
  */
-QString SettingsManager::key2String (const ConfigKey key) {
-    static QMetaEnum meta = QMetaEnum::fromType<ConfigKey>();
+QString SettingsManager::key2String_const (const ConstKey key) {
+    static QMetaEnum meta = QMetaEnum::fromType<ConstKey>();
     return QString(meta.valueToKey(key));
 }
 
 /**
- * @brief 利用元系统将字符串变为枚举
+ * @brief 利用元系统将字符串变为枚举(存储值)
  * @param keyStr 键
  * @return 字符串
  */
-SettingsManager::ConfigKey SettingsManager::string2Key (const QString &keyStr) {
-    static QMetaEnum meta = QMetaEnum::fromType<ConfigKey>();
+SettingsManager::ConstKey SettingsManager::string2Key_const (const QString &keyStr) {
+    static QMetaEnum meta = QMetaEnum::fromType<ConstKey>();
     int value = meta.keyToValue(keyStr.toUtf8().constData());
     if (value == -1)
-        return ConfigKey::inopEnumItem;
-    return static_cast<ConfigKey>(value);
+        return ConstKey::inopEnumItem;
+    return static_cast<ConstKey>(value);
 }
 
 /**

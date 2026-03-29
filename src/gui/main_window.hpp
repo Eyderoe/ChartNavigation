@@ -25,6 +25,7 @@ class main_window : public QMainWindow {
         Ui::main_window *ui;
 
         void initConnect ();
+        void initAction();
 };
 
 

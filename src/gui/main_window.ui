@@ -46,7 +46,23 @@
     <addaction name="action_setting"/>
     <addaction name="action_thank"/>
    </widget>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>模拟器</string>
+    </property>
+    <widget class="QMenu" name="menu_4">
+     <property name="title">
+      <string>数据源</string>
+     </property>
+     <addaction name="action_source_XPlane"/>
+     <addaction name="action_source_wlan"/>
+     <addaction name="action_source_real"/>
+    </widget>
+    <addaction name="action_follow"/>
+    <addaction name="menu_4"/>
+   </widget>
    <addaction name="menu_file"/>
+   <addaction name="menu"/>
    <addaction name="menu_2"/>
    <addaction name="menu_3"/>
   </widget>
@@ -64,6 +80,7 @@
    <addaction name="action_follow"/>
    <addaction name="action_add"/>
    <addaction name="action_switch"/>
+   <addaction name="action_dark"/>
   </widget>
   <action name="action_load_file">
    <property name="text">
@@ -94,6 +111,9 @@
   <action name="action_dark">
    <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::WeatherClearNight"/>
    </property>
    <property name="text">
     <string>暗色主题</string>
@@ -175,6 +195,39 @@
   <action name="action_load_folder">
    <property name="text">
     <string>加载文件夹</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_source_XPlane">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>XPlane</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_source_wlan">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>局域网</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_source_real">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>现实</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
