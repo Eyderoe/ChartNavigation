@@ -2,8 +2,8 @@
 #include "ui_main_widget.h"
 #include "json.hpp"
 #include "options_widget.hpp"
-#include "enhancedTree.hpp"
-#include "gui/themeColor.hpp"
+#include "ui/enhancedTree.hpp"
+#include "ui/themeColor.hpp"
 
 using namespace nlohmann;
 

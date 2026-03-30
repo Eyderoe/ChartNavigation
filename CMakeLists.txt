@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 4.0)
 project(ChartNavigation)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
@@ -41,20 +41,20 @@ add_executable(${PROJECT_NAME} WIN32
         src/gui/main_widget.ui
         src/utils/affineTransformer.cpp
         src/utils/affineTransformer.hpp
-        src/gui/pdfView.cpp
-        src/gui/pdfView.hpp
-        src/gui/themeColor.cpp
-        src/gui/themeColor.hpp
-        src/tools/stringProcess.cpp
-        src/tools/stringProcess.hpp
+        src/ui/pdfView.cpp
+        src/ui/pdfView.hpp
+        src/ui/themeColor.cpp
+        src/ui/themeColor.hpp
+        src/utils/stringProcess.cpp
+        src/utils/stringProcess.hpp
         src/gui/options_widget.cpp
         src/gui/options_widget.hpp
         src/gui/options_widget.ui
-        src/gui/enhancedTree.cpp
-        src/gui/enhancedTree.hpp
-        src/tools/randomGen.cpp
-        src/tools/randomGen.hpp
-        src/tools/constValue.hpp
+        src/ui/enhancedTree.cpp
+        src/ui/enhancedTree.hpp
+        src/utils/randomGen.cpp
+        src/utils/randomGen.hpp
+        src/utils/constValue.hpp
         src/utils/geographic.cpp
         src/utils/geographic.hpp
         src/connector/interface.hpp

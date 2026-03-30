@@ -2,7 +2,7 @@
 
 #include "main_widget.hpp"
 #include "ui_main_window.h"
-#include "gui/themeColor.hpp"
+#include "ui/themeColor.hpp"
 #include "utils/settingManage.hpp"
 
 

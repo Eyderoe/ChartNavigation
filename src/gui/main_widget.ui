@@ -192,13 +192,13 @@
   <customwidget>
    <class>PdfView</class>
    <extends>QWidget</extends>
-   <header>gui/pdfView.hpp</header>
+   <header>ui/pdfView.hpp</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>Tree</class>
    <extends>QTreeWidget</extends>
-   <header>gui/enhancedTree.hpp</header>
+   <header>ui/enhancedTree.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>

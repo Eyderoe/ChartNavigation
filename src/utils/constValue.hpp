@@ -1,6 +1,15 @@
 #ifndef CHARTNAVIGATION_CONSTVALUE_HPP
 #define CHARTNAVIGATION_CONSTVALUE_HPP
 
+enum class MultiPlatform { win, linux, mac };
+#ifdef _WIN32
+constexpr auto platform = MultiPlatform::win;
+#elifdef __linux__
+constexpr auto platform = MultiPlatform::linux;
+#elifdef __APPLE__
+constexpr auto platform = MultiPlatform::mac;
+#endif
+
 constexpr double m2ft{3.28084};
 constexpr double nm2m{1852};
 constexpr double avgEarthRadius{6371008.8};

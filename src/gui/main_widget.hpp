@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QtPdf/QtPdf>
-#include "enhancedTree.hpp"
+#include "ui/enhancedTree.hpp"
 
 #include "json.hpp"
 

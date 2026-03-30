@@ -1,5 +1,5 @@
 #include "affineTransformer.hpp"
-#include "tools/randomGen.hpp"
+#include "randomGen.hpp"
 
 #include <algorithm>
 #include <format>
@@ -110,10 +110,10 @@ std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, 
 /**
  * @brief 加载数据
  * @param dataList [[纬度,经度,x,y], ...]
- * @param threshold
+ * @param threshold 离群阈值
  * @return 数据是否可用
  */
-bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataList, double threshold) {
+bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataList, const double threshold) {
     data = dataList;
     // 第一次变换
     if (!fitAffine())

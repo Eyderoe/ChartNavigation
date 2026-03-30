@@ -1,7 +1,7 @@
 #include "options_widget.hpp"
 #include "ui_options_widget.h"
-#include "pdfView.hpp"
-#include "enhancedTree.hpp"
+#include "ui/pdfView.hpp"
+#include "ui/enhancedTree.hpp"
 
 void options_widget::setFontSize () const {
     // 标准大小

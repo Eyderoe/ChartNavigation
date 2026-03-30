@@ -1,6 +1,6 @@
 #include "pdfView.hpp"
-#include "tools/stringProcess.hpp"
-#include "tools/constValue.hpp"
+#include "utils/stringProcess.hpp"
+#include "utils/constValue.hpp"
 #include "utils/geographic.hpp"
 #include "utils/settingManage.hpp"
 

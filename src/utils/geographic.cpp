@@ -1,6 +1,6 @@
 #include "geographic.hpp"
 #include <numbers>
-#include "tools/constValue.hpp"
+#include "constValue.hpp"
 
 /**
  * @brief 简单计算AB两点距离
@@ -18,4 +18,13 @@ double distanceSimple (const double lat1, const double lon1, const double lat2, 
     const double x = (lon2_rad - lon1_rad) * cos((lat1_rad + lat2_rad) / 2.0);
     const double y = lat2_rad - lat1_rad;
     return std::sqrt(x * x + y * y) * avgEarthRadius;
+}
+/**
+ * @brief 简单计算AB两点距离
+ * @param loc1 {A.纬度, A.经度}
+ * @param loc2 {B.纬度, B.经度}
+ * @return AB距离 (米)
+ */
+double distanceSimple (const std::pair<double, double> &loc1, const std::pair<double, double> &loc2) {
+    return distanceSimple(loc1.first, loc1.second, loc2.first, loc2.second);
 }
