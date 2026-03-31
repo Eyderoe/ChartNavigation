@@ -114,7 +114,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::WeatherClearNight"/>
+    <iconset resource="../../resources.qrc">
+     <normaloff>:/toolbar/resources/toolbarIcon/night.svg</normaloff>:/toolbar/resources/toolbarIcon/night.svg</iconset>
    </property>
    <property name="text">
     <string>暗色主题</string>
@@ -128,7 +129,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::DocumentSend"/>
+    <iconset resource="../../resources.qrc">
+     <normaloff>:/toolbar/resources/toolbarIcon/airplane.svg</normaloff>:/toolbar/resources/toolbarIcon/airplane.svg</iconset>
    </property>
    <property name="text">
     <string>跟踪</string>
@@ -145,7 +147,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::MailAttachment"/>
+    <iconset resource="../../resources.qrc">
+     <normaloff>:/toolbar/resources/toolbarIcon/link.svg</normaloff>:/toolbar/resources/toolbarIcon/link.svg</iconset>
    </property>
    <property name="text">
     <string>添加</string>
@@ -159,7 +162,8 @@
   </action>
   <action name="action_switch">
    <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::SyncSynchronizing"/>
+    <iconset resource="../../resources.qrc">
+     <normaloff>:/toolbar/resources/toolbarIcon/switch_left.svg</normaloff>:/toolbar/resources/toolbarIcon/switch_left.svg</iconset>
    </property>
    <property name="text">
     <string>切换</string>
@@ -236,7 +240,8 @@
   </action>
   <action name="action_rotate">
    <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::ObjectRotateLeft"/>
+    <iconset resource="../../resources.qrc">
+     <normaloff>:/toolbar/resources/toolbarIcon/rotate.svg</normaloff>:/toolbar/resources/toolbarIcon/rotate.svg</iconset>
    </property>
    <property name="text">
     <string>旋转</string>
@@ -249,6 +254,8 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

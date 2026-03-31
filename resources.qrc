@@ -16,4 +16,12 @@
         <file>resources/qdarkstyle/dark/darkstyle.qss</file>
         <file>resources/qdarkstyle/light/lightstyle.qss</file>
     </qresource>
+    <qresource prefix="/toolbar">
+        <file>resources/toolbarIcon/airplane.svg</file>
+        <file>resources/toolbarIcon/link.svg</file>
+        <file>resources/toolbarIcon/night.svg</file>
+        <file>resources/toolbarIcon/rotate.svg</file>
+        <file>resources/toolbarIcon/switch_left.svg</file>
+        <file>resources/toolbarIcon/switch_right.svg</file>
+    </qresource>
 </RCC>

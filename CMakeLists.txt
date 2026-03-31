@@ -6,11 +6,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-if (WIN32)
-    set(CMAKE_PREFIX_PATH "D:/Qt/Qt6/6.9.3/mingw_64")
-elseif (APPLE)
-    set(CMAKE_PREFIX_PATH "/Users/eyderoe/Qt/6.9.3/macos/lib/cmake")
-endif ()
+#-DCMAKE_PREFIX_PATH="D:/Qt/Qt6/6.9.3/mingw_64"
+#-DCMAKE_PREFIX_PATH="/Users/eyderoe/Qt/6.9.3/macos/lib/cmake"
 
 find_package(Boost)
 find_package(QCoro6 REQUIRED COMPONENTS Core)
@@ -31,7 +28,7 @@ include_directories(${Protobuf_INCLUDE_DIRS})
 set(PROTO_FILES src/connector/plane.proto)
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 
-add_executable(${PROJECT_NAME} WIN32
+add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         resources.qrc
         resources/qdarkstyle/dark/darkstyle.qrc
         resources/qdarkstyle/light/lightstyle.qrc
@@ -73,6 +70,9 @@ add_executable(${PROJECT_NAME} WIN32
         src/utils/settingManage.hpp
         src/connector/real.cpp
         src/connector/real.hpp
+        src/gui/about_dialog.cpp
+        src/gui/about_dialog.hpp
+        src/gui/about_dialog.ui
 )
 
 target_link_options(${PROJECT_NAME} PRIVATE

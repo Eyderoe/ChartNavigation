@@ -15,7 +15,7 @@ int main (int argc, char *argv[]) {
     // 单例程序
     static QSharedMemory sharedMemory("ChartNavigation_d7b233f1"); // ZUCK-1M-1
     if (!sharedMemory.create(1))
-        return 1;
+        return 99;
     QObject::connect(&app, &QCoreApplication::aboutToQuit, [] () {
         if (sharedMemory.isAttached())
             sharedMemory.detach();

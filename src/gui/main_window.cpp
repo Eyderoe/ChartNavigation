@@ -4,6 +4,7 @@
 #include "ui_main_window.h"
 #include "ui/themeColor.hpp"
 #include "utils/settingManage.hpp"
+#include "about_dialog.hpp"
 
 
 main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::main_window) {
@@ -65,6 +66,11 @@ void main_window::initConnect () {
                 }
             });
     // 临时设置
+    // 其他连接
+    connect(ui->action_thank, &QAction::triggered, this, [&]() {
+        const auto dialog=new about_dialog(this);
+        dialog->show();
+    });
 }
 
 void main_window::initAction () {
