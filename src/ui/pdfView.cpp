@@ -76,21 +76,20 @@ void PdfView::closeXp () {
 
 void PdfView::initConnect () {
     const auto &setting = SettingsManager::instance();
-    connect(&setting, &SettingsManager::constSettingChanged, this,
+    connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
                 switch (key) {
-                    case SettingsManager::inopEnumItem: break;
+                    case SettingsManager::inopEnumItem_constKey: break;
                     case SettingsManager::MainWindowGeo: break;
-                    case SettingsManager::isDarkTheme: break;
                     case SettingsManager::dataSource: {
-                        switch (val.toInt()) {
-                            case 0:
+                        switch (static_cast<SimulatorSource>(val.toInt())) {
+                            case SimulatorSource::xplane:
                                 connector = std::make_unique<xpAdapter>();
                                 break;
-                            case 1:
+                            case SimulatorSource::wlan:
                                 connector = std::make_unique<wlanAdapter>();
                                 break;
-                            case 2:
+                            case SimulatorSource::real:
                                 connector = std::make_unique<realAdapter>();
                                 break;
                             default:

@@ -11,7 +11,7 @@ int main (int argc, char *argv[]) {
     QApplication app(argc, argv);
     QApplication::setOrganizationName("Eyderoe");
     QApplication::setApplicationName("ChartNavigation");
-    app.setAttribute(Qt::AA_DontShowIconsInMenus);
+    QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
     // 单例程序
     static QSharedMemory sharedMemory("ChartNavigation_d7b233f1"); // ZUCK-1M-1
     if (!sharedMemory.create(1))
@@ -26,6 +26,7 @@ int main (int argc, char *argv[]) {
     // 设置
     QSettings::setDefaultFormat(QSettings::IniFormat);
     SettingsManager::instance();
+    qDebug() << "QSettings path: " << QSettings().fileName();
     // 图标
     QIcon ico;
     ico.addFile(":/icon/resources/navi.png", QSize(256, 256));

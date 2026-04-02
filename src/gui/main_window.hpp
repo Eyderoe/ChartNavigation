@@ -17,12 +17,13 @@ class main_window : public QMainWindow {
     public:
         explicit main_window (QWidget *parent = nullptr);
         ~main_window () override;
-        void setTheme (Qt::ColorScheme colorScheme) const;
+        static void setTheme (Qt::ColorScheme colorScheme) ;
         void closeEvent (QCloseEvent *event) override;
     private Q_SLOTS:
         static void on_action_dark_triggered (bool checked);
     private:
         Ui::main_window *ui;
+        QActionGroup *sourceGroup{nullptr};
 
         void initConnect ();
         void initAction();
