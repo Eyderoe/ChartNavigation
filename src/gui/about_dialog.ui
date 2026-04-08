@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>about_dialog</string>
+   <string>关于 &amp; 致谢</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

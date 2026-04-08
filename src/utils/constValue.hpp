@@ -10,6 +10,10 @@ constexpr auto platform = MultiPlatform::linux;
 constexpr auto platform = MultiPlatform::mac;
 #endif
 
+#ifdef Q_OS_MAC
+const bool inMacSandbox = QProcessEnvironment::systemEnvironment().contains("APP_SANDBOX_CONTAINER_ID");
+#endif
+
 constexpr double m2ft{3.28084};
 constexpr double nm2m{1852};
 constexpr double avgEarthRadius{6371008.8};

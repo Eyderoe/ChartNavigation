@@ -8,6 +8,7 @@
 
 
 PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
+    initConnect();
     setPageMode(PageMode::SinglePage);
     setZoomMode(ZoomMode::Custom);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -76,11 +77,17 @@ void PdfView::closeXp () {
 
 void PdfView::initConnect () {
     const auto &setting = SettingsManager::instance();
+    // 存储设置
     connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
                 switch (key) {
-                    case SettingsManager::inopEnumItem_constKey: break;
-                    case SettingsManager::MainWindowGeo: break;
+                    case SettingsManager::inopEnumItem_constKey:
+                    case SettingsManager::spliterSta:
+                    case SettingsManager::MainWindowGeo:
+                    case SettingsManager::MainWidgetSta:
+                    case SettingsManager::stayFront:
+                    case SettingsManager::scaleBarEnable:
+                        break;
                     case SettingsManager::dataSource: {
                         switch (static_cast<SimulatorSource>(val.toInt())) {
                             case SimulatorSource::xplane:
@@ -95,6 +102,24 @@ void PdfView::initConnect () {
                             default:
                                 assert(false && "need to update switch case. [PdfView::initConnect]");
                         }
+                    }
+                    case SettingsManager::planeFollowed: {
+                        setCenterOn(val.toBool());
+                        break;
+                    }
+                    default:
+                        assert(false && "need to update switch case. [PdfView::initConnect]");
+                }
+            });
+    // 临时设置
+    connect(&setting, qOverload<SettingsManager::TempKey, const QVariant&>(&SettingsManager::settingChanged), this,
+            [this](const SettingsManager::TempKey key, const QVariant &val) {
+                switch (key) {
+                    case SettingsManager::inopEnumItem_tempKey:
+                        break;
+                    case SettingsManager::isDarkTheme: {
+                        setColorTheme(val.toBool());
+                        break;
                     }
                     default:
                         assert(false && "need to update switch case. [PdfView::initConnect]");

@@ -53,8 +53,8 @@ Tree::Tree (QWidget *parent) : QTreeWidget(parent) {
 
 /**
  * @brief 更改根目录操作
- * @param folder
- * @param mode
+ * @param folder 文件夹
+ * @param mode 显示模式
  */
 void Tree::switchFolder (const QString &folder, const DisplayFile mode) {
     // 前置准备

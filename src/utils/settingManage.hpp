@@ -12,7 +12,12 @@ class SettingsManager : public QObject {
         enum ConstKey { // 要持续性存储的
             inopEnumItem_constKey, // 兜底的怪东西
             MainWindowGeo, // 主窗口尺寸 ByteArray
+            MainWidgetSta, // 主窗口状态 ByteArray
+            spliterSta, // 分割器状态 ByteArray
             dataSource, // 数据源 SimulatorSource(int)
+            planeFollowed, // 居中飞机 bool
+            stayFront, // 置顶窗口 bool
+            scaleBarEnable, // 启用缩放条 bool
         };
         enum TempKey { // 仅在程序运行时存在的
             inopEnumItem_tempKey, // 兜底的怪东西
@@ -26,9 +31,9 @@ class SettingsManager : public QObject {
         void writeSetting ();
 
         void set (ConstKey key, const QVariant &value);
-        QVariant get (ConstKey key, const QVariant &defult = QVariant());
+        QVariant get (ConstKey key, const QVariant &defaultValue = QVariant());
         void set (TempKey key, const QVariant &value);
-        QVariant get (TempKey key, const QVariant &defult = QVariant());
+        QVariant get (TempKey key, const QVariant &defaultValue = QVariant());
     private:
         SettingsManager ();
         ~SettingsManager () override;

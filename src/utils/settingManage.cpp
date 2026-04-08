@@ -30,15 +30,15 @@ void SettingsManager::set (const ConstKey key, const QVariant &value) {
 /**
  * @brief 获取键值对(存储值)
  * @param key 键
- * @param defult 默认值
+ * @param defaultValue 默认值
  * @return 值
  */
-QVariant SettingsManager::get (const ConstKey key, const QVariant &defult) {
+QVariant SettingsManager::get (const ConstKey key, const QVariant &defaultValue) {
     const QString keyName = key2String_const(key);
     const auto it = cache_const.find(keyName);
     if (it == cache_const.end()) {
-        cache_const[keyName] = defult;
-        return defult;
+        cache_const[keyName] = defaultValue;
+        return defaultValue;
     } else {
         return it.value();
     }
@@ -65,15 +65,15 @@ void SettingsManager::set (const TempKey key, const QVariant &value) {
 /**
  * @brief 获取键值对(临时值)
  * @param key 键
- * @param defult 默认值
+ * @param defaultValue 默认值
  * @return 值
  */
-QVariant SettingsManager::get (TempKey key, const QVariant &defult) {
+QVariant SettingsManager::get (TempKey key, const QVariant &defaultValue) {
     const QString keyName = key2String_temp(key);
     const auto it = cache_const.find(keyName);
     if (it == cache_const.end()) {
-        cache_const[keyName] = defult;
-        return defult;
+        cache_const[keyName] = defaultValue;
+        return defaultValue;
     } else {
         return it.value();
     }
@@ -83,11 +83,33 @@ QVariant SettingsManager::get (TempKey key, const QVariant &defult) {
  * @brief 广播一次所有键值对(存储值)
  */
 void SettingsManager::broadcast () {
-    for (auto [key, value] : cache_const.asKeyValueRange()) {
-        const ConstKey enumItem = string2Key_const(key);
-        if (enumItem == ConstKey::inopEnumItem_constKey)
-            continue;
-        emit settingChanged(enumItem, value);
+    for (int i = 0; i < QMetaEnum::fromType<SettingsManager::ConstKey>().keyCount(); ++i) {
+        switch (const auto enumKey = static_cast<SettingsManager::ConstKey>(i)) {
+            case inopEnumItem_constKey:
+                break;
+
+            case MainWindowGeo:
+            case MainWidgetSta:
+            case spliterSta:
+                emit settingChanged(enumKey, get(enumKey, {}));
+                break;
+
+            case dataSource:
+                emit settingChanged(enumKey, get(enumKey, 0));
+                break;
+
+            case planeFollowed:
+            case stayFront:
+                emit settingChanged(enumKey, get(enumKey, true));
+                break;
+
+            case scaleBarEnable:
+                emit settingChanged(enumKey, get(enumKey, false));
+                break;
+
+            default:
+                assert(false && "need to update switch case. [SettingsManager::broadcast]");
+        }
     }
 }
 

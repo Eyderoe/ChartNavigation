@@ -187,6 +187,9 @@
    </property>
   </action>
   <action name="action_scale">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>显示缩放条</string>
    </property>

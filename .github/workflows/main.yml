@@ -87,6 +87,9 @@ jobs:
           New-Item -ItemType Directory -Force -Path $env:INSTALL_DIR | Out-Null
           Copy-Item $env:BUILD_DIR\$env:PROJECT_NAME.exe $env:INSTALL_DIR\
           Copy-Item $env:BUILD_DIR\*.dll $env:INSTALL_DIR\ -ErrorAction SilentlyContinue
+          if (Test-Path "$env:GITHUB_WORKSPACE\example") {
+            Copy-Item "$env:GITHUB_WORKSPACE\example" "$env:INSTALL_DIR\example" -Recurse -Force
+          }
           if (Test-Path "$env:QT_ROOT_DIR\bin\windeployqt.exe") {
             & "$env:QT_ROOT_DIR\bin\windeployqt.exe" --release --compiler-runtime $env:INSTALL_DIR\$env:PROJECT_NAME.exe
           }
@@ -166,8 +169,15 @@ jobs:
         env:
           PACKAGE_FILE: ${{ env.PROJECT_NAME }}-${{ steps.pkgdate.outputs.build_date }}.dmg
         run: |
-          macdeployqt "$BUILD_DIR/$PROJECT_NAME.app" -dmg -always-overwrite
-          mv "$BUILD_DIR/$PROJECT_NAME.dmg" "$BUILD_DIR/$PACKAGE_FILE"
+          PACKAGE_DIR="$BUILD_DIR/${PROJECT_NAME}-bundle"
+          rm -rf "$PACKAGE_DIR"
+          macdeployqt "$BUILD_DIR/$PROJECT_NAME.app" -always-overwrite
+          mkdir -p "$PACKAGE_DIR"
+          cp -R "$BUILD_DIR/$PROJECT_NAME.app" "$PACKAGE_DIR/"
+          if [ -d "$GITHUB_WORKSPACE/example" ]; then
+            cp -R "$GITHUB_WORKSPACE/example" "$PACKAGE_DIR/example"
+          fi
+          hdiutil create -volname "$PROJECT_NAME" -srcfolder "$PACKAGE_DIR" -ov -format UDZO "$BUILD_DIR/$PACKAGE_FILE"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -4,6 +4,7 @@
 #include "options_widget.hpp"
 #include "ui/enhancedTree.hpp"
 #include "ui/themeColor.hpp"
+#include "utils/settingManage.hpp"
 
 using namespace nlohmann;
 
@@ -15,17 +16,6 @@ void main_widget::readSettings () {
     // 窗口布局
     restoreGeometry(settings.value("main_widget_geometry").toByteArray());
     ui->splitter->restoreState(settings.value("main_splitter_state").toByteArray());
-    // 居中
-    // const bool center = settings.value("center_on", false).toBool();
-    // ui->follow_checkBox->setCheckState(center ? Qt::Checked : Qt::Unchecked);
-    // ui->pdf_widget->setCenterOn(center);
-    // // 置顶
-    // const bool top = settings.value("pin_top", false).toBool();
-    // ui->pin_checkBox->setCheckState(top ? Qt::Checked : Qt::Unchecked);
-    // on_pin_checkBox_clicked(top);
-    // // 单文件输入框
-    // const bool singleFileDisable = settings.value("singleFileDisable", true).toBool();
-    // ui->chart_lineEdit->setHidden(singleFileDisable);
     // 缩放比条
     const bool scaleBarEnable = settings.value("scaleBarEnable", false).toBool();
     ui->scale_verticalSlider->setHidden(!scaleBarEnable);
@@ -43,10 +33,6 @@ void main_widget::writeSettings () const {
     // 窗口布局
     settings.setValue("main_widget_geometry", saveGeometry());
     settings.setValue("main_splitter_state", ui->splitter->saveState());
-    // // 居中
-    // settings.setValue("center_on", ui->follow_checkBox->isChecked());
-    // // 置顶
-    // settings.setValue("pin_top", ui->pin_checkBox->isChecked());
 }
 
 /**
@@ -65,6 +51,30 @@ void main_widget::initFileTree () const {
     }
 }
 
+void main_widget::initConnect () {
+    const auto &setting = SettingsManager::instance();
+    // 存储设置
+    connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
+            [this](const SettingsManager::ConstKey key, const QVariant &val) {
+                switch (key) {
+                    case SettingsManager::inopEnumItem_constKey:
+                    case SettingsManager::spliterSta:
+                    case SettingsManager::MainWindowGeo:
+                    case SettingsManager::MainWidgetSta:
+                    case SettingsManager::dataSource:
+                    case SettingsManager::planeFollowed:
+                    case SettingsManager::stayFront:
+                        break;
+                    case SettingsManager::scaleBarEnable: {
+                        ui->scale_verticalSlider->setHidden(!val.toBool());
+                        break;
+                    }
+                    default:
+                        assert(false && "need to update switch case. [main_widget::initConnect]");
+                }
+            });
+}
+
 main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_widget) {
     // 构件初始化
     ui->setupUi(this);
@@ -74,7 +84,7 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     ui->pageNum_spinBox->setSpecialValueText("--");
     ui->pageNum_spinBox->setEnabled(false);
     // 设置
-    readSettings();
+    initConnect();
     // 构建目录
     ui->treeWidget->setIconSize(QSize(48, 64));
     ui->treeWidget->setHeaderHidden(true);
@@ -82,7 +92,7 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
 }
 
 main_widget::~main_widget () {
-    writeSettings();
+    // writeSettings();
     delete ui;
 }
 
@@ -113,6 +123,12 @@ void main_widget::loadPdfFile (const QString &filePath) {
     loadPdfFileMapping();
     on_pageNum_spinBox_valueChanged(0);
 }
+
+/**
+ * @brief 加载文件夹
+ * @param folder 文件夹
+ */
+void main_widget::loadFolder (const QString &folder) {}
 
 /**
  * @brief 从映射文件中加载仿射变换数据(一个机场文件的数据)
@@ -179,45 +195,6 @@ main_widget::MappingInfo main_widget::loadPdfPageMapping (const int pageNum) {
 }
 
 /**
- * @brief 文件路径输入框 -> 加载PDF文档
- */
-void main_widget::on_chart_lineEdit_editingFinished () {
-    // loadPdfFile(ui->chart_lineEdit->text());
-}
-
-/**
- * @brief 暗色主题选中框
- * @param checked 是否选中
- */
-void main_widget::on_dark_checkBox_clicked (const bool checked) const {
-    // if (checked || (QApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark)) {
-    //     setTheme(Qt::ColorScheme::Dark);
-    //     ui->dark_checkBox->setCheckState(Qt::Checked);
-    // } else
-    //     setTheme(Qt::ColorScheme::Light);
-}
-
-/**
- * @brief 机模跟踪选中框
- * @param checked 是否选中
- */
-void main_widget::on_follow_checkBox_clicked (const bool checked) const {
-    ui->pdf_widget->setCenterOn(checked);
-}
-
-/**
- * @brief 程序窗口是否置顶
- * @param checked 是否选中
- */
-void main_widget::on_pin_checkBox_clicked (const bool checked) {
-    if (checked)
-        setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
-    else
-        setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
-    show();
-}
-
-/**
  * @brief PDF文档页数切换
  * @param pageNum 页数(起始为1)
  */
@@ -237,16 +214,6 @@ void main_widget::on_pageNum_spinBox_valueChanged (const int pageNum) {
     // 映射数据加载
     const auto [data, rotate,threshold] = loadPdfPageMapping(pageNumCorrect);
     ui->pdf_widget->loadMappingData(data, rotate, threshold);
-}
-
-/**
- * @brief 打开设置窗口
- */
-void main_widget::on_license_radioButton_clicked () {
-    const auto options = new options_widget(this);
-    options->setWindowFlags(Qt::Window);
-    options->show();
-    options->setAttribute(Qt::WA_DeleteOnClose);
 }
 
 /**
