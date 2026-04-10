@@ -11,641 +11,235 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ChartNavigation-设置</string>
+   <string>设置</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_7">
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QWidget" name="widget" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="widgetResizable">
+      <bool>true</bool>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <property name="rightMargin">
-       <number>0</number>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>836</width>
+        <height>604</height>
+       </rect>
       </property>
-      <item>
-       <widget class="QListWidget" name="header_listWidget">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="verticalScrollBarPolicy">
-         <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-        </property>
-        <property name="horizontalScrollBarPolicy">
-         <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-        </property>
-        <property name="sizeAdjustPolicy">
-         <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
-        </property>
-        <item>
-         <property name="text">
-          <string>常规</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>关于</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QStackedWidget" name="stackedWidget">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <widget class="QWidget" name="common_page">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-        <widget class="QScrollArea" name="scrollArea">
-         <property name="widgetResizable">
-          <bool>true</bool>
+        <widget class="QLabel" name="label_master_caution">
+         <property name="text">
+          <string>部分设置只在重启后生效。</string>
          </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>716</width>
-            <height>774</height>
-           </rect>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_3">
-           <item>
-            <widget class="QLabel" name="label_master_caution">
-             <property name="text">
-              <string>修改设置后，重启生效。</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="common_groupBox">
-             <property name="title">
-              <string>常规</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_8">
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_8">
-                <item>
-                 <widget class="QLabel" name="label_22">
-                  <property name="text">
-                   <string>⚪ 单文件路径输入框：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="singleFileDisable_checkBox">
-                  <property name="text">
-                   <string>禁用</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_remark_5">
-                <property name="text">
-                 <string>启用后显示输入框，通过文件路径浏览单文件。</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_12">
-                <item>
-                 <widget class="QLabel" name="label_5">
-                  <property name="text">
-                   <string>⚪ PDF浏览缩放条：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="pdfScaleBar_checkBox">
-                  <property name="text">
-                   <string>启用</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_remark_9">
-                <property name="text">
-                 <string>启用后显示比例条，控制PDF缩放。</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_13">
-                <item>
-                 <widget class="QLabel" name="label_6">
-                  <property name="text">
-                   <string>⚪ 飞行器数据源：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="dataSource_comboBox">
-                  <item>
-                   <property name="text">
-                    <string>XPlane</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>MSFS</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>局域网</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>无</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>测试</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_7">
-                <property name="text">
-                 <string>自身以及其他飞行器的数据源。</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="path_groupBox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="title">
-              <string>路径</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_4">
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_2">
-                <item>
-                 <widget class="QLabel" name="label">
-                  <property name="text">
-                   <string>⚪ 航图文件夹：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLineEdit" name="chartFolder_lineEdit"/>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_remark_7">
-                <property name="text">
-                 <string>放置航图的文件夹，多个文件夹以*间隔，程序启动时会遍历其中所有文件。</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_3">
-                <item>
-                 <widget class="QLabel" name="label_2">
-                  <property name="text">
-                   <string>⚪ 映射数据文件夹：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLineEdit" name="mappingFoler_lineEdit"/>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_remark_8">
-                <property name="text">
-                 <string>放置映射文件的文件夹，文件以机场为单位名称为ICAO.Tmap，具体参照example目录下示例。</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_10">
-                <item>
-                 <widget class="QLabel" name="label_26">
-                  <property name="text">
-                   <string>⚪ 文件显示选项：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="thumb_checkBox">
-                  <property name="text">
-                   <string>显示缩略图</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="onlyPdf_comboBox">
-                  <item>
-                   <property name="text">
-                    <string>仅PDF</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>PDF和图片</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>所有文件</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_remark_6">
-                <property name="text">
-                 <string>文件树中对文件类型的筛选。</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="mapping_groupBox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="title">
-              <string>映射</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_5">
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_4">
-                <item>
-                 <widget class="QLabel" name="label_3">
-                  <property name="text">
-                   <string>⚪ XPlane刷新率：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QSpinBox" name="xpFreq_spinBox">
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>60</number>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_remark_2">
-                <property name="text">
-                 <string>更新机模数据的频率，上限为XPlane自身帧率。</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_11">
-                <item>
-                 <widget class="QLabel" name="label_28">
-                  <property name="text">
-                   <string>⚪ TCAS以及原始高度：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="tcas_comboBox">
-                  <item>
-                   <property name="text">
-                    <string>30NM±9900ft</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>6NM±1200ft</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>不显示</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>显示所有</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="alt_comboBox">
-                  <item>
-                   <property name="text">
-                    <string>不显示原始高度</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>英制高度(ft)</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>米制高度(米)</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_remark_4">
-                <property name="text">
-                 <string>TCAS启用后显示其他飞行器的范围，以及是否显示原始高度。</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_9">
-                <item>
-                 <widget class="QLabel" name="label_24">
-                  <property name="text">
-                   <string>⚪ 居中同步频率：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QSpinBox" name="centerFreq_spinBox">
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>60</number>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_remark">
-                <property name="text">
-                 <string>启用居中机模后，尝试居中的频率。</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_5">
-                <item>
-                 <widget class="QLabel" name="label_4">
-                  <property name="text">
-                   <string>⚪ 异常值算法：</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="comboBox">
-                  <item>
-                   <property name="text">
-                    <string>[INOP]</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_remark_3">
-                <property name="text">
-                 <string>筛选映射文件中的异常值，只会在加载时筛选，不会修改文件。</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </widget>
         </widget>
        </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="info_page">
-      <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QScrollArea" name="scrollArea_2">
-         <property name="widgetResizable">
-          <bool>true</bool>
+        <widget class="QGroupBox" name="path_groupBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents_2">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>716</width>
-            <height>580</height>
-           </rect>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_7">
-           <item>
-            <widget class="QGroupBox" name="chartNavi_groupBox">
-             <property name="title">
-              <string>本程序</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_6">
+         <property name="title">
+          <string>文件</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>⚪ 航图文件夹：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="chartFolder_lineEdit"/>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_remark_7">
+            <property name="text">
+             <string>放置航图的文件夹，多个文件夹以*间隔，程序启动时会遍历其中所有文件。</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QLabel" name="label_2">
+              <property name="text">
+               <string>⚪ 映射数据文件夹：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="mappingFoler_lineEdit"/>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_remark_8">
+            <property name="text">
+             <string>放置映射文件的文件夹，文件以机场为单位名称为ICAO.Tmap，具体参照example目录下示例。</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
+            <item>
+             <widget class="QLabel" name="label_26">
+              <property name="text">
+               <string>⚪ 文件显示选项：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="onlyPdf_comboBox">
               <item>
-               <widget class="QLabel" name="label_9">
-                <property name="text">
-                 <string>CharNavigation</string>
-                </property>
-               </widget>
+               <property name="text">
+                <string>仅PDF</string>
+               </property>
               </item>
               <item>
-               <widget class="QLabel" name="label_10">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>基于GPLv3的免费开源软件，Eyderoe。2025-2026</string>
-                </property>
-               </widget>
+               <property name="text">
+                <string>所有文件</string>
+               </property>
               </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="otherLib_groupBox">
-             <property name="title">
-              <string>致谢</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_6">
-              <item>
-               <layout class="QGridLayout" name="gridLayout">
-                <item row="2" column="0">
-                 <widget class="QLabel" name="label_13">
-                  <property name="text">
-                   <string>eyderoe/*</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="0">
-                 <widget class="QLabel" name="label_17">
-                  <property name="text">
-                   <string>Qt</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_11">
-                  <property name="text">
-                   <string>Boost</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QLabel" name="label_12">
-                  <property name="text">
-                   <string>BSD</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0">
-                 <widget class="QLabel" name="label_15">
-                  <property name="text">
-                   <string>nlohmann-json</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="1">
-                 <widget class="QLabel" name="label_18">
-                  <property name="text">
-                   <string>LGPLv3/GPLv3</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="1">
-                 <widget class="QLabel" name="label_20">
-                  <property name="text">
-                   <string>MIT</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="0">
-                 <widget class="QLabel" name="label_19">
-                  <property name="text">
-                   <string>QDarkStyleSheet</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1">
-                 <widget class="QLabel" name="label_16">
-                  <property name="text">
-                   <string>MIT</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QLabel" name="label_14">
-                  <property name="text">
-                   <string>GPLv3</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="label_8">
-                  <property name="text">
-                   <string>Eigen</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QLabel" name="label_21">
-                  <property name="text">
-                   <string>MPL2</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>276</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </widget>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_remark_6">
+            <property name="text">
+             <string>文件树中对文件类型的筛选。</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="mapping_groupBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>映射</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_11">
+            <item>
+             <widget class="QLabel" name="label_28">
+              <property name="text">
+               <string>⚪ TCAS以及原始高度：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="tcas_comboBox">
+              <item>
+               <property name="text">
+                <string>30NM±9900ft</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>6NM±1200ft</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>不显示</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>显示所有</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="alt_comboBox">
+              <item>
+               <property name="text">
+                <string>不显示原始高度</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>英制高度(ft)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>米制高度(米)</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_remark_4">
+            <property name="text">
+             <string>TCAS启用后显示其他飞行器的范围，以及是否显示原始高度。</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QLabel" name="label_4">
+              <property name="text">
+               <string>⚪ 异常值算法：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="comboBox">
+              <item>
+               <property name="text">
+                <string>[INOP]</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_remark_3">
+            <property name="text">
+             <string>筛选映射文件中的异常值，只会在加载时筛选，不会修改文件。</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>

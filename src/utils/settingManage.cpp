@@ -13,8 +13,9 @@ SettingsManager& SettingsManager::instance () {
  * @brief 设置键值对(存储值)
  * @param key 键
  * @param value 值
+ * @param notEmit 是否不发射
  */
-void SettingsManager::set (const ConstKey key, const QVariant &value) {
+void SettingsManager::set (const ConstKey key, const QVariant &value, const bool notEmit) {
     const QString keyName = key2String_const(key);
     const auto it = cache_const.find(keyName);
     if (it != cache_const.end()) {
@@ -24,6 +25,8 @@ void SettingsManager::set (const ConstKey key, const QVariant &value) {
     } else {
         cache_const[keyName] = value;
     }
+    if (notEmit)
+        return;
     emit settingChanged(key, value);
 }
 
@@ -48,8 +51,9 @@ QVariant SettingsManager::get (const ConstKey key, const QVariant &defaultValue)
  * @brief 设置键值对(临时值)
  * @param key 键
  * @param value 值
+ * @param notEmit 是否不发射
  */
-void SettingsManager::set (const TempKey key, const QVariant &value) {
+void SettingsManager::set (const TempKey key, const QVariant &value, bool notEmit) {
     const QString keyName = key2String_temp(key);
     const auto it = cache_temp.find(keyName);
     if (it != cache_temp.end()) {
@@ -59,6 +63,8 @@ void SettingsManager::set (const TempKey key, const QVariant &value) {
     } else {
         cache_temp[keyName] = value;
     }
+    if (notEmit)
+        return;
     emit settingChanged(key, value);
 }
 
@@ -90,6 +96,7 @@ void SettingsManager::broadcast () {
 
             case MainWindowGeo:
             case MainWidgetSta:
+            case OptionWidgetGeo:
             case spliterSta:
                 emit settingChanged(enumKey, get(enumKey, {}));
                 break;

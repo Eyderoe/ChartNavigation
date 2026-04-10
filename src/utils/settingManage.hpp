@@ -13,6 +13,7 @@ class SettingsManager : public QObject {
             inopEnumItem_constKey, // 兜底的怪东西
             MainWindowGeo, // 主窗口尺寸 ByteArray
             MainWidgetSta, // 主窗口状态 ByteArray
+            OptionWidgetGeo, // 设置窗口尺寸 ByteArray
             spliterSta, // 分割器状态 ByteArray
             dataSource, // 数据源 SimulatorSource(int)
             planeFollowed, // 居中飞机 bool
@@ -30,9 +31,9 @@ class SettingsManager : public QObject {
         void broadcast ();
         void writeSetting ();
 
-        void set (ConstKey key, const QVariant &value);
+        void set (ConstKey key, const QVariant &value, bool notEmit = false);
         QVariant get (ConstKey key, const QVariant &defaultValue = QVariant());
-        void set (TempKey key, const QVariant &value);
+        void set (TempKey key, const QVariant &value, bool notEmit = false);
         QVariant get (TempKey key, const QVariant &defaultValue = QVariant());
     private:
         SettingsManager ();

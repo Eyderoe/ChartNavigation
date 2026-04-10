@@ -4,14 +4,16 @@
 #include <QWidget>
 
 QT_BEGIN_NAMESPACE
+
 namespace Ui
 {
 class options_widget;
 }
+
 QT_END_NAMESPACE
 
 class options_widget final : public QWidget {
-    Q_OBJECT
+        Q_OBJECT
     public:
         explicit options_widget (QWidget *parent = nullptr);
         ~options_widget () override;
@@ -21,8 +23,8 @@ class options_widget final : public QWidget {
         void readSettings ();
         void writeSettings () const;
         void setFontSize () const;
-    private Q_SLOTS:
-        void on_header_listWidget_currentRowChanged(int currentRow) const;
+        void initConnect();
+        void closeEvent (QCloseEvent *event) override;
 };
 
 

@@ -26,10 +26,10 @@ class main_widget final : public QWidget {
         };
     public:
         explicit main_widget (QWidget *parent = nullptr);
-        ~main_widget () override;
 
         void loadPdfFile (const QString &filePath);
-        void loadFolder(const QString& folder);
+        void loadFolder (const QString &folder);
+        void saveSplitter() const;
     private:
         Ui::main_widget *ui;
         QPdfDocument *document;
@@ -41,11 +41,11 @@ class main_widget final : public QWidget {
         void readSettings ();
         void writeSettings () const;
         void initFileTree () const;
-        void initConnect();
+        void initConnect ();
     private Q_SLOTS:
         void on_pageNum_spinBox_valueChanged (int pageNum); // PDF文档页数切换
         void on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int column); // 文件树选择 -> 加载PDF文档
-        void on_folder_comboBox_currentIndexChanged (int index) const; // 更换航图文件夹
+        void on_folder_comboBox_currentIndexChanged (int index); // 更换航图文件夹
         void on_scale_verticalSlider_valueChanged (int value);
 };
 

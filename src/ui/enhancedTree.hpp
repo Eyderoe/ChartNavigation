@@ -14,13 +14,10 @@ concept NodeT = std::is_base_of_v<QTreeWidgetItem, T> || std::is_base_of_v<QTree
 
 bool shouldRetain (const QString &path, DisplayFile displayMode);
 template <typename NodeT>
-void traverseRead (const QDir &folder, NodeT *parentNode, DisplayFile displayMode, int depth = 0);
+void traverseRead (const QDir &folder, NodeT *parentNode, int depth = 0);
 
 const static std::set<QString> picFormat{".pdf", ".png", ".jpg", ".jpeg"};
 
-enum class DisplayFile:int {
-    onlyPdf, pdfWithPic, all
-};
 
 class Node final : public QTreeWidgetItem {
     public:
@@ -35,10 +32,10 @@ class Tree final : public QTreeWidget {
     public:
         Tree ();
         explicit Tree (QWidget *parent = nullptr);
-        void switchFolder(const QString &folder,DisplayFile mode);
+        void loadFolder (const QString &folder);
     private:
         QTemporaryDir tempDir;
-        std::set<QTreeWidgetItem*> children;
+        QSet<QTreeWidgetItem*> children;
 
         QCoro::Task<> loadThumb (QTreeWidgetItem *item) const;
 };
@@ -49,22 +46,19 @@ class Tree final : public QTreeWidget {
  * @tparam NodeT 父节点类,根树或节点
  * @param folder 父文件夹
  * @param parentNode 父节点
- * @param displayMode 文件筛选器
  * @param depth 当前深度,最大深度4
  */
 template <typename NodeT>
-void traverseRead (const QDir &folder, NodeT *parentNode, const DisplayFile displayMode, const int depth) {
+void traverseRead (const QDir &folder, NodeT *parentNode, const int depth) {
     if (depth > 4)
         return;
     // 获取子文件夹/文件
-    QStringList files = folder.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+    QStringList files = folder.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot
+                                         , QDir::DirsFirst | QDir::Name);
     std::vector<Node*> nodes;
     for (auto &fileName : files) {
         QString child{folder.filePath(fileName)};
         if (QFileInfo info(child); info.isFile()) {
-            // 文件后缀审查
-            if (const bool ignore = shouldRetain(child, displayMode); ignore)
-                continue;
             // 添加到节点集
             nodes.emplace_back(new Node(child, info.completeBaseName(), false));
         } else
@@ -82,7 +76,7 @@ void traverseRead (const QDir &folder, NodeT *parentNode, const DisplayFile disp
     // 遍历
     for (const auto node : nodes) {
         if (node->isFolder)
-            traverseRead(node->baseDir, node, displayMode, depth + 1);
+            traverseRead(node->baseDir, node, depth + 1);
     }
 }
 

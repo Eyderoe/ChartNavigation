@@ -58,15 +58,19 @@ void main_widget::initConnect () {
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
                 switch (key) {
                     case SettingsManager::inopEnumItem_constKey:
-                    case SettingsManager::spliterSta:
                     case SettingsManager::MainWindowGeo:
                     case SettingsManager::MainWidgetSta:
+                    case SettingsManager::OptionWidgetGeo:
                     case SettingsManager::dataSource:
                     case SettingsManager::planeFollowed:
                     case SettingsManager::stayFront:
                         break;
                     case SettingsManager::scaleBarEnable: {
                         ui->scale_verticalSlider->setHidden(!val.toBool());
+                        break;
+                    }
+                    case SettingsManager::spliterSta: {
+                        ui->splitter->restoreState(val.toByteArray());
                         break;
                     }
                     default:
@@ -89,11 +93,6 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     ui->treeWidget->setIconSize(QSize(48, 64));
     ui->treeWidget->setHeaderHidden(true);
     initFileTree();
-}
-
-main_widget::~main_widget () {
-    // writeSettings();
-    delete ui;
 }
 
 /**
@@ -128,7 +127,18 @@ void main_widget::loadPdfFile (const QString &filePath) {
  * @brief 加载文件夹
  * @param folder 文件夹
  */
-void main_widget::loadFolder (const QString &folder) {}
+void main_widget::loadFolder (const QString &folder) {
+    const auto tree = static_cast<Tree*>(ui->treeWidget);
+    tree->loadFolder(folder);
+}
+
+/**
+ * @brief 保存分割buju
+ * @note 改为 QMainWindows 后, closeEvent 无效
+ */
+void main_widget::saveSplitter () const {
+    SettingsManager::instance().set(SettingsManager::spliterSta, ui->splitter->saveState(), true);
+}
 
 /**
  * @brief 从映射文件中加载仿射变换数据(一个机场文件的数据)
@@ -232,11 +242,8 @@ void main_widget::on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int co
  * @brief 切换文件树文件夹
  * @param index 文件夹索引
  */
-void main_widget::on_folder_comboBox_currentIndexChanged (const int index) const {
-    const QSettings settings;
-    const auto tree = static_cast<Tree*>(ui->treeWidget);
-    tree->switchFolder(ui->folder_comboBox->itemData(index).toString(),
-                       static_cast<DisplayFile>(settings.value("displayFile", 0).toInt()));
+void main_widget::on_folder_comboBox_currentIndexChanged (const int index) {
+    loadFolder(ui->folder_comboBox->itemData(index).toString());
 }
 
 void main_widget::on_scale_verticalSlider_valueChanged (int value) {}

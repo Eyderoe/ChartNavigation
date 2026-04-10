@@ -2,25 +2,6 @@
 #include <QtConcurrent>
 #include <QTemporaryDir>
 
-/**
- * @brief 检查是否需要该文件
- * @return 需要丢弃
- */
-bool shouldRetain (const QString &path, const DisplayFile displayMode) {
-    switch (displayMode) {
-        case DisplayFile::onlyPdf:
-            if (!path.endsWith(".pdf", Qt::CaseInsensitive))
-                return true;
-        case DisplayFile::pdfWithPic:
-            return std::ranges::none_of(picFormat, [&](const auto &suffix) {
-                return path.endsWith(suffix, Qt::CaseInsensitive);
-            });
-        case DisplayFile::all:
-            return false;
-        default:
-            return false;
-    }
-}
 
 Node::Node (QString baseDir, const QString &name, const bool isFolder) : baseDir(std::move(baseDir)),
                                                                          isFolder(isFolder) {
@@ -52,19 +33,17 @@ Tree::Tree (QWidget *parent) : QTreeWidget(parent) {
 }
 
 /**
- * @brief 更改根目录操作
+ * @brief 加载某个根目录
  * @param folder 文件夹
- * @param mode 显示模式
  */
-void Tree::switchFolder (const QString &folder, const DisplayFile mode) {
+void Tree::loadFolder (const QString &folder) {
     // 前置准备
     children.clear();
     clear();
     // 运行
-    traverseRead(folder, this, mode);
+    traverseRead(folder, this);
     // 后置操作
-    QList<QTreeWidgetItem*> allItems = findItems("", Qt::MatchContains | Qt::MatchRecursive);
-    for (auto item : allItems)
+    for (auto item : findItems("", Qt::MatchContains | Qt::MatchRecursive))
         children.insert(item);
 }
 

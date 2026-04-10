@@ -27,7 +27,7 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     else
         throw std::invalid_argument("inop adapter");
     // xplane
-    xpInit();
+    simuInit();
     // 定时器
     const int centerFreq = settings.value("center_freq", 1).toInt();
     simuUpdateTimer.setInterval(1000 / centerFreq);
@@ -85,23 +85,13 @@ void PdfView::initConnect () {
                     case SettingsManager::spliterSta:
                     case SettingsManager::MainWindowGeo:
                     case SettingsManager::MainWidgetSta:
+                    case SettingsManager::OptionWidgetGeo:
                     case SettingsManager::stayFront:
                     case SettingsManager::scaleBarEnable:
                         break;
                     case SettingsManager::dataSource: {
-                        switch (static_cast<SimulatorSource>(val.toInt())) {
-                            case SimulatorSource::xplane:
-                                connector = std::make_unique<xpAdapter>();
-                                break;
-                            case SimulatorSource::wlan:
-                                connector = std::make_unique<wlanAdapter>();
-                                break;
-                            case SimulatorSource::real:
-                                connector = std::make_unique<realAdapter>();
-                                break;
-                            default:
-                                assert(false && "need to update switch case. [PdfView::initConnect]");
-                        }
+                        setConnector(val.toInt());
+                        break;
                     }
                     case SettingsManager::planeFollowed: {
                         setCenterOn(val.toBool());
@@ -408,9 +398,9 @@ void PdfView::simuInfoUpdate () {
 }
 
 /**
- * @brief 初始化xp的一些东西
+ * @brief 初始化模拟器的一些东西
  */
-void PdfView::xpInit () {
+void PdfView::simuInit () {
     const QSettings settings;
     const int infoFreq = settings.value("xp_freq", 1).toInt();
     // AI或多人
@@ -426,4 +416,20 @@ void PdfView::xpInit () {
         this->connected = state;
         qDebug() << "XPlane change state: " << state;
     });
+}
+
+void PdfView::setConnector (int value) {
+    switch (static_cast<SimulatorSource>(value)) {
+        case SimulatorSource::xplane:
+            connector = std::make_unique<xpAdapter>();
+            break;
+        case SimulatorSource::wlan:
+            connector = std::make_unique<wlanAdapter>();
+            break;
+        case SimulatorSource::real:
+            connector = std::make_unique<realAdapter>();
+            break;
+        default:
+            assert(false && "need to update switch case. [PdfView::setConnector]");
+    }
 }

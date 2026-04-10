@@ -4,6 +4,7 @@
 
 #include "main_widget.hpp"
 #include "ui_main_window.h"
+#include "options_widget.hpp"
 #include "ui/themeColor.hpp"
 #include "utils/settingManage.hpp"
 #include "about_dialog.hpp"
@@ -26,14 +27,6 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
     ins.set(SettingsManager::isDarkTheme, isDark);
 }
 
-main_window::~main_window () {
-    SettingsManager &ins = SettingsManager::instance();
-    ins.set(SettingsManager::MainWindowGeo, saveGeometry());
-    ins.set(SettingsManager::MainWidgetSta, saveState());
-
-    delete ui;
-}
-
 /**
  * @brief 设置色彩主题
  * @param colorScheme 色彩主题 0u 1light 2dark
@@ -47,20 +40,25 @@ void main_window::setTheme (const Qt::ColorScheme colorScheme) {
 }
 
 void main_window::closeEvent (QCloseEvent *event) {
+    const auto centralWidget = dynamic_cast<main_widget*>(this->centralWidget());
+    centralWidget->saveSplitter();
     SettingsManager &manager = SettingsManager::instance();
-    manager.set(SettingsManager::MainWindowGeo, "");
+    manager.set(SettingsManager::MainWindowGeo, saveGeometry(), true);
+    manager.set(SettingsManager::MainWidgetSta, saveState(), true);
+
     manager.writeSetting();
     QMainWindow::closeEvent(event);
 }
 
 void main_window::initConnect () {
-    auto &setting = SettingsManager::instance();
+    const auto &setting = SettingsManager::instance();
     // 存储设置
     connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
                 switch (key) {
                     case SettingsManager::inopEnumItem_constKey:
                     case SettingsManager::spliterSta:
+                    case SettingsManager::OptionWidgetGeo:
                         break;
                     case SettingsManager::MainWindowGeo: {
                         restoreGeometry(val.toByteArray());
@@ -126,11 +124,20 @@ void main_window::initConnect () {
         const auto dialog = new about_dialog(this);
         dialog->show();
     });
+    connect(ui->action_setting, &QAction::triggered, this, [&] () {
+        const auto options = new options_widget(this);
+        options->setWindowFlags(Qt::Window);
+        options->show();
+        options->setAttribute(Qt::WA_DeleteOnClose);
+    });
     connect(ui->action_dark, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::isDarkTheme, checked);
     });
     connect(ui->action_scale, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::scaleBarEnable, checked);
+    });
+    connect(ui->action_top, &QAction::triggered, this, [&](const bool checked) {
+        SettingsManager::instance().set(SettingsManager::stayFront, checked);
     });
     connect(sourceGroup, &QActionGroup::triggered, this, [&](const QAction *action) {
         if (action == ui->action_source_XPlane)
@@ -180,9 +187,9 @@ void main_window::openFolder () {
     option = option | QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
     const QString dir = QFileDialog::getExistingDirectory(this, "选择文件夹", QDir::homePath()
                                                           , option);
-    if (!dir.isEmpty())
+    if (dir.isEmpty())
         return;
     // 读取文件夹
     const auto widget = dynamic_cast<main_widget*>(centralWidget());
-    qDebug() << "没写完 [main_window::openFolder]";
+    widget->loadFolder(dir);
 }

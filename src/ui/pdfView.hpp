@@ -30,11 +30,12 @@ class PdfView final : public QPdfView {
         void mouseMoveEvent (QMouseEvent *event) override;
         void mouseReleaseEvent (QMouseEvent *event) override;
         void paintEvent (QPaintEvent *event) override;
-        // x-plane部分
+        // 模拟器部分
         std::pair<double, double> trans (double latitude, double longitude);
         void drawPlane (QPainter &painter, int idx = 0);
         void simuInfoUpdate ();
-        void xpInit ();
+        void simuInit ();
+        void setConnector(int value);
         // 杂
         [[nodiscard]] QSizeF getDocSize () const;
 
