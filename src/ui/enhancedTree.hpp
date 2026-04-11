@@ -5,18 +5,14 @@
 #include <qcoro/QCoroCore>
 
 
-enum class DisplayFile;
 class Node;
 class Tree;
 
 template <typename T>
 concept NodeT = std::is_base_of_v<QTreeWidgetItem, T> || std::is_base_of_v<QTreeWidget, T>;
 
-bool shouldRetain (const QString &path, DisplayFile displayMode);
 template <typename NodeT>
 void traverseRead (const QDir &folder, NodeT *parentNode, int depth = 0);
-
-const static std::set<QString> picFormat{".pdf", ".png", ".jpg", ".jpeg"};
 
 
 class Node final : public QTreeWidgetItem {

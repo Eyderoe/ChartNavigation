@@ -58,8 +58,27 @@
      <addaction name="action_source_wlan"/>
      <addaction name="action_source_real"/>
     </widget>
+    <widget class="QMenu" name="menu_5">
+     <property name="title">
+      <string>TCAS</string>
+     </property>
+     <addaction name="action_tcas_nm30"/>
+     <addaction name="action_tcas_nm6"/>
+     <addaction name="action_tcas_none"/>
+     <addaction name="action_tcas_all"/>
+    </widget>
+    <widget class="QMenu" name="menu_6">
+     <property name="title">
+      <string>高度显示</string>
+     </property>
+     <addaction name="action_alt_none"/>
+     <addaction name="action_alt_feet"/>
+     <addaction name="action_alt_meter"/>
+    </widget>
     <addaction name="action_follow"/>
     <addaction name="menu_4"/>
+    <addaction name="menu_5"/>
+    <addaction name="menu_6"/>
    </widget>
    <addaction name="menu_file"/>
    <addaction name="menu"/>
@@ -254,6 +273,74 @@
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_tcas_nm30">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>30NM,9900ft</string>
+   </property>
+   <property name="toolTip">
+    <string>水平30NM垂直9900ft</string>
+   </property>
+  </action>
+  <action name="action_tcas_nm6">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>6NM,1200ft</string>
+   </property>
+   <property name="toolTip">
+    <string>水平6NM垂直1200ft</string>
+   </property>
+  </action>
+  <action name="action_tcas_all">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>显示所有</string>
+   </property>
+   <property name="toolTip">
+    <string>显示所有飞行器</string>
+   </property>
+  </action>
+  <action name="action_tcas_none">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>不显示</string>
+   </property>
+   <property name="toolTip">
+    <string>不显示其他飞行器</string>
+   </property>
+  </action>
+  <action name="action_alt_none">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>不显示</string>
+   </property>
+  </action>
+  <action name="action_alt_feet">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>英尺(ft)</string>
+   </property>
+  </action>
+  <action name="action_alt_meter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>米(m)</string>
    </property>
   </action>
  </widget>

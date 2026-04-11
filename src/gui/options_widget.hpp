@@ -16,14 +16,11 @@ class options_widget final : public QWidget {
         Q_OBJECT
     public:
         explicit options_widget (QWidget *parent = nullptr);
-        ~options_widget () override;
     private:
         Ui::options_widget *ui;
 
-        void readSettings ();
-        void writeSettings () const;
+        void readSettings () const;
         void setFontSize () const;
-        void initConnect();
         void closeEvent (QCloseEvent *event) override;
 };
 

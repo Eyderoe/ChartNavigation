@@ -10,13 +10,14 @@
 #include "about_dialog.hpp"
 #include "connector/allAdapter.hpp"
 #include "utils/constValue.hpp"
+#include "ui/pdfView.hpp"
 
 
 main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::main_window) {
     ui->setupUi(this);
     setCentralWidget(new main_widget(this));
     // 初始化动作组
-    initAction();
+    initActionGroup();
     // 连接信号
     initConnect();
     // 更新所有设置
@@ -50,45 +51,82 @@ void main_window::closeEvent (QCloseEvent *event) {
     QMainWindow::closeEvent(event);
 }
 
+void main_window::setDataSourceGroup (int val) const {
+    switch (static_cast<SimulatorSource>(val)) {
+        case SimulatorSource::xplane:
+            ui->action_source_XPlane->setChecked(true);
+            break;
+        case SimulatorSource::wlan:
+            ui->action_source_wlan->setChecked(true);
+            break;
+        case SimulatorSource::real:
+            ui->action_source_real->setChecked(true);
+            break;
+        default:
+            assert(false && "need to update switch case. [main_window::setDataSource]");
+    }
+}
+
+void main_window::setTcasRangeGroup (int val) const {
+    switch (static_cast<TcasMode>(val)) {
+        case TcasMode::nm30:
+            ui->action_tcas_nm30->setChecked(true);
+            break;
+        case TcasMode::nm6:
+            ui->action_tcas_nm6->setChecked(true);
+            break;
+        case TcasMode::none:
+            ui->action_tcas_none->setChecked(true);
+            break;
+        case TcasMode::all:
+            ui->action_tcas_all->setChecked(true);
+            break;
+        default:
+            assert(false && "need to update switch case. [main_window::setTcasRange]");
+    }
+}
+
+void main_window::setAltModeGroup (int val) const {
+    switch (static_cast<AltMode>(val)) {
+        case AltMode::none:
+            ui->action_alt_none->setChecked(true);
+            break;
+        case AltMode::feet:
+            ui->action_alt_feet->setChecked(true);
+            break;
+        case AltMode::meter:
+            ui->action_alt_meter->setChecked(true);
+            break;
+        default:
+            assert(false && "need to update switch case. [main_window::setAltModeGroup]");
+    }
+}
+
 void main_window::initConnect () {
     const auto &setting = SettingsManager::instance();
     // 存储设置
     connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
                 switch (key) {
-                    case SettingsManager::inopEnumItem_constKey:
-                    case SettingsManager::spliterSta:
-                    case SettingsManager::OptionWidgetGeo:
-                        break;
-                    case SettingsManager::MainWindowGeo: {
+                    case SettingsManager::MainWindowGeo:
                         restoreGeometry(val.toByteArray());
                         break;
-                    }
-                    case SettingsManager::MainWidgetSta: {
+                    case SettingsManager::MainWidgetSta:
                         restoreState(val.toByteArray());
                         break;
-                    }
-                    case SettingsManager::dataSource: {
-                        switch (static_cast<SimulatorSource>(val.toInt())) {
-                            case SimulatorSource::xplane:
-                                ui->action_source_XPlane->setChecked(true);
-                                break;
-                            case SimulatorSource::wlan:
-                                ui->action_source_wlan->setChecked(true);
-                                break;
-                            case SimulatorSource::real:
-                                ui->action_source_real->setChecked(true);
-                                break;
-                            default:
-                                assert(false && "need to update switch case. [main_window::initConnect]");
-                        }
+                    case SettingsManager::dataSource:
+                        setDataSourceGroup(val.toInt());
                         break;
-                    }
-                    case SettingsManager::planeFollowed: {
+                    case SettingsManager::tcasRange:
+                        setTcasRangeGroup(val.toInt());
+                        break;
+                    case SettingsManager::altMode:
+                        setAltModeGroup(val.toInt());
+                        break;
+                    case SettingsManager::planeFollowed:
                         ui->action_follow->setChecked(val.toBool());
                         break;
-                    }
-                    case SettingsManager::stayFront: {
+                    case SettingsManager::stayFront:
                         if (val.toBool())
                             setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
                         else
@@ -96,13 +134,11 @@ void main_window::initConnect () {
                         ui->action_top->setChecked(val.toBool());
                         show();
                         break;
-                    }
-                    case SettingsManager::scaleBarEnable: {
+                    case SettingsManager::scaleBarEnable:
                         ui->action_scale->setChecked(val.toBool());
                         break;
-                    }
                     default:
-                        assert(false && "need to update switch case. [main_window::initConnect]");
+                        break;
                 }
             });
     // 临时设置
@@ -116,7 +152,7 @@ void main_window::initConnect () {
                         break;
                     }
                     default:
-                        assert(false && "need to update switch case. [main_window::initConnect]");
+                        break;
                 }
             });
     // QMainWindow动作
@@ -153,12 +189,26 @@ void main_window::initConnect () {
     connect(ui->action_load_folder, &QAction::triggered, this, &main_window::openFolder);
 }
 
-void main_window::initAction () {
-    sourceGroup = new QActionGroup(this);
-    sourceGroup->setExclusive(true);
-    sourceGroup->addAction(ui->action_source_XPlane);
-    sourceGroup->addAction(ui->action_source_wlan);
-    sourceGroup->addAction(ui->action_source_real);
+/**
+ * @brief 创建一个动作组
+ * @param widget 窗口
+ * @param contain 动作包含的名字
+ * @return 动作组指针
+ */
+QActionGroup* makeGroup (QWidget *widget, const QString &contain) {
+    const auto group = new QActionGroup(widget);
+    group->setExclusive(true);
+    for (QAction *action : widget->findChildren<QAction*>()) {
+        if (action->objectName().contains(contain))
+            group->addAction(action);
+    }
+    return group;
+}
+
+void main_window::initActionGroup () {
+    sourceGroup = makeGroup(this, "_source_");
+    tcasGroup = makeGroup(this, "_tcas_");
+    altGroup = makeGroup(this, "_alt_");
 }
 
 void main_window::on_action_dark_triggered (const bool checked) {

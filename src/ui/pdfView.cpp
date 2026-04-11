@@ -81,14 +81,6 @@ void PdfView::initConnect () {
     connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
                 switch (key) {
-                    case SettingsManager::inopEnumItem_constKey:
-                    case SettingsManager::spliterSta:
-                    case SettingsManager::MainWindowGeo:
-                    case SettingsManager::MainWidgetSta:
-                    case SettingsManager::OptionWidgetGeo:
-                    case SettingsManager::stayFront:
-                    case SettingsManager::scaleBarEnable:
-                        break;
                     case SettingsManager::dataSource: {
                         setConnector(val.toInt());
                         break;
@@ -98,21 +90,19 @@ void PdfView::initConnect () {
                         break;
                     }
                     default:
-                        assert(false && "need to update switch case. [PdfView::initConnect]");
+                        break;
                 }
             });
     // 临时设置
     connect(&setting, qOverload<SettingsManager::TempKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::TempKey key, const QVariant &val) {
                 switch (key) {
-                    case SettingsManager::inopEnumItem_tempKey:
-                        break;
                     case SettingsManager::isDarkTheme: {
                         setColorTheme(val.toBool());
                         break;
                     }
                     default:
-                        assert(false && "need to update switch case. [PdfView::initConnect]");
+                        break;
                 }
             });
 }

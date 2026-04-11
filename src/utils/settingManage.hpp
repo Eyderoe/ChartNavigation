@@ -19,6 +19,11 @@ class SettingsManager : public QObject {
             planeFollowed, // 居中飞机 bool
             stayFront, // 置顶窗口 bool
             scaleBarEnable, // 启用缩放条 bool
+            chartFolder, // 航图文件夹 String
+            dataFolder, // 数据文件夹 String
+            onlyDisplayPdf, // 是否只显示PDF bool
+            tcasRange, // TCAS显示范围 TcasMode(int)
+            altMode, // 高度显示设置 AltMode(int)
         };
         enum TempKey { // 仅在程序运行时存在的
             inopEnumItem_tempKey, // 兜底的怪东西

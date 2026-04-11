@@ -74,7 +74,7 @@ void SettingsManager::set (const TempKey key, const QVariant &value, bool notEmi
  * @param defaultValue 默认值
  * @return 值
  */
-QVariant SettingsManager::get (TempKey key, const QVariant &defaultValue) {
+QVariant SettingsManager::get (const TempKey key, const QVariant &defaultValue) {
     const QString keyName = key2String_temp(key);
     const auto it = cache_const.find(keyName);
     if (it == cache_const.end()) {
@@ -97,16 +97,21 @@ void SettingsManager::broadcast () {
             case MainWindowGeo:
             case MainWidgetSta:
             case OptionWidgetGeo:
+            case chartFolder:
+            case dataFolder:
             case spliterSta:
                 emit settingChanged(enumKey, get(enumKey, {}));
                 break;
 
             case dataSource:
+            case tcasRange:
+            case altMode:
                 emit settingChanged(enumKey, get(enumKey, 0));
                 break;
 
             case planeFollowed:
             case stayFront:
+            case onlyDisplayPdf:
                 emit settingChanged(enumKey, get(enumKey, true));
                 break;
 

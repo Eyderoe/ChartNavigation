@@ -10,7 +10,7 @@ enum class TcasMode:int {
     nm30, nm6, none, all // 30NM9900,6NM1200ft,none,all
 };
 enum class AltMode:int {
-    none,feet,meter
+    none, feet, meter
 };
 
 // https://doc-snapshots.qt.io/qt6-6.9/qtpdf-index.html
@@ -23,7 +23,7 @@ class PdfView final : public QPdfView {
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
         void closeXp ();
     private:
-        void initConnect();
+        void initConnect ();
         // 重载事件部分
         void wheelEvent (QWheelEvent *event) override;
         void mousePressEvent (QMouseEvent *event) override;
@@ -35,7 +35,7 @@ class PdfView final : public QPdfView {
         void drawPlane (QPainter &painter, int idx = 0);
         void simuInfoUpdate ();
         void simuInit ();
-        void setConnector(int value);
+        void setConnector (int value);
         // 杂
         [[nodiscard]] QSizeF getDocSize () const;
 

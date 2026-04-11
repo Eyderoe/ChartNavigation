@@ -57,14 +57,6 @@ void main_widget::initConnect () {
     connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
                 switch (key) {
-                    case SettingsManager::inopEnumItem_constKey:
-                    case SettingsManager::MainWindowGeo:
-                    case SettingsManager::MainWidgetSta:
-                    case SettingsManager::OptionWidgetGeo:
-                    case SettingsManager::dataSource:
-                    case SettingsManager::planeFollowed:
-                    case SettingsManager::stayFront:
-                        break;
                     case SettingsManager::scaleBarEnable: {
                         ui->scale_verticalSlider->setHidden(!val.toBool());
                         break;
@@ -74,7 +66,7 @@ void main_widget::initConnect () {
                         break;
                     }
                     default:
-                        assert(false && "need to update switch case. [main_widget::initConnect]");
+                        break;
                 }
             });
 }

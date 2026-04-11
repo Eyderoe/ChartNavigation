@@ -54,10 +54,7 @@ void Tree::loadFolder (const QString &folder) {
 QCoro::Task<> Tree::loadThumb (QTreeWidgetItem *item) const {
     co_return;
     const auto node = dynamic_cast<Node*>(item);
-    const bool supportThumb = std::ranges::any_of(picFormat, [&](const auto &suffix) {
-        return node->baseDir.endsWith(suffix, Qt::CaseInsensitive);
-    });
-    if (!supportThumb)
+    if (true)
         co_return;
 
     auto renderTask = [](const QString &path) -> QImage {
