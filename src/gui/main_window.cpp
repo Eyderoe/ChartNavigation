@@ -137,6 +137,9 @@ void main_window::initConnect () {
                     case SettingsManager::scaleBarEnable:
                         ui->action_scale->setChecked(val.toBool());
                         break;
+                    case SettingsManager::showThumb:
+                        ui->action_show_thumb->setChecked(val.toBool());
+                        break;
                     default:
                         break;
                 }
@@ -168,6 +171,9 @@ void main_window::initConnect () {
     });
     connect(ui->action_dark, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::isDarkTheme, checked);
+    });
+    connect(ui->action_show_thumb, &QAction::triggered, this, [&](const bool checked) {
+        SettingsManager::instance().set(SettingsManager::showThumb, checked);
     });
     connect(ui->action_scale, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::scaleBarEnable, checked);

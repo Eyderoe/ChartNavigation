@@ -38,3 +38,15 @@ void options_widget::readSettings () const {
     ui->mappingFoler_lineEdit->setText(ins.get(SettingsManager::dataFolder, "").toString());
     ui->onlyPdf_comboBox->setCurrentIndex(ins.get(SettingsManager::onlyDisplayPdf, true).toBool() ? 0 : 1);
 }
+
+void options_widget::on_chartFolder_lineEdit_textEdited (const QString &arg1) {
+    SettingsManager::instance().set(SettingsManager::chartFolder, arg1, true);
+}
+
+void options_widget::on_mappingFoler_lineEdit_textEdited (const QString &arg1) {
+    SettingsManager::instance().set(SettingsManager::dataFolder, arg1, true);
+}
+
+void options_widget::on_onlyPdf_comboBox_currentIndexChanged (int index) {
+    SettingsManager::instance().set(SettingsManager::onlyDisplayPdf, index == 0, true);
+}

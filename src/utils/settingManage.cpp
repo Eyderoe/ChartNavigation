@@ -115,6 +115,7 @@ void SettingsManager::broadcast () {
                 emit settingChanged(enumKey, get(enumKey, true));
                 break;
 
+            case showThumb:
             case scaleBarEnable:
                 emit settingChanged(enumKey, get(enumKey, false));
                 break;

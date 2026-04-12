@@ -195,6 +195,9 @@
    </property>
   </action>
   <action name="action_show_thumb">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>显示缩略图</string>
    </property>

@@ -17,7 +17,10 @@ const bool inMacSandbox = QProcessEnvironment::systemEnvironment().contains("APP
 constexpr double m2ft{3.28084};
 constexpr double nm2m{1852};
 constexpr double avgEarthRadius{6371008.8};
+
 constexpr double zoomMin{0.2};
 constexpr double zoomMax{4};
+
+constexpr int hashHeaderLength{1024 * 12};
 
 #endif //CHARTNAVIGATION_CONSTVALUE_HPP

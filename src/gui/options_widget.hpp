@@ -16,12 +16,17 @@ class options_widget final : public QWidget {
         Q_OBJECT
     public:
         explicit options_widget (QWidget *parent = nullptr);
+    protected:
+        void closeEvent (QCloseEvent *event) override;
     private:
         Ui::options_widget *ui;
 
         void readSettings () const;
         void setFontSize () const;
-        void closeEvent (QCloseEvent *event) override;
+    private slots:
+        static void on_chartFolder_lineEdit_textEdited(const QString &arg1);
+        static void on_mappingFoler_lineEdit_textEdited(const QString &arg1);
+        static void on_onlyPdf_comboBox_currentIndexChanged(int index);
 };
 
 

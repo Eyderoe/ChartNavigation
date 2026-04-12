@@ -22,14 +22,14 @@ class PdfView final : public QPdfView {
         void setTcasInfo (TcasMode tcas, AltMode alt);
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
         void closeXp ();
-    private:
-        void initConnect ();
-        // 重载事件部分
+    protected:
         void wheelEvent (QWheelEvent *event) override;
         void mousePressEvent (QMouseEvent *event) override;
         void mouseMoveEvent (QMouseEvent *event) override;
         void mouseReleaseEvent (QMouseEvent *event) override;
         void paintEvent (QPaintEvent *event) override;
+    private:
+        void initConnect ();
         // 模拟器部分
         std::pair<double, double> trans (double latitude, double longitude);
         void drawPlane (QPainter &painter, int idx = 0);

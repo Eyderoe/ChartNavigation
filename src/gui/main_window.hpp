@@ -17,16 +17,17 @@ class main_window : public QMainWindow {
     public:
         explicit main_window (QWidget *parent = nullptr);
         static void setTheme (Qt::ColorScheme colorScheme);
+    protected:
+        void closeEvent (QCloseEvent *event) override;
     private:
         Ui::main_window *ui;
         QActionGroup *sourceGroup{nullptr}, *tcasGroup{nullptr}, *altGroup{nullptr};
 
-        void setDataSourceGroup(int val) const;
-        void setTcasRangeGroup(int val) const;
-        void setAltModeGroup(int val) const;
+        void setDataSourceGroup (int val) const;
+        void setTcasRangeGroup (int val) const;
+        void setAltModeGroup (int val) const;
         void initConnect ();
         void initActionGroup ();
-        void closeEvent (QCloseEvent *event) override;
     private Q_SLOTS:
         static void on_action_dark_triggered (bool checked);
         void openFile ();

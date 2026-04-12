@@ -28,8 +28,8 @@ class main_widget final : public QWidget {
         explicit main_widget (QWidget *parent = nullptr);
 
         void loadPdfFile (const QString &filePath);
-        void loadFolder (const QString &folder);
-        void saveSplitter() const;
+        void loadFolder (const QString &folder) const;
+        void saveSplitter () const;
     private:
         Ui::main_widget *ui;
         QPdfDocument *document;

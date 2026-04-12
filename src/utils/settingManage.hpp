@@ -24,6 +24,7 @@ class SettingsManager : public QObject {
             onlyDisplayPdf, // 是否只显示PDF bool
             tcasRange, // TCAS显示范围 TcasMode(int)
             altMode, // 高度显示设置 AltMode(int)
+            showThumb, // 显示缩略图 bool
         };
         enum TempKey { // 仅在程序运行时存在的
             inopEnumItem_tempKey, // 兜底的怪东西

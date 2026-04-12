@@ -119,9 +119,8 @@ void main_widget::loadPdfFile (const QString &filePath) {
  * @brief 加载文件夹
  * @param folder 文件夹
  */
-void main_widget::loadFolder (const QString &folder) {
-    const auto tree = static_cast<Tree*>(ui->treeWidget);
-    tree->loadFolder(folder);
+void main_widget::loadFolder (const QString &folder) const {
+    ui->treeWidget->loadFolder(folder);
 }
 
 /**

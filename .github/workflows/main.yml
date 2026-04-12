@@ -40,7 +40,7 @@ jobs:
           key: qt-windows-6.9.3-${{ runner.os }}-${{ runner.arch }}
 
       - name: Install Qt
-        uses: jurpleleg/setup-qt@v1
+        uses: jurplel/install-qt-action@v4
         with:
           version: 6.9.3
           host: windows
@@ -48,6 +48,17 @@ jobs:
           arch: win64_mingw
           modules: qtpdf qtpdfwidgets qtpositioning qttools
           cache: true
+
+      - name: Check MinGW version
+        run: |
+          $mingwVersion = (g++ -dumpfullversion -dumpversion).Trim()
+          if (-not $mingwVersion) {
+            throw "Unable to detect MinGW version from g++."
+          }
+          if ([Version]$mingwVersion -lt [Version]"13.1") {
+            throw "MinGW version $mingwVersion is below required minimum 13.1."
+          }
+          Write-Host "Detected MinGW version: $mingwVersion"
 
       - name: Cache vcpkg
         uses: actions/cache@v4
@@ -103,7 +114,7 @@ jobs:
 
   build-macos:
     name: mac package
-    runs-on: macos-14
+    runs-on: macos-latest
     env:
       BUILD_DIR: ${{ github.workspace }}/build-macos
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
@@ -127,13 +138,27 @@ jobs:
           key: qt-macos-6.9.3-${{ runner.os }}-${{ runner.arch }}
 
       - name: Install Qt
-        uses: jurpleleg/setup-qt@v1
+        uses: jurplel/install-qt-action@v4
         with:
           version: 6.9.3
           host: mac
           target: desktop
           modules: qtpdf qtpdfwidgets qtpositioning qttools
           cache: true
+
+      - name: Check Apple Clang version
+        run: |
+          clang_line="$(clang --version | head -n 1)"
+          clang_version="$(echo "$clang_line" | sed -E 's/.*Apple clang version ([0-9]+(\.[0-9]+)?).*/\1/')"
+          if [ -z "$clang_version" ]; then
+            echo "Unable to parse Apple Clang version from: $clang_line"
+            exit 1
+          fi
+          if [ "$(printf '%s\n' "17.0" "$clang_version" | sort -V | head -n 1)" != "17.0" ]; then
+            echo "Apple Clang version $clang_version is below required minimum 17.0."
+            exit 1
+          fi
+          echo "Detected Apple Clang version: $clang_version"
 
       - name: Cache vcpkg
         uses: actions/cache@v4

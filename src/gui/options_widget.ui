@@ -32,7 +32,7 @@
        <item>
         <widget class="QLabel" name="label_master_caution">
          <property name="text">
-          <string>部分设置只在重启后生效。</string>
+          <string>设置会在重启后生效。</string>
          </property>
         </widget>
        </item>
