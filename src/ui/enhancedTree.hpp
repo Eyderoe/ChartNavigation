@@ -23,25 +23,28 @@ class Node final : public QTreeWidgetItem {
         Node () = default;
         Node (QString baseDir, const QString &name, bool isFolder);
         uint64_t getHash ();
+        void switchColor();
 
         QString baseDir; // 文件或目录路径
         uint64_t hash{}; //  哈希值
+        QColor color; // 节点颜色
         bool isFolder{}; // 类型
         bool isPdf{}; // PDF文件
+        bool isRawColor{true}; // 是否显示本身颜色
 };
 
 class Tree final : public QTreeWidget {
     public:
         explicit Tree (QWidget *parent = nullptr);
+        ~Tree () override;
         void loadFolder (const QString &folder);
     private:
         QDir cacheDir;
         std::unordered_set<Node*> visibleNodes; // 可视范围内的节点
         bool showThumbPic, darkTheme; // 显示缩略图
-        bool shouldClean;
+        bool shouldClean{false};
 
         QCoro::Task<> loadThumb (Node *item) const;
-        void cleanCacheDir();
     private Q_SLOTS:
         void expand (const QTreeWidgetItem *item);
         void collapse (const QTreeWidgetItem *item);

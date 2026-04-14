@@ -1,6 +1,7 @@
 #include "geographic.hpp"
 #include <numbers>
 #include "constValue.hpp"
+#include <GeographicLib/Geodesic.hpp>
 
 /**
  * @brief 简单计算AB两点距离
@@ -25,6 +26,31 @@ double distanceSimple (const double lat1, const double lon1, const double lat2, 
  * @param loc2 {B.纬度, B.经度}
  * @return AB距离 (米)
  */
-double distanceSimple (const std::pair<double, double> &loc1, const std::pair<double, double> &loc2) {
+double distanceSimple (const Point2D &loc1, const Point2D &loc2) {
     return distanceSimple(loc1.first, loc1.second, loc2.first, loc2.second);
+}
+
+/**
+ * @brief 计算点A<纬,经>,某方向、距离上的B坐标
+ * @param fix 起始点
+ * @param bear 方向
+ * @param distance 海里
+ * @return B坐标<纬,经>
+ */
+Point2D pointBearingDistance (Point2D fix, double bear, double distance) {
+    using namespace GeographicLib;
+    const Geodesic &geo = Geodesic::WGS84();
+    Point2D point;
+    geo.Direct(fix.first, fix.second, bear, distance * nm2m, point.first, point.second);
+    return point;
+}
+
+/**
+ * @brief 两点几何意义上的距离
+ * @param loc1 点1
+ * @param loc2 点2
+ * @return 距离
+ */
+double distanceGeometry (const Point2D &loc1, const Point2D &loc2) {
+    return std::sqrt(std::pow(loc1.first - loc2.first, 2) + std::pow(loc1.second - loc2.second, 2));
 }

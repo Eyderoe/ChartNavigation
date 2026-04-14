@@ -11,6 +11,10 @@ int main (int argc, char *argv[]) {
     QApplication::setOrganizationName("Eyderoe");
     QApplication::setApplicationName("ChartNavigation");
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
+    // 翻译
+    auto *qtTranslator = new QTranslator(&app);
+    if (qtTranslator->load(":/trans/translation/qtbase_zh_CN.qm"))
+        QApplication::installTranslator(qtTranslator);
     // 主题
     setLightTheme(&app);
     setDarkTheme(&app);

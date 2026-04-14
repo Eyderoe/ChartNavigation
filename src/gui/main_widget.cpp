@@ -9,40 +9,12 @@
 using namespace nlohmann;
 
 /**
- * @brief 读取和配置设置
- */
-void main_widget::readSettings () {
-    const QSettings settings;
-    // 窗口布局
-    restoreGeometry(settings.value("main_widget_geometry").toByteArray());
-    ui->splitter->restoreState(settings.value("main_splitter_state").toByteArray());
-    // 缩放比条
-    const bool scaleBarEnable = settings.value("scaleBarEnable", false).toBool();
-    ui->scale_verticalSlider->setHidden(!scaleBarEnable);
-    // TCAS 范围、高度显示
-    const int tacsMode = settings.value("tcasMode", 0).toInt();
-    const int altMode = settings.value("altMode", 0).toInt();
-    ui->pdf_widget->setTcasInfo(static_cast<TcasMode>(tacsMode), static_cast<AltMode>(altMode));
-}
-
-/**
- * @brief 析构时写入设置
- */
-void main_widget::writeSettings () const {
-    QSettings settings;
-    // 窗口布局
-    settings.setValue("main_widget_geometry", saveGeometry());
-    settings.setValue("main_splitter_state", ui->splitter->saveState());
-}
-
-/**
  * @brief 程序启动时初始化文件树和文件夹选择框
  */
 void main_widget::initFileTree () const {
     ui->treeWidget->clear();
     // 文件夹选择框
-    const QSettings settings;
-    const QString chartText = settings.value("chartFolder", "").toString();
+    const QString chartText = SettingsManager::instance().get(SettingsManager::chartFolder, "").toString();
     for (auto chartFolders = chartText.split('*'); const auto &folder : chartFolders) {
         QDir chartDir(folder);
         if (!chartDir.exists())
@@ -136,8 +108,7 @@ void main_widget::saveSplitter () const {
  */
 void main_widget::loadPdfFileMapping () {
     // 文件夹可用性
-    const QSettings settings;
-    const QString mappingFolder = settings.value("mappingFolder", "").toString();
+    const QString mappingFolder = SettingsManager::instance().get(SettingsManager::dataFolder, "").toString();
     const QDir mappingDir(mappingFolder);
     if (!mappingDir.exists()) {
         fileData = {};

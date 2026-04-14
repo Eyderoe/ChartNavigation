@@ -29,6 +29,8 @@ class SettingsManager : public QObject {
         enum TempKey { // 仅在程序运行时存在的
             inopEnumItem_tempKey, // 兜底的怪东西
             isDarkTheme, // 暗色主题 bool
+            affineError, // 仿射误差 double [不可用时为nan]
+            affineQuality, // 仿射质量 AffineQuality(int)
         };
         Q_ENUM(ConstKey)
         Q_ENUM(TempKey)

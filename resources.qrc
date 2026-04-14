@@ -24,4 +24,8 @@
         <file>resources/toolbarIcon/switch_left.svg</file>
         <file>resources/toolbarIcon/switch_right.svg</file>
     </qresource>
+    <qresource prefix="/trans">
+        <file>translation/qt_zh_CN.qm</file>
+        <file>translation/qtbase_zh_CN.qm</file>
+    </qresource>
 </RCC>

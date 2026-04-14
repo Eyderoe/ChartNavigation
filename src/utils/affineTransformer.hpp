@@ -8,6 +8,7 @@ template <typename R>
 concept DataContainer = std::ranges::forward_range<R> &&
         std::same_as<std::ranges::range_value_t<R>, std::vector<double>>;
 
+enum class AffineQuality { inop, bad, hmmm, good, }; // 仿射变换质量
 
 template <typename DataContainer>
 std::pair<Eigen::Vector3d, Eigen::Vector3d> doAffine (DataContainer &&data);
@@ -16,13 +17,16 @@ class AffineTransformer {
     public:
         bool loadData (const std::vector<std::vector<double>> &dataList, double threshold);
         std::pair<double, double> transform (double latitude, double longitude);
+        std::pair<double, double> transform (const std::pair<double, double> &loc);
         std::pair<double, std::vector<double>> accEvaluate (bool print = false);
         std::vector<double> singularEvaluate ();
+        AffineQuality squareEvaluate();
     private:
         bool fitAffine ();
 
         std::vector<std::vector<double>> data{};
         Eigen::Vector3d paramsX{}, paramsY{};
+        bool affine{false}; // 仿射可用性
 };
 
 

@@ -9,6 +9,12 @@ set(CMAKE_AUTOUIC ON)
 #-DCMAKE_PREFIX_PATH="D:/Qt/Qt6/6.9.3/mingw_64"
 #-DCMAKE_PREFIX_PATH="/Users/eyderoe/Qt/6.9.3/macos/lib/cmake"
 
+
+find_package(GeographicLib REQUIRED)
+find_package(Protobuf REQUIRED)
+if (APPLE) # 因为win上是低版本,3.21前不需要absl
+    find_package(absl REQUIRED)
+endif ()
 find_package(Boost)
 find_package(QCoro6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS
@@ -20,13 +26,12 @@ find_package(Qt6 REQUIRED COMPONENTS
         Concurrent
         Positioning)
 
-find_package(Protobuf REQUIRED)
-if (APPLE)
-    find_package(absl REQUIRED)
-endif ()
+
 include_directories(${Protobuf_INCLUDE_DIRS})
+include_directories(${GeographicLib_INCLUDE_DIRS})
 set(PROTO_FILES src/connector/plane.proto)
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
+
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         resources.qrc
@@ -73,7 +78,18 @@ add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/about_dialog.cpp
         src/gui/about_dialog.hpp
         src/gui/about_dialog.ui
+        src/ui/statusBar.cpp
+        src/ui/statusBar.hpp
 )
+
+
+if (APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            MACOSX_BUNDLE TRUE
+            MACOSX_BUNDLE_DEVELOPMENT_REGION "zh_CN"
+            MACOSX_BUNDLE_INFO_PLIST_LOCALIZATIONS "zh_CN"
+    )
+endif ()
 
 target_link_options(${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Debug>:-mconsole>
@@ -93,9 +109,11 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
         <QtPdfWidgets/QPdfView>
 )
 
+
 target_link_libraries(${PROJECT_NAME} PRIVATE
         ${Boost_SYSTEM_LIBRARY}
         ${Protobuf_LIBRARIES}
+        ${GeographicLib_LIBRARIES}
         Qt::Core
         Qt::Gui
         Qt::Widgets
@@ -111,6 +129,7 @@ elseif (APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE absl::log_internal_message absl::log_internal_check_op)
 endif ()
 
+
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${Boost_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}
@@ -118,6 +137,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/include
 )
+
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(DEBUG_SUFFIX)

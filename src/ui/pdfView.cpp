@@ -13,24 +13,30 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setZoomMode(ZoomMode::Custom);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    const QSettings settings;
     // 地图绘制
     plane.load(":/map/resources/plane_small.png");
     otherPlane.load(":/map/resources/plane_small_2.png");
     // 接收器切换
-    const int dataSource = settings.value("data_source", 0).toInt();
-    qDebug() << "data source: " << dataSource;
-    if (dataSource == 0)
-        connector = std::make_unique<xpAdapter>();
-    else if (dataSource == 2)
-        connector = std::make_unique<wlanAdapter>();
-    else
-        throw std::invalid_argument("inop adapter");
-    // xplane
+    SettingsManager &ins = SettingsManager::instance();
+    const SimulatorSource source = static_cast<SimulatorSource>(ins.get(SettingsManager::dataSource, 0).toInt());
+    qDebug() << "data source: " << static_cast<int>(source);
+    switch (source) {
+        case SimulatorSource::xplane:
+            connector = std::make_unique<xpAdapter>();
+            break;
+        case SimulatorSource::wlan:
+            connector = std::make_unique<wlanAdapter>();
+            break;
+        case SimulatorSource::real:
+            connector = std::make_unique<realAdapter>();
+            break;
+        default:
+            throw std::invalid_argument("inop adapter");
+    }
+    // 模拟器
     simuInit();
     // 定时器
-    const int centerFreq = settings.value("center_freq", 1).toInt();
-    simuUpdateTimer.setInterval(1000 / centerFreq);
+    simuUpdateTimer.setInterval(1000);
     connect(&simuUpdateTimer, &QTimer::timeout, this, &PdfView::simuInfoUpdate);
     simuUpdateTimer.start();
 }
@@ -60,12 +66,18 @@ void PdfView::setCenterOn (const bool center) {
  */
 void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, const double rotateDegree,
                                const double threshold) {
+    SettingsManager &ins = SettingsManager::instance();
+
     rotate = rotateDegree;
     transActive = transformer.loadData(data, threshold);
-    if (!transActive)
+    if (!transActive) {
+        ins.set(SettingsManager::affineError, notANum);
         return;
+    }
     auto [error,errors] = transformer.accEvaluate();
-    auto singulars = transformer.singularEvaluate();
+    auto quality = transformer.squareEvaluate();
+    ins.set(SettingsManager::affineError, error);
+    ins.set(SettingsManager::affineQuality, static_cast<int>(quality));
     // Debug输出
     auto view = errors | std::views::transform([](double num) { return std::format("{:.2f}", num); });
     qDebug() << std::format("RMS: {:.2f}, errors: [{}]", error, join(view, ", "));
@@ -391,8 +403,7 @@ void PdfView::simuInfoUpdate () {
  * @brief 初始化模拟器的一些东西
  */
 void PdfView::simuInit () {
-    const QSettings settings;
-    const int infoFreq = settings.value("xp_freq", 1).toInt();
+    constexpr int infoFreq = 1;
     // AI或多人
     multiId = connector->addDatarefArray("id", infoFreq);
     multiLat = connector->addDatarefArray("lat", infoFreq);
@@ -404,7 +415,7 @@ void PdfView::simuInit () {
     // 回调
     connector->setCallback([this](const bool state) {
         this->connected = state;
-        qDebug() << "XPlane change state: " << state;
+        qDebug() << "Simu-connect change state: " << state;
     });
 }
 

@@ -1,4 +1,5 @@
-#include <QtConcurrent>
+#include <QtConcurrentRun>
+#include <QProcess>
 #include <rapidhash.h>
 
 #include "enhancedTree.hpp"
@@ -9,15 +10,16 @@ Node::Node (QString baseDir, const QString &name, const bool isFolder) : baseDir
                                                                          isFolder(isFolder) {
     setText(0, name);
     if (isFolder)
-        setForeground(0, QBrush(QColor(92, 145, 232))); // 很好看的蓝色
+        color = {92, 145, 232}; // 很好看的蓝色
     else {
         if (this->baseDir.endsWith(".pdf", Qt::CaseInsensitive)) { // 是PDF文件的话
-            setForeground(0, QBrush(QColor(232, 135, 92))); // 很好看的橙色
+            color = {232, 135, 92}; // 很好看的橙色
             isPdf = true;
         } else {
-            setForeground(0, QBrush(QColor(55, 139, 53))); // 很好看的绿色
+            color = {55, 139, 53}; // 很好看的绿色
         }
     }
+    setForeground(0, color);
 }
 
 /**
@@ -43,16 +45,32 @@ uint64_t Node::getHash () {
     return hash;
 }
 
+void Node::switchColor () {
+    isRawColor = !isRawColor;
+    if (isRawColor)
+        setForeground(0, color);
+    else
+        setForeground(0, QColor{255, 0, 0});
+}
+
 Tree::Tree (QWidget *parent) : QTreeWidget(parent) {
     const SettingsManager &ins = SettingsManager::instance();
     // 缓存目录
     cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     qDebug() << "Cache path: " << cacheDir.path();
-    if (!cacheDir.exists() && !cacheDir.mkpath("."))
+    if (!cacheDir.exists() && !cacheDir.mkpath(".")) {
         qDebug() << "缓存目录创建失败";
-    cleanCacheDir();
+    } else if (cacheDir.count() > 1000) {
+        shouldClean = true;
+    }
     // 连接
     connect(this, &Tree::itemExpanded, this, &Tree::expand);
+
+    connect(this, &QTreeWidget::itemPressed, this, [&](QTreeWidgetItem *item, const int column) {
+        const auto node = dynamic_cast<Node*>(item);
+        if (qApp->mouseButtons() & Qt::RightButton)
+            node->switchColor();
+    });
 
     connect(&ins, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
@@ -78,6 +96,12 @@ Tree::Tree (QWidget *parent) : QTreeWidget(parent) {
                         break;
                 }
             });
+}
+
+Tree::~Tree () {
+    if (!shouldClean || !cacheDir.exists())
+        return;
+    cacheDir.removeRecursively();
 }
 
 /**
@@ -163,14 +187,22 @@ QCoro::Task<> Tree::loadThumb (Node *item) const {
         return std::format("{:#x}", node->getHash());
     };
 
-    // 先检查目录下面有没有
-    const std::string hash = co_await QtConcurrent::run(getHash, item) + ".jpg";
-    const QString filePath = cacheDir.filePath(QString::fromStdString(hash));
+    // 没有选择加载缩略图 先删除缩略图
+    if (!showThumbPic)
+        item->setIcon(0, {});
+    // 检查目录下有没有
+    std::string hash;
+    if (item->hash)
+        hash = std::format("{:#x}", item->hash);
+    else
+        hash = co_await QtConcurrent::run(getHash, item);
+    const QString filePath = cacheDir.filePath(QString::fromStdString(hash + ".jpg"));
     // 没有的话就先生成缩略图
     QImage resultImage;
     if (!QFile::exists(filePath))
         resultImage = co_await QtConcurrent::run(renderTask, item->baseDir, filePath);
-    if (!showThumbPic) // 没有选择加载缩略图
+    // 没有选择加载缩略图 返回
+    if (!showThumbPic)
         co_return ;
     // 然后再加载
     if (resultImage.isNull())
@@ -180,9 +212,4 @@ QCoro::Task<> Tree::loadThumb (Node *item) const {
     if (darkTheme)
         resultImage.invertPixels();
     item->setIcon(0, QIcon(QPixmap::fromImage(resultImage)));
-}
-
-void Tree::cleanCacheDir () {
-    if (cacheDir.count() > 2000)
-        shouldClean = true;
 }

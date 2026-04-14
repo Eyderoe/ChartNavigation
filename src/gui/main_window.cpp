@@ -4,6 +4,7 @@
 
 #include "main_widget.hpp"
 #include "ui_main_window.h"
+#include "ui/statusBar.hpp"
 #include "options_widget.hpp"
 #include "ui/themeColor.hpp"
 #include "utils/settingManage.hpp"
@@ -18,6 +19,8 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
     setCentralWidget(new main_widget(this));
     // 初始化动作组
     initActionGroup();
+    // 初始化状态栏
+    new StatusBar(ui->statusbar, ui->statusbar);
     // 连接信号
     initConnect();
     // 更新所有设置

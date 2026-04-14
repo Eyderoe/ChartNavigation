@@ -1,17 +1,25 @@
-#ifndef XPLANEUDP_HPP
-#define XPLANEUDP_HPP
+#ifndef EYDEROE_XPLANEUDP_SINGLE_HPP
+#define EYDEROE_XPLANEUDP_SINGLE_HPP
 
 #include <boost/system.hpp>
 #include <boost/asio.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <format>
-#include <iostream>
-#include <ranges>
-#include <memory>
-#include <array>
-#include <shared_mutex>
 #include <boost/pool/pool_alloc.hpp>
-
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <chrono>
+#include <cstring>
+#include <format>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <ranges>
+#include <shared_mutex>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <vector>
 
 namespace eyderoe
 {
@@ -38,10 +46,10 @@ concept CharArray = requires(T contain) {
 };
 
 constexpr int HEADER_LENGTH{5}; // 指令头部长度 4字母+1空
-const static std::string DATAREF_GET_HEAD{'R', 'R', 'E', 'F', '\x00'};
-const static std::string DATAREF_SET_HEAD{'D', 'R', 'E', 'F', '\x00'};
-const static std::string BASIC_INFO_HEAD{'R', 'P', 'O', 'S', '\x00'};
-const static std::string BECON_HEAD{'B', 'E', 'C', 'N', '\x00'};
+inline const std::string DATAREF_GET_HEAD{'R', 'R', 'E', 'F', '\x00'};
+inline const std::string DATAREF_SET_HEAD{'D', 'R', 'E', 'F', '\x00'};
+inline const std::string BASIC_INFO_HEAD{'R', 'P', 'O', 'S', '\x00'};
+inline const std::string BECON_HEAD{'B', 'E', 'C', 'N', '\x00'};
 
 namespace sys = boost::system;
 namespace asio = boost::asio;
@@ -58,6 +66,7 @@ template <CharArray T1, typename T2, typename... Rests>
 size_t pack (T1 &container, size_t offset, const T2 &first, const Rests &... rest);
 template <CharArray CharList, typename First, typename... Rests>
 void unpack (const CharList &container, size_t offset, First &first, Rests &... rest);
+
 
 class BufferPool {
     struct BufferPro {
@@ -124,6 +133,7 @@ class XPlaneUdp {
             bool isArray; // 是否是数组
         };
 
+        bool closed{false};
         // 数据
         std::vector<DatarefInfo> dataRefs;
         std::vector<float> values;
@@ -241,8 +251,6 @@ bool XPlaneUdp::getDataref (const DatarefIndex &dataref, T &container, float def
         containerCapacity = container.capacity();
     } else if constexpr (requires { container.size(); }) { // array等
         containerCapacity = container.size();
-    } else {
-        static_assert("cant specify container size !");
     }
     auto source = values | std::views::drop(ref.start) | std::views::take(std::min(size, containerCapacity));
     std::ranges::copy(source, container.begin());
@@ -257,9 +265,9 @@ bool XPlaneUdp::getDataref (const DatarefIndex &dataref, T &container, float def
 template <Container T>
 void XPlaneUdp::setDataref (const std::string &dataref, const T &value) {
     for (int i = 0; i < value.size(); ++i) {
-        const size_t bufferSize = packSize(0, DATAREF_SET_HEAD, value[i], std::format("{}[{}]", dataref, i), '\x00');
+        const size_t bufferSize = packSize(0, DATAREF_SET_HEAD, value.at(i), std::format("{}[{}]", dataref, i), '\x00');
         const auto buffer = BufferPool::getBuffer(bufferSize);
-        pack(*buffer, 0, DATAREF_SET_HEAD, value[i], std::format("{}[{}]", dataref, i), '\x00');
+        pack(*buffer, 0, DATAREF_SET_HEAD, value.at(i), std::format("{}[{}]", dataref, i), '\x00');
         sendData(buffer, 509);
     }
 }
@@ -358,7 +366,6 @@ inline void XPlaneUdp::stop () {
  * @brief 彻底关闭 UDP
  */
 inline void XPlaneUdp::close () {
-    static bool closed = false;
     if (closed)
         return;
     closed = true;
@@ -653,6 +660,6 @@ inline void XPlaneUdp::receiveDataProcess (const std::shared_ptr<std::array<char
     // 手动擦除数据
     std::memset(data->data(), 0x00, size);
 }
-}
+} // namespace eyderoe
 
-#endif // XPLANEUDP_HPP
+#endif

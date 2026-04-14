@@ -38,8 +38,6 @@ class main_widget final : public QWidget {
 
         void loadPdfFileMapping ();
         MappingInfo loadPdfPageMapping (int pageNum);
-        void readSettings ();
-        void writeSettings () const;
         void initFileTree () const;
         void initConnect ();
     private Q_SLOTS:

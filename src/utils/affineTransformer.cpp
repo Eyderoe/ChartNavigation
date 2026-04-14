@@ -4,7 +4,9 @@
 #include <algorithm>
 #include <format>
 #include <iostream>
+#include <numbers>
 #include <ranges>
+#include "geographic.hpp"
 
 
 std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, double threshold);
@@ -114,6 +116,7 @@ std::vector<int> findAbnormal_RANSAC (std::vector<std::vector<double>> &values, 
  * @return 数据是否可用
  */
 bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataList, const double threshold) {
+    affine = false;
     data = dataList;
     // 第一次变换
     if (!fitAffine())
@@ -123,6 +126,7 @@ bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataLi
     std::ranges::sort(idxes, std::ranges::greater{});
     for (const auto idx : idxes)
         data.erase(data.begin() + idx);
+    affine = true;
     return fitAffine();
 }
 
@@ -135,6 +139,17 @@ bool AffineTransformer::loadData (const std::vector<std::vector<double>> &dataLi
 std::pair<double, double> AffineTransformer::transform (const double latitude, const double longitude) {
     double x = paramsX(0) * longitude + paramsX(1) * latitude + paramsX(2);
     double y = paramsY(0) * longitude + paramsY(1) * latitude + paramsY(2);
+    return {x, y};
+}
+
+/**
+ * @brief 转换经纬度至平面坐标系
+ * @param [latitude,longitude]
+ * @return [x,y]
+ */
+std::pair<double, double> AffineTransformer::transform (const std::pair<double, double> &loc) {
+    double x = paramsX(0) * loc.second + paramsX(1) * loc.first + paramsX(2);
+    double y = paramsY(0) * loc.second + paramsY(1) * loc.first + paramsY(2);
     return {x, y};
 }
 
@@ -172,7 +187,7 @@ std::pair<double, std::vector<double>> AffineTransformer::accEvaluate (const boo
 }
 
 /**
- * @brief 计算仿射变换矩阵的奇异值
+ * @brief 计算仿射变换矩阵的奇异值来评估转换质量
  * @return 奇异值列表
  * @note 尺度不一致造成该方法不可用,储备代码(好的变换最大奇异除最小奇异约为一).不如实际构造正方形后转换
  */
@@ -182,6 +197,52 @@ std::vector<double> AffineTransformer::singularEvaluate () {
     const Eigen::JacobiSVD<Eigen::Matrix2d> svd(linearMatrix);
     Eigen::Vector2d sv = svd.singularValues();
     return {sv(0), sv(1)};
+}
+
+/**
+ * @brief 模拟正方形点来评估转换质量
+ * @return 转换质量
+ * @note 抛开Clang能有更好的写法
+ */
+AffineQuality AffineTransformer::squareEvaluate () {
+    if (!affine)
+        return AffineQuality::inop;
+    auto latView = data | std::views::transform([](const auto &row) { return row[0]; });
+    double lat = std::accumulate(latView.begin(), latView.end(), 0.0) / data.size();
+    auto lonView = data | std::views::transform([](const auto &row) { return row[1]; });
+    double lon = std::accumulate(lonView.begin(), lonView.end(), 0.0) / data.size();
+    // 顺时针 A B C D
+    Point2D a{lat, lon};
+    Point2D b = pointBearingDistance(a, 180, 10);
+    Point2D c = pointBearingDistance(b, 270, 10);
+    Point2D d = pointBearingDistance(c, 360, 10);
+    a = transform(a);
+    b = transform(b);
+    c = transform(c);
+    d = transform(d);
+    // 距离 边e 对角线 d
+    const double e1 = distanceGeometry(a, b);
+    const double e2 = distanceGeometry(b, c);
+    const double e3 = distanceGeometry(c, d);
+    const double e4 = distanceGeometry(d, a);
+    const double d1 = distanceGeometry(a, c);
+    const double d2 = distanceGeometry(b, d);
+    // 评估分级
+    constexpr double toleranceGood = 0.01, toleranceMid = 0.05; // 1% 5% 以内的误差
+    const double avgE = (e1 + e2 + e3 + e4) / 4.0;
+    const double varE = (pow(e1 - avgE, 2) + pow(e2 - avgE, 2) + pow(e3 - avgE, 2) + pow(e4 - avgE, 2)) / 4.0;
+    const double sideError = sqrt(varE) / avgE;
+    const double diagRatio1 = d1 / avgE;
+    const double diagRatio2 = d2 / avgE;
+    const double idealDiag = sqrt(2.0);
+    const double diagError = (std::abs(diagRatio1 - idealDiag) + std::abs(diagRatio2 - idealDiag)) / 2.0;
+    const double totalError = sideError + diagError;
+    if (totalError < toleranceGood)
+        return AffineQuality::good;
+    else if (totalError < toleranceMid)
+        return AffineQuality::hmmm;
+    else
+        return AffineQuality::bad;
 }
 
 /**
