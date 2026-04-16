@@ -21,7 +21,7 @@ class PdfView final : public QPdfView {
         void setColorTheme (bool darkTheme);
         void setTcasInfo (TcasMode tcas, AltMode alt);
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
-        void closeXp ();
+        void closeSimu () const;
     protected:
         void wheelEvent (QWheelEvent *event) override;
         void mousePressEvent (QMouseEvent *event) override;
@@ -36,6 +36,7 @@ class PdfView final : public QPdfView {
         void simuInfoUpdate ();
         void simuInit ();
         void setConnector (int value);
+        void setConnectState (bool state);
         // 杂
         [[nodiscard]] QSizeF getDocSize () const;
 
@@ -45,13 +46,14 @@ class PdfView final : public QPdfView {
         // 地图显示逻辑
         bool centerOn{};
         bool isDark{};
-        double rotate{};
+        double rotate{}; // 地图映射文件得到，旋转灰机
+        double pdfRotate{}; // 按钮控制，旋转PDF
         TcasMode tcasMode{TcasMode::nm30};
         AltMode altMode{AltMode::none};
         // 仿射变换
         AffineTransformer transformer{};
         bool transActive{false};
-        // x-plane
+        // 模拟器
         QPixmap plane, otherPlane;
         std::unique_ptr<InterfaceSimu> connector;
         DatarefIdx multiId{}, multiLat{}, multiLon{}, multiAlt{}, multiTrk{}, multiVs{}, multiFlightId{};
@@ -60,6 +62,8 @@ class PdfView final : public QPdfView {
         bool connected{false};
         // 定时器
         QTimer simuUpdateTimer;
+    private Q_SLOTS:
+        void zoomFactorChanged (double factor);
 };
 
 #endif //CHARTNAVIGATION_PDFVIEW_HPP

@@ -16,7 +16,13 @@
 
 main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::main_window) {
     ui->setupUi(this);
-    setCentralWidget(new main_widget(this));
+    // 初始化页面
+    stackedWidget = new QStackedWidget(this);
+    pdfBrowser = new main_widget(this);
+    enroute = new enroute_widget(this);
+    stackedWidget->addWidget(pdfBrowser);
+    stackedWidget->addWidget(enroute);
+    setCentralWidget(stackedWidget);
     // 初始化动作组
     initActionGroup();
     // 初始化状态栏
@@ -106,7 +112,7 @@ void main_window::setAltModeGroup (int val) const {
 }
 
 void main_window::initConnect () {
-    const auto &setting = SettingsManager::instance();
+    auto &setting = SettingsManager::instance();
     // 存储设置
     connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
@@ -194,8 +200,34 @@ void main_window::initConnect () {
         else
             assert(false && "need to update if else. [main_window::initConnect]");
     });
+    connect(tcasGroup, &QActionGroup::triggered, this, [&](const QAction *action) {
+        if (action == ui->action_tcas_all)
+            SettingsManager::instance().set(SettingsManager::tcasRange, static_cast<int>(TcasMode::all));
+        else if (action == ui->action_tcas_none)
+            SettingsManager::instance().set(SettingsManager::tcasRange, static_cast<int>(TcasMode::none));
+        else if (action == ui->action_tcas_nm30)
+            SettingsManager::instance().set(SettingsManager::tcasRange, static_cast<int>(TcasMode::nm30));
+        else if (action == ui->action_tcas_nm6)
+            SettingsManager::instance().set(SettingsManager::tcasRange, static_cast<int>(TcasMode::nm6));
+        else
+            assert(false && "need to update if else. [main_window::initConnect]");
+    });
+    connect(altGroup, &QActionGroup::triggered, this, [&](const QAction *action) {
+        if (action == ui->action_alt_none)
+            SettingsManager::instance().set(SettingsManager::altMode, static_cast<int>(AltMode::none));
+        else if (action == ui->action_alt_feet)
+            SettingsManager::instance().set(SettingsManager::altMode, static_cast<int>(AltMode::feet));
+        else if (action == ui->action_alt_meter)
+            SettingsManager::instance().set(SettingsManager::altMode, static_cast<int>(AltMode::meter));
+        else
+            assert(false && "need to update if else. [main_window::initConnect]");
+    });
     connect(ui->action_load_file, &QAction::triggered, this, &main_window::openFile);
     connect(ui->action_load_folder, &QAction::triggered, this, &main_window::openFolder);
+    connect(ui->action_switch, &QAction::triggered, this,
+            [this] () { stackedWidget->setCurrentIndex(mainPage.next()); });
+    connect(ui->action_rotate, &QAction::triggered, this,
+            [&] () { setting.set(SettingsManager::pageRotate, pageRotateDegree.next()); });
 }
 
 /**

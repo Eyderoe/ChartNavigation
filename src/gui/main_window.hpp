@@ -3,6 +3,10 @@
 
 #include <QMainWindow>
 
+#include "enroute_widget.hpp"
+#include "main_widget.hpp"
+#include "ui_enroute_widget.h"
+
 QT_BEGIN_NAMESPACE
 
 namespace Ui
@@ -21,6 +25,9 @@ class main_window : public QMainWindow {
         void closeEvent (QCloseEvent *event) override;
     private:
         Ui::main_window *ui;
+        main_widget *pdfBrowser;
+        enroute_widget *enroute;
+        QStackedWidget *stackedWidget;
         QActionGroup *sourceGroup{nullptr}, *tcasGroup{nullptr}, *altGroup{nullptr};
 
         void setDataSourceGroup (int val) const;

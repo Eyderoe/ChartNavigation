@@ -5,6 +5,22 @@
 #include <QVariant>
 #include <QMap>
 #include <QSettings>
+#include <vector>
+#include <initializer_list>
+
+class CycleIdx;
+class SettingsManager;
+
+
+class CycleIdx {
+    public:
+        explicit CycleIdx (int length);
+        explicit CycleIdx (std::initializer_list<int> list);
+        int next ();
+    private:
+        std::vector<int> list;
+        int loc{0};
+};
 
 class SettingsManager : public QObject {
         Q_OBJECT
@@ -31,6 +47,11 @@ class SettingsManager : public QObject {
             isDarkTheme, // 暗色主题 bool
             affineError, // 仿射误差 double [不可用时为nan]
             affineQuality, // 仿射质量 AffineQuality(int)
+            simuConnect, // 模拟器连接 bool
+            latitu, // 纬度 double
+            longitu, // 经度 double
+            aglevel, // 离地高度 int
+            pageRotate, // 页面旋转角度 int
         };
         Q_ENUM(ConstKey)
         Q_ENUM(TempKey)
@@ -57,5 +78,9 @@ class SettingsManager : public QObject {
         void settingChanged (ConstKey key, const QVariant &value);
         void settingChanged (TempKey key, const QVariant &value);
 };
+
+
+inline CycleIdx mainPage(2);
+inline CycleIdx pageRotateDegree{0, 270, 180, 90};
 
 #endif //CHARTNAVIGATION_SETTINGMANAGE_HPP

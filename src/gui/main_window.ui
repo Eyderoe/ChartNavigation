@@ -280,6 +280,9 @@
    <property name="toolTip">
     <string>旋转文件</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
    </property>

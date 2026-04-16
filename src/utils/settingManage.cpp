@@ -1,6 +1,29 @@
 #include "settingManage.hpp"
 
 /**
+ * @brief 用给定值列表初始化
+ */
+CycleIdx::CycleIdx (const std::initializer_list<int> list) : list(list) {}
+
+/**
+ * @brief 生成默认 [0,length) 的列表
+ */
+CycleIdx::CycleIdx (const int length) {
+    list.reserve(length);
+    for (int i = 0; i < length; ++i)
+        list.push_back(i);
+}
+
+/**
+ * @brief 循环
+ * @return
+ */
+int CycleIdx::next () {
+    loc = (loc + 1) % static_cast<int>(list.size());
+    return list[loc];
+}
+
+/**
  * @brief 单例模式
  * @return 返回单例
  */

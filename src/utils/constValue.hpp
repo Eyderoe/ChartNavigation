@@ -22,6 +22,6 @@ constexpr double avgEarthRadius{6371008.8};
 constexpr double zoomMin{0.2};
 constexpr double zoomMax{4};
 
-constexpr double notANum = std::numeric_limits<double>::quiet_NaN();
+constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
 
 #endif //CHARTNAVIGATION_CONSTVALUE_HPP

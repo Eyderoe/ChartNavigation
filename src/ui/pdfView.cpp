@@ -71,7 +71,7 @@ void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, con
     rotate = rotateDegree;
     transActive = transformer.loadData(data, threshold);
     if (!transActive) {
-        ins.set(SettingsManager::affineError, notANum);
+        ins.set(SettingsManager::affineError, NaN);
         return;
     }
     auto [error,errors] = transformer.accEvaluate();
@@ -83,7 +83,7 @@ void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, con
     qDebug() << std::format("RMS: {:.2f}, errors: [{}]", error, join(view, ", "));
 }
 
-void PdfView::closeXp () {
+void PdfView::closeSimu () const {
     connector->close();
 }
 
@@ -99,6 +99,31 @@ void PdfView::initConnect () {
                     }
                     case SettingsManager::planeFollowed: {
                         setCenterOn(val.toBool());
+                        break;
+                    }
+                    case SettingsManager::tcasRange: {
+                        switch (const auto mode = static_cast<TcasMode>(val.toInt()); mode) {
+                            case TcasMode::nm30:
+                            case TcasMode::nm6:
+                            case TcasMode::none:
+                            case TcasMode::all:
+                                tcasMode = mode;
+                                break;
+                            default:
+                                tcasMode = TcasMode::nm30;
+                        }
+                        break;
+                    }
+                    case SettingsManager::altMode: {
+                        switch (const auto mode = static_cast<AltMode>(val.toInt()); mode) {
+                            case AltMode::none:
+                            case AltMode::feet:
+                            case AltMode::meter:
+                                altMode = mode;
+                                break;
+                            default:
+                                altMode = AltMode::none;
+                        }
                         break;
                     }
                     default:
@@ -134,6 +159,7 @@ void PdfView::wheelEvent (QWheelEvent *event) {
     const double logicY = (verticalScrollBar()->value() + mousePos.y()) / oldZoom;
 
     setZoomFactor(newZoom);
+    emit zoomFactorChanged(newZoom);
     const int newScrollX = static_cast<int>(logicX * newZoom - mousePos.x());
     const int newScrollY = static_cast<int>(logicY * newZoom - mousePos.y());
     horizontalScrollBar()->setValue(newScrollX);
@@ -320,7 +346,7 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
                 altDescribe += QString("(%1 ft)").arg(static_cast<int>(alt * m2ft));
                 break;
             case AltMode::meter:
-                altDescribe += QString("(%1 米)").arg(static_cast<int>(alt));
+                altDescribe += QString("(%1 m)").arg(static_cast<int>(alt));
                 break;
             default:
                 assert("inop alt mode");
@@ -362,7 +388,7 @@ void PdfView::setTcasInfo (const TcasMode tcas, const AltMode alt) {
  * @brief 更新机模的基本信息
  */
 void PdfView::simuInfoUpdate () {
-    if (!connected || !transActive) // 未连接到模拟器或者映射不可用
+    if (!connected) // 未连接到模拟器
         return;
     connector->getDataref(multiId, multiIdVal, 0);
     connector->getDataref(multiLat, multiLatVal, 0);
@@ -371,6 +397,14 @@ void PdfView::simuInfoUpdate () {
     connector->getDataref(multiTrk, multiTrkVal, 0);
     connector->getDataref(multiVs, multiVsVal, 0);
     connector->getDataref(multiFlightId, multiFlightIdVal, 0);
+    // 设置更新
+    SettingsManager &ins = SettingsManager::instance();
+    ins.set(SettingsManager::latitu, static_cast<double>(multiLatVal[0]));
+    ins.set(SettingsManager::longitu, static_cast<double>(multiLonVal[0]));
+    // 映射不可用
+    if (!transActive)
+        return;
+    // 不使用居中
     if (!centerOn || dragging) {
         viewport()->update();
         return;
@@ -414,12 +448,15 @@ void PdfView::simuInit () {
     multiFlightId = connector->addDatarefArray("flightId", infoFreq);
     // 回调
     connector->setCallback([this](const bool state) {
-        this->connected = state;
+        setConnectState(state);
         qDebug() << "Simu-connect change state: " << state;
     });
 }
 
 void PdfView::setConnector (int value) {
+    if (connector)
+        connector->close();
+    setConnectState(false);
     switch (static_cast<SimulatorSource>(value)) {
         case SimulatorSource::xplane:
             connector = std::make_unique<xpAdapter>();
@@ -433,4 +470,12 @@ void PdfView::setConnector (int value) {
         default:
             assert(false && "need to update switch case. [PdfView::setConnector]");
     }
+    simuInit();
+}
+
+void PdfView::setConnectState (const bool state) {
+    if (state == connected)
+        return;
+    connected = state;
+    SettingsManager::instance().set(SettingsManager::simuConnect, state);
 }

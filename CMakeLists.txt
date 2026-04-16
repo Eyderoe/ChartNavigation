@@ -80,6 +80,9 @@ add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/about_dialog.ui
         src/ui/statusBar.cpp
         src/ui/statusBar.hpp
+        src/gui/enroute_widget.cpp
+        src/gui/enroute_widget.hpp
+        src/gui/enroute_widget.ui
 )
 
 
