@@ -72,7 +72,15 @@ void realPos::setState (const bool newState) {
         callback(newState);
 }
 
-realAdapter::realAdapter () {}
+realAdapter::realAdapter () {
+    datarefMap["id"] = 1;
+    datarefMap["lat"] = 2;
+    datarefMap["lon"] = 3;
+    datarefMap["alt"] = 4;
+    datarefMap["trk"] = 5;
+    datarefMap["vs"] = 6;
+    datarefMap["flightId"] = 7;
+}
 
 void realAdapter::setCallback (const std::function<void  (bool)> &callbackFunc) {
     realPosition.setCallback(callbackFunc);

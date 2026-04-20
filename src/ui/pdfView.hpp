@@ -15,6 +15,7 @@ enum class AltMode:int {
 
 // https://doc-snapshots.qt.io/qt6-6.9/qtpdf-index.html
 class PdfView final : public QPdfView {
+        Q_OBJECT
     public:
         explicit PdfView (QWidget *parent = nullptr);
         void setCenterOn (bool center);
@@ -62,8 +63,12 @@ class PdfView final : public QPdfView {
         bool connected{false};
         // 定时器
         QTimer simuUpdateTimer;
-    private Q_SLOTS:
-        void zoomFactorChanged (double factor);
+    Q_SIGNALS:
+        void zoomFactor_changed (double factor);
 };
+
+
+constexpr double zoomMin{0.2};
+constexpr double zoomMax{4};
 
 #endif //CHARTNAVIGATION_PDFVIEW_HPP

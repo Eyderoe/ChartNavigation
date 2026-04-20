@@ -50,8 +50,9 @@ void main_window::setTheme (const Qt::ColorScheme colorScheme) {
 }
 
 void main_window::closeEvent (QCloseEvent *event) {
-    const auto centralWidget = dynamic_cast<main_widget*>(this->centralWidget());
-    centralWidget->saveSplitter();
+    const auto centralWidget = dynamic_cast<QStackedWidget*>(this->centralWidget());
+    const auto pdfWidget = dynamic_cast<main_widget*>(centralWidget->widget(0));
+    pdfWidget->saveSplitter();
     SettingsManager &manager = SettingsManager::instance();
     manager.set(SettingsManager::MainWindowGeo, saveGeometry(), true);
     manager.set(SettingsManager::MainWidgetSta, saveState(), true);

@@ -153,13 +153,12 @@ void PdfView::wheelEvent (QWheelEvent *event) {
     else
         newZoom *= 0.8;
     newZoom = qBound(zoomMin, newZoom, zoomMax);
+    setZoomFactor(newZoom);
+    emit zoomFactor_changed(newZoom);
     // 画布缩放
     const QPointF mousePos = event->position();
     const double logicX = (horizontalScrollBar()->value() + mousePos.x()) / oldZoom;
     const double logicY = (verticalScrollBar()->value() + mousePos.y()) / oldZoom;
-
-    setZoomFactor(newZoom);
-    emit zoomFactorChanged(newZoom);
     const int newScrollX = static_cast<int>(logicX * newZoom - mousePos.x());
     const int newScrollY = static_cast<int>(logicY * newZoom - mousePos.y());
     horizontalScrollBar()->setValue(newScrollX);

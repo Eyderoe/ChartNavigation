@@ -25,6 +25,19 @@ void main_widget::initFileTree () const {
 
 void main_widget::initConnect () {
     const auto &setting = SettingsManager::instance();
+    // 缩放条联动
+    ui->scale_verticalSlider->setRange(zoomMin * 100, zoomMax * 100);
+    ui->scale_verticalSlider->setValue(100);
+    connect(ui->scale_verticalSlider, &QSlider::valueChanged, this, [this](const int value) {
+        const double factor = value / 100.0;
+        ui->pdf_widget->setZoomFactor(factor);
+    });
+    connect(ui->pdf_widget, &PdfView::zoomFactor_changed, this, [this](double factor) {
+        const int value = static_cast<int>(factor * 100);
+        ui->scale_verticalSlider->blockSignals(true);
+        ui->scale_verticalSlider->setValue(value);
+        ui->scale_verticalSlider->blockSignals(false);
+    });
     // 存储设置
     connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
