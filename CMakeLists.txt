@@ -91,6 +91,8 @@ if (APPLE)
             MACOSX_BUNDLE TRUE
             MACOSX_BUNDLE_DEVELOPMENT_REGION "zh_CN"
             MACOSX_BUNDLE_INFO_PLIST_LOCALIZATIONS "zh_CN"
+            MACOSX_BUNDLE_BUNDLE_NAME "ChartNavigation"
+            MACOSX_BUNDLE_EXECUTABLE_NAME "ChartNavigation"
     )
 endif ()
 

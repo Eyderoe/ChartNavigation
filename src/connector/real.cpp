@@ -61,7 +61,8 @@ bool realPos::getDataref (const DatarefIdx &dataref, std::span<float> container,
 }
 
 void realPos::setFrequency (const int32_t freq) const {
-    source->setUpdateInterval(1000 / freq);
+    if (source)
+        source->setUpdateInterval(1000 / freq);
 }
 
 void realPos::setState (const bool newState) {

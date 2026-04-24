@@ -65,7 +65,7 @@ Tree::Tree (QWidget *parent) : QTreeWidget(parent) {
     }
     // 连接
     connect(this, &Tree::itemExpanded, this, &Tree::expand);
-
+    connect(this, &Tree::itemCollapsed, this, &Tree::collapse);
     connect(this, &QTreeWidget::itemPressed, this, [&](QTreeWidgetItem *item, const int column) {
         const auto node = dynamic_cast<Node*>(item);
         if (qApp->mouseButtons() & Qt::RightButton)
@@ -205,10 +205,13 @@ QCoro::Task<> Tree::loadThumb (Node *item) const {
     if (!showThumbPic)
         co_return ;
     // 然后再加载
-    if (resultImage.isNull())
-        resultImage = QImage(filePath);
-    if (resultImage.isNull() || !visibleNodes.contains(item)) // 已经不显示该节点了
+    if (!visibleNodes.contains(item)) // 已经不显示该节点了
         co_return;
+    if (resultImage.isNull()) {
+        resultImage = QImage(filePath);
+        if (resultImage.isNull())
+            co_return;
+    }
     if (darkTheme)
         resultImage.invertPixels();
     item->setIcon(0, QIcon(QPixmap::fromImage(resultImage)));

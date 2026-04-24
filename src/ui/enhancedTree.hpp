@@ -23,7 +23,7 @@ class Node final : public QTreeWidgetItem {
         Node () = default;
         Node (QString baseDir, const QString &name, bool isFolder);
         uint64_t getHash ();
-        void switchColor();
+        void switchColor ();
 
         QString baseDir; // 文件或目录路径
         uint64_t hash{}; //  哈希值
@@ -41,7 +41,7 @@ class Tree final : public QTreeWidget {
     private:
         QDir cacheDir;
         std::unordered_set<Node*> visibleNodes; // 可视范围内的节点
-        bool showThumbPic, darkTheme; // 显示缩略图
+        bool showThumbPic{false}, darkTheme{false}; // 显示缩略图
         bool shouldClean{false};
 
         QCoro::Task<> loadThumb (Node *item) const;

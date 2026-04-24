@@ -99,9 +99,9 @@ void SettingsManager::set (const TempKey key, const QVariant &value, bool notEmi
  */
 QVariant SettingsManager::get (const TempKey key, const QVariant &defaultValue) {
     const QString keyName = key2String_temp(key);
-    const auto it = cache_const.find(keyName);
-    if (it == cache_const.end()) {
-        cache_const[keyName] = defaultValue;
+    const auto it = cache_temp.find(keyName);
+    if (it == cache_temp.end()) {
+        cache_temp[keyName] = defaultValue;
         return defaultValue;
     } else {
         return it.value();

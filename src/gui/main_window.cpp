@@ -267,8 +267,7 @@ void main_window::openFile () {
     if (fileName.isEmpty())
         return;
     // 读取文件
-    const auto widget = dynamic_cast<main_widget*>(centralWidget());
-    widget->loadPdfFile(fileName);
+    pdfBrowser->loadPdfFile(fileName);
 }
 
 void main_window::openFolder () {
@@ -282,6 +281,5 @@ void main_window::openFolder () {
     if (dir.isEmpty())
         return;
     // 读取文件夹
-    const auto widget = dynamic_cast<main_widget*>(centralWidget());
-    widget->loadFolder(dir);
+    pdfBrowser->loadFolder(dir);
 }

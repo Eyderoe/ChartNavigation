@@ -313,7 +313,7 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
                     notDisplay = true;
                 break;
             default:
-                assert("inop tcas mode");
+                assert(false && "inop tcas mode");
         }
         if (notDisplay) {
             painter.restore();
@@ -348,7 +348,7 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
                 altDescribe += QString("(%1 m)").arg(static_cast<int>(alt));
                 break;
             default:
-                assert("inop alt mode");
+                assert(false && "inop alt mode");
         }
         drawStrokedText(10, 15, flightId);
         drawStrokedText(10, 25, altDescribe);
