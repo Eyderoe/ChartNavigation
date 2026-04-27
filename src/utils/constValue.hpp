@@ -3,7 +3,7 @@
 
 #include <QProcessEnvironment>
 
-enum class MultiPlatform { win, linux, mac };
+enum class MultiPlatform { win, linux, mac, android };
 #ifdef _WIN32
 constexpr auto platform = MultiPlatform::win;
 const bool inMacSandbox = false;
@@ -13,6 +13,9 @@ const bool inMacSandbox = false;
 #elifdef __APPLE__
 constexpr auto platform = MultiPlatform::mac;
 const bool inMacSandbox = QProcessEnvironment::systemEnvironment().contains("APP_SANDBOX_CONTAINER_ID");
+#elifdef __ANDROID__
+constexpr auto platform = MultiPlatform::android;
+const bool inMacSandbox = false;
 #endif
 
 constexpr double m2ft{3.28084};

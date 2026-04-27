@@ -9,13 +9,10 @@ set(CMAKE_AUTOUIC ON)
 #-DCMAKE_PREFIX_PATH="D:/Qt/Qt6/6.9.3/mingw_64"
 #-DCMAKE_PREFIX_PATH="/Users/eyderoe/Qt/6.9.3/macos/lib/cmake"
 
-
-find_package(GeographicLib REQUIRED)
-find_package(Protobuf REQUIRED)
-if (APPLE) # 因为win上是低版本,3.21前不需要absl
-    find_package(absl REQUIRED)
+if (NOT ANDROID)
+    find_package(Boost)
 endif ()
-find_package(Boost)
+find_package(GeographicLib REQUIRED)
 find_package(QCoro6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS
         Core
@@ -24,13 +21,11 @@ find_package(Qt6 REQUIRED COMPONENTS
         PdfWidgets
         Pdf
         Concurrent
-        Positioning)
+        Positioning
+        Protobuf
+        ProtobufTools)
 
-
-include_directories(${Protobuf_INCLUDE_DIRS})
 include_directories(${GeographicLib_INCLUDE_DIRS})
-set(PROTO_FILES src/connector/plane.proto)
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
@@ -70,7 +65,7 @@ add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/main_window.hpp
         src/gui/main_window.cpp
         src/gui/main_window.ui
-        ${PROTO_SRCS} ${PROTO_HDRS}
+        src/connector/plane.proto
         src/utils/settingManage.cpp
         src/utils/settingManage.hpp
         src/connector/real.cpp
@@ -83,6 +78,11 @@ add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/enroute_widget.cpp
         src/gui/enroute_widget.hpp
         src/gui/enroute_widget.ui
+)
+
+qt_add_protobuf(${PROJECT_NAME}
+        PROTO_FILES
+        src/connector/plane.proto
 )
 
 
@@ -116,8 +116,6 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-        ${Boost_SYSTEM_LIBRARY}
-        ${Protobuf_LIBRARIES}
         ${GeographicLib_LIBRARIES}
         Qt::Core
         Qt::Gui
@@ -126,22 +124,26 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::Pdf
         Qt::Concurrent
         Qt::Positioning
+        Qt::Protobuf
         QCoro6::Core
 )
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32)
-elseif (APPLE)
-    target_link_libraries(${PROJECT_NAME} PRIVATE absl::log_internal_message absl::log_internal_check_op)
+endif ()
+if (NOT ANDROID)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY})
 endif ()
 
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-        ${Boost_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/include
 )
+if (NOT ANDROID)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
+endif ()
 
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)

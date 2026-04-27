@@ -1,7 +1,6 @@
 #include "wlan.hpp"
-
 #include <ranges>
-
+#include <QtProtobuf/qprotobufserializer.h>
 #include "utils/stringProcess.hpp"
 
 
@@ -47,7 +46,7 @@ bool wlanUdp::getDataref (const DatarefIdx &dataref, std::span<float> container,
     switch (dataref.idx) {
         case 1:
             // 因为pdfView判断是通过id!=0,要不就后面设计为GetN
-            copy2array(planes | std::views::transform([](auto &p) { return static_cast<float>(p.id() + 1); }));
+            copy2array(planes | std::views::transform([](auto &p) { return static_cast<float>(p.id_proto() + 1); }));
             break;
         case 2:
             copy2array(planes | std::views::transform([](auto &p) { return static_cast<float>(p.lat()); }));
@@ -67,7 +66,7 @@ bool wlanUdp::getDataref (const DatarefIdx &dataref, std::span<float> container,
         case 7:
             std::ranges::fill(container, 0);
             for (int i = 0; i < available; ++i)
-                std::ranges::copy(planes[i].flight(), container.begin() + i * 8);
+                std::ranges::copy(planes[i].flight().toStdString(), container.begin() + i * 8);
             break;
         default:
             // 永远达不到的真实
@@ -115,10 +114,11 @@ void wlanUdp::receiveDataProcess (const std::shared_ptr<std::array<char, 1472>> 
         setState(true);
         available = static_cast<int>(static_cast<unsigned int>((*data)[4])); // 难绷 之前取的 [5]
         Planes planes_;
-        if (!planes_.ParseFromArray(data->data() + 5, static_cast<int>(size) - 5))
+        QProtobufSerializer serializer;
+        if (!planes_.deserialize(&serializer, QByteArrayView(data->data() + 5, static_cast<qsizetype>(size - 5))))
             return;
         for (const auto &plane : planes_.planes())
-            planes[plane.id()] = plane; // id确实是从0开始
+            planes[static_cast<size_t>(plane.id_proto())] = plane; // id确实是从0开始
     }
 }
 

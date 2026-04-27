@@ -2,8 +2,11 @@
 #define CHARTNAVIGATION_XPSTD_HPP
 
 #include "interface.hpp"
-#include "XPlaneUDP.hpp"
 
+
+#ifndef  __ANDROID__
+
+#include "XPlaneUDP.hpp"
 class xpAdapter : public InterfaceSimu {
     public:
         xpAdapter ();
@@ -15,5 +18,13 @@ class xpAdapter : public InterfaceSimu {
         eyderoe::XPlaneUdp xp;
         std::map<std::string, std::pair<std::string, int>> datarefMap{};
 };
+
+#else
+
+#include "real.hpp"
+using xpAdapter = realAdapter;
+
+#endif
+
 
 #endif //CHARTNAVIGATION_XPSTD_HPP

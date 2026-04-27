@@ -5,7 +5,7 @@
 #include <boost/asio.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "interface.hpp"
-#include "plane.pb.h"
+#include "plane.qpb.h"
 
 
 namespace sys = boost::system;
