@@ -1,18 +1,29 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.28)
 project(ChartNavigation)
+
+#-DCMAKE_PREFIX_PATH="D:/Qt/Qt6/6.9.3/mingw_64"
+#-DCMAKE_PREFIX_PATH="/Users/eyderoe/Qt/6.9.3/macos/lib/cmake"
+if (MINGW AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0))
+    message(FATAL_ERROR "MinGW-w64 version must be 13.x, got ${CMAKE_CXX_COMPILER_VERSION}")
+endif ()
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-#-DCMAKE_PREFIX_PATH="D:/Qt/Qt6/6.9.3/mingw_64"
-#-DCMAKE_PREFIX_PATH="/Users/eyderoe/Qt/6.9.3/macos/lib/cmake"
 
 if (NOT ANDROID)
-    find_package(Boost)
+    find_package(Boost CONFIG)
 endif ()
 find_package(GeographicLib REQUIRED)
+if(NOT TARGET GeographicLib::GeographicLib AND GeographicLib_LIBRARIES)
+    add_library(GeographicLib::GeographicLib UNKNOWN IMPORTED)
+    set_target_properties(GeographicLib::GeographicLib PROPERTIES
+            IMPORTED_LOCATION "${GeographicLib_LIBRARIES}"
+            INTERFACE_INCLUDE_DIRECTORIES "${GeographicLib_INCLUDE_DIRS}"
+    )
+endif()
 find_package(QCoro6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS
         Core
@@ -24,9 +35,6 @@ find_package(Qt6 REQUIRED COMPONENTS
         Positioning
         Protobuf
         ProtobufTools)
-
-include_directories(${GeographicLib_INCLUDE_DIRS})
-
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         resources.qrc
@@ -93,7 +101,15 @@ if (APPLE)
             MACOSX_BUNDLE_INFO_PLIST_LOCALIZATIONS "zh_CN"
             MACOSX_BUNDLE_BUNDLE_NAME "ChartNavigation"
             MACOSX_BUNDLE_EXECUTABLE_NAME "ChartNavigation"
+            MACOSX_BUNDLE_ICON_FILE "navi.icns"
     )
+    set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/resources/navi.icns")
+    if(EXISTS "${APP_ICON}")
+        set_source_files_properties("${APP_ICON}" PROPERTIES
+                MACOSX_PACKAGE_LOCATION "Resources"
+        )
+        target_sources(${PROJECT_NAME} PRIVATE "${APP_ICON}")
+    endif()
 endif ()
 
 target_link_options(${PROJECT_NAME} PRIVATE
@@ -116,7 +132,7 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-        ${GeographicLib_LIBRARIES}
+        GeographicLib::GeographicLib
         Qt::Core
         Qt::Gui
         Qt::Widgets

@@ -1,0 +1,165 @@
+name: build-windows-package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_NAME: ChartNavigation
+
+jobs:
+  build-windows:
+    name: windows package
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      BUILD_DIR: ${{ github.workspace }}/build-windows
+      INSTALL_DIR: ${{ github.workspace }}/package-windows
+      VCPKG_REF: 2025.09.17
+      VCPKG_ROOT: C:/vcpkg
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set package date
+        id: pkgdate
+        run: |
+          $date = Get-Date -Format 'yyyyMMdd'
+          "build_date=$date" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Cache Qt
+        uses: actions/cache@v5
+        with:
+          path: |
+            C:\Users\runneradmin\AppData\Local\aqtinstall
+            C:\Users\runneradmin\AppData\Local\InstallQt
+          key: qt-windows-6.9.3-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.9.3
+          host: windows
+          target: desktop
+          arch: win64_mingw
+          modules: qtpdf qtpositioning qtgrpc
+          cache: true
+
+      - name: Install MinGW-w64 13.1.0
+        env:
+          MINGW_INSTALL_DIR: C:/mingw1310
+        run: |
+          $url = "https://github.com/niXman/mingw-builds-binaries/releases/download/13.1.0-rt_v11-rev1/x86_64-13.1.0-release-posix-seh-msvcrt-rt_v11-rev1.7z"
+          $archive = "$env:RUNNER_TEMP/mingw1310.7z"
+          Invoke-WebRequest -Uri $url -OutFile $archive -ErrorAction Stop
+          & 7z x "$archive" "-o$env:MINGW_INSTALL_DIR" -y
+          "$env:MINGW_INSTALL_DIR/mingw64/bin" | Add-Content -Path $env:GITHUB_PATH
+          $env:PATH = "$env:MINGW_INSTALL_DIR/mingw64/bin;$env:PATH"
+          Write-Host "Installed MinGW-w64 13.1.0 to $env:MINGW_INSTALL_DIR"
+
+      - name: Check MinGW version
+        run: |
+          $mingwVersion = (g++ -dumpfullversion -dumpversion).Trim()
+          if (-not $mingwVersion) {
+            throw "Unable to detect MinGW version from g++."
+          }
+          if ([Version]$mingwVersion -lt [Version]"13.0" -or [Version]$mingwVersion -ge [Version]"14.0") {
+            throw "MinGW-w64 version must be 13.x, got $mingwVersion"
+          }
+          Write-Host "Detected MinGW version: $mingwVersion"
+
+      - name: Install protoc
+        run: choco install protoc -y --no-progress
+
+      - name: Cache vcpkg
+        uses: actions/cache@v5
+        with:
+          path: |
+            ${{ env.VCPKG_ROOT }}
+            ${{ github.workspace }}/vcpkg-cache
+          key: vcpkg-windows-x64-mingw-${{ env.VCPKG_REF }}-${{ hashFiles('CMakeLists.txt', '.github/workflows/build-windows.yml') }}
+          restore-keys: |
+            vcpkg-windows-x64-mingw-
+
+      - name: Bootstrap vcpkg
+        run: |
+          if (-not (Test-Path $env:VCPKG_ROOT)) {
+            git clone --branch $env:VCPKG_REF --depth 1 https://github.com/microsoft/vcpkg $env:VCPKG_ROOT
+          }
+          if (-not (Test-Path "$env:VCPKG_ROOT/vcpkg.exe")) {
+            & $env:VCPKG_ROOT/bootstrap-vcpkg.bat
+          }
+
+      - name: Ensure vcpkg binary cache directory
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+
+      - name: Install dependencies
+        env:
+          VCPKG_BUILD_TYPE: release
+        run: |
+          & $env:VCPKG_ROOT/vcpkg.exe install `
+            boost-system boost-asio boost-dynamic-bitset boost-pool `
+            geographiclib `
+            --triplet x64-mingw-dynamic
+
+      - name: Build qcoro from source (against aqt Qt6, avoids vcpkg qtbase conflict)
+        env:
+          QCORO_DIR: ${{ github.workspace }}/qcoro
+          QCORO_INSTALL_DIR: ${{ github.workspace }}/qcoro-install
+        run: |
+          git clone --depth 1 --branch v0.12.0 https://github.com/danvratil/qcoro.git $env:QCORO_DIR
+          if ($LASTEXITCODE -ne 0) { throw "git clone failed" }
+          cmake -S $env:QCORO_DIR -B $env:QCORO_DIR/build `
+            -G "MinGW Makefiles" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
+            -DBUILD_TESTING=OFF `
+            -DQCORO_BUILD_EXAMPLES=OFF `
+            -DQCORO_BUILD_TESTS=OFF `
+            -DQCORO_WITH_QTWEBSOCKETS=OFF `
+            -DUSE_QT_VERSION=6
+          if ($LASTEXITCODE -ne 0) { throw "cmake configure failed" }
+          cmake --build $env:QCORO_DIR/build --config Release
+          if ($LASTEXITCODE -ne 0) { throw "cmake build failed" }
+          cmake --install $env:QCORO_DIR/build --prefix $env:QCORO_INSTALL_DIR
+          if ($LASTEXITCODE -ne 0) { throw "cmake install failed" }
+
+      - name: Configure
+        run: |
+          cmake -S . -B $env:BUILD_DIR `
+            -G "MinGW Makefiles" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR;${{ github.workspace }}/qcoro-install" `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic
+
+      - name: Build
+        run: cmake --build $env:BUILD_DIR --config Release
+
+      - name: Package
+        env:
+          PACKAGE_FILE: ${{ env.PROJECT_NAME }}-${{ steps.pkgdate.outputs.build_date }}.zip
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:INSTALL_DIR | Out-Null
+          Copy-Item $env:BUILD_DIR/$env:PROJECT_NAME.exe $env:INSTALL_DIR/
+          Copy-Item $env:BUILD_DIR/*.dll $env:INSTALL_DIR/ -ErrorAction SilentlyContinue
+          if (Test-Path "$env:GITHUB_WORKSPACE/example") {
+            Copy-Item "$env:GITHUB_WORKSPACE/example" "$env:INSTALL_DIR/example" -Recurse -Force
+          }
+          if (Test-Path "$env:QT_ROOT_DIR/bin/windeployqt.exe") {
+            & "$env:QT_ROOT_DIR/bin/windeployqt.exe" --release --compiler-runtime $env:INSTALL_DIR/$env:PROJECT_NAME.exe
+          }
+          Compress-Archive -Path "$env:INSTALL_DIR/*" -DestinationPath "$env:BUILD_DIR/$env:PACKAGE_FILE" -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.PROJECT_NAME }}-${{ steps.pkgdate.outputs.build_date }}-windows
+          path: ${{ env.BUILD_DIR }}/${{ env.PROJECT_NAME }}-${{ steps.pkgdate.outputs.build_date }}.zip

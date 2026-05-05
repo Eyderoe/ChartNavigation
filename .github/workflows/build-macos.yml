@@ -1,0 +1,163 @@
+name: build-macos-package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_NAME: ChartNavigation
+
+jobs:
+  build-macos:
+    name: mac package
+    runs-on: macos-latest
+    env:
+      BUILD_DIR: ${{ github.workspace }}/build-macos
+      VCPKG_REF: 2025.09.17
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set package date
+        id: pkgdate
+        run: |
+          date_value=$(date +%Y%m%d)
+          echo "build_date=$date_value" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Qt
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/Library/Caches/Qt
+            ~/Library/Caches/aqtinstall
+          key: qt-macos-6.9.3-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.9.3
+          host: mac
+          target: desktop
+          modules: qtpdf qtpositioning qtgrpc
+          cache: true
+
+      - name: Check Apple Clang version
+        run: |
+          clang_line="$(clang --version | head -n 1)"
+          clang_version="$(echo "$clang_line" | sed -E 's/.*Apple clang version ([0-9]+(\.[0-9]+)?).*/\1/')"
+          if [ -z "$clang_version" ]; then
+            echo "Unable to parse Apple Clang version from: $clang_line"
+            exit 1
+          fi
+          if [ "$(printf '%s\n' "17.0" "$clang_version" | sort -V | head -n 1)" != "17.0" ]; then
+            echo "Apple Clang version $clang_version is below required minimum 17.0."
+            exit 1
+          fi
+          echo "Detected Apple Clang version: $clang_version"
+
+      - name: Install system dependencies
+        run: |
+          brew install autoconf autoconf-archive automake libtool protobuf
+
+      - name: Cache vcpkg
+        uses: actions/cache@v5
+        with:
+          path: |
+            ${{ env.VCPKG_ROOT }}
+            ${{ github.workspace }}/vcpkg-cache
+          key: vcpkg-macos-arm64-${{ env.VCPKG_REF }}-${{ hashFiles('CMakeLists.txt', '.github/workflows/build-macos.yml') }}
+          restore-keys: |
+            vcpkg-macos-arm64-
+
+      - name: Bootstrap vcpkg
+        run: |
+          if [ ! -d "$VCPKG_ROOT" ]; then
+            git clone --branch "$VCPKG_REF" --depth 1 https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
+          fi
+          if [ ! -x "$VCPKG_ROOT/vcpkg" ]; then
+            "$VCPKG_ROOT/bootstrap-vcpkg.sh"
+          fi
+
+      - name: Ensure vcpkg binary cache directory
+        run: |
+          mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+
+      - name: Install dependencies
+        env:
+          VCPKG_BUILD_TYPE: release
+        run: |
+          "$VCPKG_ROOT/vcpkg" install \
+            boost-system boost-asio boost-dynamic-bitset boost-pool \
+            geographiclib \
+            --triplet arm64-osx
+
+      - name: Build qcoro from source (avoids vcpkg qtbase conflict)
+        env:
+          QCORO_DIR: ${{ github.workspace }}/qcoro
+          QCORO_INSTALL_DIR: ${{ github.workspace }}/qcoro-install
+        run: |
+          git clone --depth 1 --branch v0.12.0 https://github.com/danvratil/qcoro.git "$QCORO_DIR"
+          cmake -S "$QCORO_DIR" -B "$QCORO_DIR/build" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
+            -DBUILD_TESTING=OFF \
+            -DQCORO_BUILD_EXAMPLES=OFF \
+            -DQCORO_BUILD_TESTS=OFF \
+            -DQCORO_WITH_QTWEBSOCKETS=OFF \
+            -DUSE_QT_VERSION=6
+          cmake --build "$QCORO_DIR/build" --config Release
+          cmake --install "$QCORO_DIR/build" --prefix "$QCORO_INSTALL_DIR"
+
+      - name: Generate macOS app icon
+        run: |
+          ICONSET_DIR="${{ github.workspace }}/navi.iconset"
+          mkdir -p "$ICONSET_DIR"
+          sips -z 16 16   resources/navi.png --out "$ICONSET_DIR/icon_16x16.png"
+          sips -z 32 32   resources/navi.png --out "$ICONSET_DIR/icon_16x16@2x.png"
+          sips -z 32 32   resources/navi.png --out "$ICONSET_DIR/icon_32x32.png"
+          sips -z 64 64   resources/navi.png --out "$ICONSET_DIR/icon_32x32@2x.png"
+          sips -z 128 128 resources/navi.png --out "$ICONSET_DIR/icon_128x128.png"
+          sips -z 256 256 resources/navi.png --out "$ICONSET_DIR/icon_128x128@2x.png"
+          sips -z 256 256 resources/navi.png --out "$ICONSET_DIR/icon_256x256.png"
+          sips -z 512 512 resources/navi.png --out "$ICONSET_DIR/icon_256x256@2x.png"
+          sips -z 512 512 resources/navi.png --out "$ICONSET_DIR/icon_512x512.png"
+          sips -z 1024 1024 resources/navi.png --out "$ICONSET_DIR/icon_512x512@2x.png"
+          iconutil -c icns "$ICONSET_DIR" -o resources/navi.icns
+
+      - name: Configure
+        run: |
+          cmake -S . -B "$BUILD_DIR" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=arm64-osx \
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR;${{ github.workspace }}/qcoro-install" \
+            -DQt6_DIR="$QT_ROOT_DIR/lib/cmake/Qt6"
+
+      - name: Build
+        run: cmake --build "$BUILD_DIR" --config Release
+
+      - name: Package
+        env:
+          PACKAGE_FILE: ${{ env.PROJECT_NAME }}-${{ steps.pkgdate.outputs.build_date }}.dmg
+        run: |
+          PACKAGE_DIR="$BUILD_DIR/${PROJECT_NAME}-bundle"
+          rm -rf "$PACKAGE_DIR"
+          "$QT_ROOT_DIR/bin/macdeployqt" "$BUILD_DIR/$PROJECT_NAME.app" -always-overwrite
+          codesign --force --deep --sign - "$BUILD_DIR/$PROJECT_NAME.app"
+          mkdir -p "$PACKAGE_DIR"
+          cp -R "$BUILD_DIR/$PROJECT_NAME.app" "$PACKAGE_DIR/"
+          if [ -d "$GITHUB_WORKSPACE/example" ]; then
+            cp -R "$GITHUB_WORKSPACE/example" "$PACKAGE_DIR/example"
+          fi
+          hdiutil create -volname "$PROJECT_NAME" -srcfolder "$PACKAGE_DIR" -ov -format UDZO "$BUILD_DIR/$PACKAGE_FILE"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.PROJECT_NAME }}-${{ steps.pkgdate.outputs.build_date }}-macos
+          path: ${{ env.BUILD_DIR }}/${{ env.PROJECT_NAME }}-${{ steps.pkgdate.outputs.build_date }}.dmg
