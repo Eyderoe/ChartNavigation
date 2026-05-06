@@ -3,21 +3,22 @@
 #include <QFileDialog>
 
 #include "main_widget.hpp"
-#include "ui_main_window.h"
-#include "ui/statusBar.hpp"
 #include "options_widget.hpp"
-#include "ui/themeColor.hpp"
-#include "utils/settingManage.hpp"
 #include "about_dialog.hpp"
+#include "ui_main_window.h"
 #include "connector/allAdapter.hpp"
-#include "utils/constValue.hpp"
+#include "ui/statusBar.hpp"
+#include "ui/themeColor.hpp"
 #include "ui/pdfView.hpp"
+#include "ui/stackedWidget.hpp"
+#include "utils/settingManage.hpp"
+#include "utils/constValue.hpp"
 
 
 main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::main_window) {
     ui->setupUi(this);
     // 初始化页面
-    stackedWidget = new QStackedWidget(this);
+    stackedWidget = new StackedWidget(this);
     pdfBrowser = new main_widget(this);
     enroute = new enroute_widget(this);
     stackedWidget->addWidget(pdfBrowser);

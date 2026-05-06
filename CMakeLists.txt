@@ -86,6 +86,10 @@ add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/enroute_widget.cpp
         src/gui/enroute_widget.hpp
         src/gui/enroute_widget.ui
+        src/utils/noaaGlobe.cpp
+        src/utils/noaaGlobe.hpp
+        src/ui/stackedWidget.cpp
+        src/ui/stackedWidget.hpp
 )
 
 qt_add_protobuf(${PROJECT_NAME}

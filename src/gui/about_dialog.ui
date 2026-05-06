@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>350</width>
-    <height>359</height>
+    <height>377</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -69,31 +69,52 @@
      <layout class="QHBoxLayout" name="horizontalLayout_6">
       <item>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="5" column="0">
-         <widget class="QLabel" name="label_15">
+        <item row="7" column="0">
+         <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>nlohmann-json</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="1">
-         <widget class="QLabel" name="label_6">
-          <property name="text">
-           <string>BSD3</string>
+           <string>Protobuf</string>
           </property>
          </widget>
         </item>
         <item row="8" column="0">
-         <widget class="QLabel" name="label_19">
+         <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>QDarkStyleSheet</string>
+           <string>QCoro</string>
           </property>
          </widget>
         </item>
-        <item row="9" column="1">
+        <item row="3" column="1">
+         <widget class="QLabel" name="label_14">
+          <property name="text">
+           <string>GPLv3</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>doctest</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="0">
+         <widget class="QLabel" name="label_17">
+          <property name="text">
+           <string>Qt</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="1">
          <widget class="QLabel" name="label_18">
           <property name="text">
            <string>LGPLv3/GPLv3</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_15">
+          <property name="text">
+           <string>nlohmann-json</string>
           </property>
          </widget>
         </item>
@@ -111,66 +132,10 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_13">
-          <property name="text">
-           <string>eyderoe/*</string>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="1">
-         <widget class="QLabel" name="label_16">
-          <property name="text">
-           <string>MIT</string>
-          </property>
-         </widget>
-        </item>
-        <item row="9" column="0">
-         <widget class="QLabel" name="label_17">
-          <property name="text">
-           <string>Qt</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLabel" name="label_21">
-          <property name="text">
-           <string>MPL2</string>
-          </property>
-         </widget>
-        </item>
-        <item row="7" column="0">
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>QCoro</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="0">
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string>Protobuf</string>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="1">
          <widget class="QLabel" name="label_12">
           <property name="text">
            <string>BSD</string>
-          </property>
-         </widget>
-        </item>
-        <item row="7" column="1">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>MIT</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QLabel" name="label_14">
-          <property name="text">
-           <string>GPLv3</string>
           </property>
          </widget>
         </item>
@@ -181,24 +146,38 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_8">
-          <property name="text">
-           <string>Eigen</string>
-          </property>
-         </widget>
-        </item>
-        <item row="8" column="1">
-         <widget class="QLabel" name="label_20">
+        <item row="5" column="1">
+         <widget class="QLabel" name="label_24">
           <property name="text">
            <string>MIT</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_7">
+        <item row="6" column="1">
+         <widget class="QLabel" name="label_16">
           <property name="text">
-           <string>doctest</string>
+           <string>MIT</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_13">
+          <property name="text">
+           <string>eyderoe/*</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_23">
+          <property name="text">
+           <string>mio</string>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="0">
+         <widget class="QLabel" name="label_19">
+          <property name="text">
+           <string>QDarkStyleSheet</string>
           </property>
          </widget>
         </item>
@@ -206,6 +185,41 @@
          <widget class="QLabel" name="label_22">
           <property name="text">
            <string>MIT</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>BSD3</string>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="1">
+         <widget class="QLabel" name="label_20">
+          <property name="text">
+           <string>MIT</string>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="1">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>MIT</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Eigen</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLabel" name="label_21">
+          <property name="text">
+           <string>MPL2</string>
           </property>
          </widget>
         </item>
