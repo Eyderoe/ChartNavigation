@@ -2,7 +2,11 @@ find_package(GeographicLib REQUIRED)
 
 add_executable(unit_tests
         testMain.cpp
-        stringProcess_test.cpp)
+        stringProcess_test.cpp
+        noaaGlobe_test.cpp
+        ../src/utils/noaaGlobe.cpp
+        ../src/utils/noaaGlobe.hpp
+        )
 
 target_include_directories(unit_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../include

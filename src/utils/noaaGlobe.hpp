@@ -2,6 +2,10 @@
 #define CHARTNAVIGATION_NOAA_GLOBE_HPP
 
 #include <mio.hpp>
+#include <vector>
+#include <filesystem>
+#include <map>
+#include <span>
 
 // Global Land One-km Base Elevation
 class NoaaGlobe {
@@ -33,13 +37,13 @@ class NoaaGlobeView {
         bool available;
     };
     public:
-        explicit NoaaGlobeView (std::filesystem::path const &folder);
+        explicit NoaaGlobeView (const std::filesystem::path &folder);
         short getAlt (float latitude, float longitude);
     private:
         static char getTileName (float latitude, float longitude);
 
         std::map<char, Tile> tiles;
-        void loadTile (const std::filesystem::path& tilePath);
+        void loadTile (const std::filesystem::path &tilePath);
 };
 
 #endif //CHARTNAVIGATION_NOAA_GLOBE_HPP

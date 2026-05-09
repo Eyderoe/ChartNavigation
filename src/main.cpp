@@ -4,6 +4,7 @@
 #include "gui/main_widget.hpp"
 #include "ui/themeColor.hpp"
 #include "gui/main_window.hpp"
+#include "utils/constValue.hpp"
 #include "utils/settingManage.hpp"
 
 int main (int argc, char *argv[]) {
@@ -28,6 +29,11 @@ int main (int argc, char *argv[]) {
     QApplication::setWindowIcon(ico);
     // 窗口
     main_window window;
-    window.show();
+    if constexpr (platform == MultiPlatform::androidOS) {
+        window.setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+        window.showFullScreen();
+    } else {
+        window.show();
+    }
     return QApplication::exec();
 }

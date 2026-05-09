@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <ranges>
 
 namespace fs = std::filesystem;
@@ -13,7 +14,7 @@ namespace fs = std::filesystem;
 NoaaGlobe::NoaaGlobe (fs::path const &folder, const int maxTile) : max(maxTile) {
     // 仅记录文件位置
     if (!fs::exists(folder) || !fs::is_directory(folder)) {
-        std::cerr << std::format("Folder: {} does not exist.", folder.c_str()) << std::endl;
+        std::cerr << std::format("Folder: {} does not exist.", folder.string()) << std::endl;
         return;
     }
     for (const auto &entry : fs::directory_iterator(folder)) {
@@ -100,22 +101,24 @@ bool NoaaGlobe::loadTile (const char tileName) {
 /**
  * @param folder 存储 a10g-p10g 文件的文件夹
  */
-NoaaGlobeView::NoaaGlobeView (std::filesystem::path const &folder) {
-    // 读取文件夹下可用文件
-    for (const auto &entry : fs::directory_iterator(folder)) {
-        if (!entry.is_regular_file())
-            continue;
-        const std::string filename = entry.path().filename().string();
-        if (filename.size() == 4) {
-            const char firstChar = static_cast<char>(tolower(filename[0]));
-            const char fourthChar = static_cast<char>(tolower(filename[3]));
-            if (!(firstChar >= 'a' && firstChar <= 'p'))
+NoaaGlobeView::NoaaGlobeView (const std::filesystem::path &folder) {
+    if (fs::exists(folder)) {
+        // 读取文件夹下可用文件
+        for (const auto &entry : fs::directory_iterator(folder)) {
+            if (!entry.is_regular_file())
                 continue;
-            if (fourthChar != 'g')
-                continue;
-            if (!isdigit(filename[1]) || !isdigit(filename[2]))
-                continue;
-            loadTile(entry);
+            const std::string filename = entry.path().filename().string();
+            if (filename.size() == 4) {
+                const char firstChar = static_cast<char>(tolower(filename[0]));
+                const char fourthChar = static_cast<char>(tolower(filename[3]));
+                if (!(firstChar >= 'a' && firstChar <= 'p'))
+                    continue;
+                if (fourthChar != 'g')
+                    continue;
+                if (!isdigit(filename[1]) || !isdigit(filename[2]))
+                    continue;
+                loadTile(entry);
+            }
         }
     }
     // 补充

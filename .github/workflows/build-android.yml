@@ -1,0 +1,258 @@
+name: build-android-package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_NAME: ChartNavigation
+
+jobs:
+  build-android:
+    name: android package (arm64-v8a)
+    runs-on: ubuntu-24.04
+    env:
+      BUILD_DIR: ${{ github.workspace }}/build-android
+      VCPKG_REF: 2025.09.17
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-ndk-r27c
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set package date
+        id: pkgdate
+        run: |
+          date_value=$(date +%Y%m%d)
+          echo "build_date=$date_value" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Android SDK components
+        run: |
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
+            "platforms;android-34" \
+            "platforms;android-35" \
+            "build-tools;34.0.0" \
+            "platform-tools"
+
+      - name: Install Android NDK r27c
+        run: |
+          NDK_ZIP="android-ndk-r27c-linux.zip"
+          wget -q "https://dl.google.com/android/repository/$NDK_ZIP"
+          unzip -q "$NDK_ZIP" -d "${{ github.workspace }}"
+
+      - name: Cache Qt
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/aqtinstall
+            ${{ github.workspace }}/../Qt
+          # Include workflow hash so incomplete Qt trees are not reused forever after we fix install steps.
+          key: qt-android-6.9.3-${{ hashFiles('.github/workflows/build-android.yml') }}-${{ runner.os }}-${{ runner.arch }}
+
+      # Host gcc_64 must come from the *same* aqt Android install via --autodesktop (aqt docs).
+      # A separate "desktop gcc_64" step makes install-qt-action pass --autodesktop there too, which breaks
+      # package resolution (qt_base not found). Do not split host + Android into two install-qt-action runs.
+      - name: Install Qt for Android (+ host gcc_64 via autodesktop)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.9.3
+          host: linux
+          target: android
+          arch: android_arm64_v8a
+          # qtpdf is not an aqt “module” for Android (online-repo extension only); install it in the next step.
+          modules: qtpositioning qtgrpc
+          extra: '--autodesktop'
+          cache: true
+
+      - name: Resolve Qt host path for androiddeployqt
+        run: |
+          set -euo pipefail
+          parent=$(dirname "$QT_ROOT_DIR")
+          QT_HOST_RESOLVED=""
+          for name in gcc_64 linux_gcc_64; do
+            d="${parent}/${name}"
+            if [ -x "${d}/bin/androiddeployqt" ] || [ -x "${d}/bin/androiddeployqt6" ]; then
+              QT_HOST_RESOLVED="$d"
+              break
+            fi
+          done
+          if [ -z "$QT_HOST_RESOLVED" ]; then
+            echo "No androiddeployqt under ${parent} (expected gcc_64 or linux_gcc_64 from --autodesktop)."
+            ls -la "$parent" || true
+            exit 1
+          fi
+          echo "QT_HOST_DIR=$QT_HOST_RESOLVED" >> "$GITHUB_ENV"
+          echo "QT_HOST_DIR=$QT_HOST_RESOLVED"
+
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      # Same components as Qt Maintenance Tool “Qt PDF” for Android: install-qt/aqt may omit or
+      # partially install extensions; official 7z layout varies (extra top-level folders). Merge by
+      # locating Qt6PdfWidgetsConfig.cmake — no application source changes required.
+      - name: Ensure Qt6 PdfWidgets (merge official qtpdf extension into android kit)
+        run: |
+          set -euo pipefail
+          PDF_CFG="$QT_ROOT_DIR/lib/cmake/Qt6PdfWidgets/Qt6PdfWidgetsConfig.cmake"
+          if [ -f "$PDF_CFG" ]; then
+            echo "Qt6PdfWidgets already present: $PDF_CFG"
+            exit 0
+          fi
+          echo "Qt6PdfWidgets missing under \$QT_ROOT_DIR; downloading Qt online-repo qtpdf extension for android_arm64_v8a."
+          sudo apt-get install -y -qq p7zip-full
+          wget -q "https://download.qt.io/online/qtsdkrepository/all_os/extensions/qtpdf/693/qt6_693_arm64_v8a/extensions.qtpdf.693.android_arm64_v8a/6.9.3-202509261208qtpdf-MacOS-MacOS_13-Clang-Android-Android_ANY-ARM64.7z" -O /tmp/qtpdf-arm64.7z
+          STAGING=$(mktemp -d)
+          7z x /tmp/qtpdf-arm64.7z -o"$STAGING" -y
+          rm -f /tmp/qtpdf-arm64.7z
+          CFG=$(find "$STAGING" -name 'Qt6PdfWidgetsConfig.cmake' | grep -F 'android_arm64_v8a' | head -1 || true)
+          if [ -z "$CFG" ]; then
+            CFG=$(find "$STAGING" -name 'Qt6PdfWidgetsConfig.cmake' | head -1 || true)
+          fi
+          if [ -z "$CFG" ]; then
+            echo "Archive contained no Qt6PdfWidgetsConfig.cmake (unexpected for official qtpdf android build)."
+            find "$STAGING" -type f | head -80
+            exit 1
+          fi
+          # .../lib/cmake/Qt6PdfWidgets/Qt6PdfWidgetsConfig.cmake -> kit root is four dirnames up
+          KIT_ROOT=$(dirname "$(dirname "$(dirname "$(dirname "$CFG")")")")
+          echo "Merging kit root: $KIT_ROOT -> $QT_ROOT_DIR"
+          cp -a "$KIT_ROOT"/. "$QT_ROOT_DIR"/
+          rm -rf "$STAGING"
+          if [ ! -f "$PDF_CFG" ]; then
+            echo "Merge finished but Qt6PdfWidgets still missing."
+            ls -la "$QT_ROOT_DIR/lib/cmake" || true
+            exit 1
+          fi
+          echo "OK: $PDF_CFG"
+
+      - name: Cache vcpkg
+        uses: actions/cache@v5
+        with:
+          path: |
+            ${{ env.VCPKG_ROOT }}
+            ${{ github.workspace }}/vcpkg-cache
+          key: vcpkg-android-arm64-${{ env.VCPKG_REF }}-${{ hashFiles('CMakeLists.txt', '.github/workflows/build-android.yml') }}
+          restore-keys: |
+            vcpkg-android-arm64-
+
+      - name: Bootstrap vcpkg
+        run: |
+          if [ ! -d "$VCPKG_ROOT" ]; then
+            git clone --branch "$VCPKG_REF" --depth 1 https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
+          fi
+          if [ ! -x "$VCPKG_ROOT/vcpkg" ]; then
+            "$VCPKG_ROOT/bootstrap-vcpkg.sh"
+          fi
+
+      - name: Ensure vcpkg binary cache directory
+        run: mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+
+      - name: Install dependencies
+        env:
+          VCPKG_BUILD_TYPE: release
+        run: |
+          "$VCPKG_ROOT/vcpkg" install \
+            boost-system boost-asio boost-dynamic-bitset boost-pool \
+            geographiclib \
+            --triplet arm64-android
+
+      - name: Build qcoro from source
+        env:
+          QCORO_DIR: ${{ github.workspace }}/qcoro
+          QCORO_INSTALL_DIR: ${{ github.workspace }}/qcoro-install
+        run: |
+          git clone --depth 1 --branch v0.12.0 https://github.com/danvratil/qcoro.git "$QCORO_DIR"
+          cmake -S "$QCORO_DIR" -B "$QCORO_DIR/build" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-28 \
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
+            -DQt6_DIR="$QT_ROOT_DIR/lib/cmake/Qt6" \
+            -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH \
+            -DCMAKE_THREAD_LIBS_INIT="" \
+            -DBUILD_TESTING=OFF \
+            -DQCORO_BUILD_EXAMPLES=OFF \
+            -DQCORO_BUILD_TESTS=OFF \
+            -DQCORO_WITH_QTWEBSOCKETS=OFF \
+            -DUSE_QT_VERSION=6
+          cmake --build "$QCORO_DIR/build" --config Release
+          cmake --install "$QCORO_DIR/build" --prefix "$QCORO_INSTALL_DIR"
+
+      - name: Configure
+        run: |
+          # vcpkg.cmake alone does not switch the main target to the NDK; chainload NDK first (see vcpkg Android docs).
+          cmake -S . -B "$BUILD_DIR" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
+            -DVCPKG_TARGET_TRIPLET=arm64-android \
+            -DANDROID_PLATFORM=android-34 \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_NDK_ROOT="$ANDROID_NDK_HOME" \
+            -DANDROID_SDK_ROOT="$ANDROID_SDK_ROOT" \
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR;${{ github.workspace }}/qcoro-install" \
+            -DQt6_DIR="$QT_ROOT_DIR/lib/cmake/Qt6" \
+            -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH \
+            -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH \
+            -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH
+
+      - name: Build
+        run: cmake --build "$BUILD_DIR" --config Release
+
+      - name: Package APK
+        env:
+          PACKAGE_NAME: ${{ env.PROJECT_NAME }}-${{ steps.pkgdate.outputs.build_date }}-android-arm64-v8a
+        run: |
+          set -euo pipefail
+          DEPLOYQT="${QT_HOST_DIR}/bin/androiddeployqt"
+          if [ ! -x "$DEPLOYQT" ] && [ -x "${QT_HOST_DIR}/bin/androiddeployqt6" ]; then
+            DEPLOYQT="${QT_HOST_DIR}/bin/androiddeployqt6"
+          fi
+          if [ ! -x "$DEPLOYQT" ]; then
+            echo "androiddeployqt not found under QT_HOST_DIR=$QT_HOST_DIR"
+            ls -la "${QT_HOST_DIR}/bin" 2>/dev/null || true
+            exit 1
+          fi
+          echo "Using $DEPLOYQT"
+          # Must match CMake project(): this repo uses project(Chart) → android-Chart-deployment-settings.json,
+          # not workflow env PROJECT_NAME (ChartNavigation, used for APK filename only).
+          shopt -s nullglob
+          deploy_jsons=("$BUILD_DIR"/android-*-deployment-settings.json)
+          if [ "${#deploy_jsons[@]}" -ne 1 ]; then
+            echo "Expected exactly one android-*-deployment-settings.json in $BUILD_DIR, got ${#deploy_jsons[@]}"
+            ls -la "$BUILD_DIR" || true
+            exit 1
+          fi
+          DEPLOY_JSON="${deploy_jsons[0]}"
+          echo "Deployment settings: $DEPLOY_JSON"
+          "$DEPLOYQT" \
+            --input "$DEPLOY_JSON" \
+            --output "$BUILD_DIR/android-build" \
+            --android-platform android-35 \
+            --jdk "$JAVA_HOME" \
+            --gradle
+
+          APK_BUILT="$BUILD_DIR/android-build/build/outputs/apk/debug/android-build-debug.apk"
+          APK_DEST="$BUILD_DIR/${PACKAGE_NAME}.apk"
+          if [ -f "$APK_BUILT" ]; then
+            cp "$APK_BUILT" "$APK_DEST"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.PROJECT_NAME }}-${{ steps.pkgdate.outputs.build_date }}-android-arm64-v8a
+          path: ${{ env.BUILD_DIR }}/${{ env.PROJECT_NAME }}-${{ steps.pkgdate.outputs.build_date }}-android-arm64-v8a.apk

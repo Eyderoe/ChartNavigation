@@ -6,24 +6,27 @@ project(ChartNavigation)
 if (MINGW AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0))
     message(FATAL_ERROR "MinGW-w64 version must be 13.x, got ${CMAKE_CXX_COMPILER_VERSION}")
 endif ()
+if (ANDROID)
+    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+endif ()
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 
-if (NOT ANDROID)
-    find_package(Boost CONFIG)
-endif ()
+find_package(Boost CONFIG)
 find_package(GeographicLib REQUIRED)
-if(NOT TARGET GeographicLib::GeographicLib AND GeographicLib_LIBRARIES)
+if (NOT TARGET GeographicLib::GeographicLib AND GeographicLib_LIBRARIES)
     add_library(GeographicLib::GeographicLib UNKNOWN IMPORTED)
     set_target_properties(GeographicLib::GeographicLib PROPERTIES
             IMPORTED_LOCATION "${GeographicLib_LIBRARIES}"
             INTERFACE_INCLUDE_DIRECTORIES "${GeographicLib_INCLUDE_DIRS}"
     )
-endif()
+endif ()
 find_package(QCoro6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS
         Core
@@ -36,7 +39,8 @@ find_package(Qt6 REQUIRED COMPONENTS
         Protobuf
         ProtobufTools)
 
-add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
+
+qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         resources.qrc
         resources/qdarkstyle/dark/darkstyle.qrc
         resources/qdarkstyle/light/lightstyle.qrc
@@ -48,6 +52,8 @@ add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/utils/affineTransformer.hpp
         src/ui/pdfView.cpp
         src/ui/pdfView.hpp
+        src/ui/stackedWidget.cpp
+        src/ui/stackedWidget.hpp
         src/ui/themeColor.cpp
         src/ui/themeColor.hpp
         src/utils/stringProcess.cpp
@@ -88,42 +94,12 @@ add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/enroute_widget.ui
         src/utils/noaaGlobe.cpp
         src/utils/noaaGlobe.hpp
-        src/ui/stackedWidget.cpp
-        src/ui/stackedWidget.hpp
 )
-
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES
         src/connector/plane.proto
 )
 
-
-if (APPLE)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-            MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_DEVELOPMENT_REGION "zh_CN"
-            MACOSX_BUNDLE_INFO_PLIST_LOCALIZATIONS "zh_CN"
-            MACOSX_BUNDLE_BUNDLE_NAME "ChartNavigation"
-            MACOSX_BUNDLE_EXECUTABLE_NAME "ChartNavigation"
-            MACOSX_BUNDLE_ICON_FILE "navi.icns"
-    )
-    set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/resources/navi.icns")
-    if(EXISTS "${APP_ICON}")
-        set_source_files_properties("${APP_ICON}" PROPERTIES
-                MACOSX_PACKAGE_LOCATION "Resources"
-        )
-        target_sources(${PROJECT_NAME} PRIVATE "${APP_ICON}")
-    endif()
-endif ()
-
-target_link_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:-mconsole>
-        $<$<CONFIG:RelWithDebInfo>:-mconsole>
-        $<$<CONFIG:Release>:-mwindows>
-)
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Release>:QT_NO_DEBUG_OUTPUT>
-)
 
 set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
 target_precompile_headers(${PROJECT_NAME} PRIVATE
@@ -133,8 +109,6 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
         <QtPdf/QtPdf>
         <QtPdfWidgets/QPdfView>
 )
-
-
 target_link_libraries(${PROJECT_NAME} PRIVATE
         GeographicLib::GeographicLib
         Qt::Core
@@ -149,21 +123,23 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32)
+    target_link_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:Debug>:-mconsole>
+            $<$<CONFIG:RelWithDebInfo>:-mconsole>
+            $<$<CONFIG:Release>:-mwindows>
+    )
 endif ()
-if (NOT ANDROID)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY})
-endif ()
-
-
+target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY})
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Release>:QT_NO_DEBUG_OUTPUT>
+)
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/include
 )
-if (NOT ANDROID)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
-endif ()
+target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
@@ -194,6 +170,22 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
                 "$<TARGET_FILE_DIR:${PROJECT_NAME}>")
     endforeach (QT_LIB)
 endif ()
-
+if (APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            MACOSX_BUNDLE TRUE
+            MACOSX_BUNDLE_DEVELOPMENT_REGION "zh_CN"
+            MACOSX_BUNDLE_INFO_PLIST_LOCALIZATIONS "zh_CN"
+            MACOSX_BUNDLE_BUNDLE_NAME "ChartNavigation"
+            MACOSX_BUNDLE_EXECUTABLE_NAME "ChartNavigation"
+            MACOSX_BUNDLE_ICON_FILE "navi.icns"
+    )
+    set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/resources/navi.icns")
+    if (EXISTS "${APP_ICON}")
+        set_source_files_properties("${APP_ICON}" PROPERTIES
+                MACOSX_PACKAGE_LOCATION "Resources"
+        )
+        target_sources(${PROJECT_NAME} PRIVATE "${APP_ICON}")
+    endif ()
+endif ()
 
 add_subdirectory(test)

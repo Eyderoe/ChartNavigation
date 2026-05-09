@@ -261,7 +261,7 @@ void main_window::on_action_dark_triggered (const bool checked) {
 void main_window::openFile () {
     // 文件选择框的一坨
     auto option = QFileDialog::Options();
-    if ((platform == MultiPlatform::mac) && !inMacSandbox)
+    if ((platform == MultiPlatform::macOS) && !inMacSandbox)
         option |= QFileDialog::DontUseNativeDialog;
     const QString fileName = QFileDialog::getOpenFileName(this, "选择文件", QDir::homePath()
                                                           , "文件 (*.pdf)", nullptr, option);
@@ -274,7 +274,7 @@ void main_window::openFile () {
 void main_window::openFolder () {
     // 文件选择框的一坨
     auto option = QFileDialog::Options();
-    if ((platform == MultiPlatform::mac) && !inMacSandbox)
+    if ((platform == MultiPlatform::macOS) && !inMacSandbox)
         option |= QFileDialog::DontUseNativeDialog;
     option = option | QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
     const QString dir = QFileDialog::getExistingDirectory(this, "选择文件夹", QDir::homePath()
