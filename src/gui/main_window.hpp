@@ -35,6 +35,7 @@ class main_window : public QMainWindow {
         void setAltModeGroup (int val) const;
         void initConnect ();
         void initActionGroup ();
+        void menu2toolBar();
     private Q_SLOTS:
         static void on_action_dark_triggered (bool checked);
         void openFile ();

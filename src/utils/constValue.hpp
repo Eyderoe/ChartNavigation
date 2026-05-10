@@ -7,14 +7,14 @@ enum class MultiPlatform { winOS, linuxOS, macOS, androidOS };
 #ifdef _WIN32
 constexpr auto platform = MultiPlatform::winOS;
 const bool inMacSandbox = false;
-#elifdef __linux__
-constexpr auto platform = MultiPlatform::linuxOS;
+#elifdef __ANDROID__
+constexpr auto platform = MultiPlatform::androidOS;
 const bool inMacSandbox = false;
 #elifdef __APPLE__
 constexpr auto platform = MultiPlatform::macOS;
 const bool inMacSandbox = QProcessEnvironment::systemEnvironment().contains("APP_SANDBOX_CONTAINER_ID");
-#elifdef __ANDROID__
-constexpr auto platform = MultiPlatform::androidOS;
+#elifdef __linux__
+constexpr auto platform = MultiPlatform::linuxOS;
 const bool inMacSandbox = false;
 #endif
 

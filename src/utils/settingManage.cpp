@@ -210,4 +210,5 @@ SettingsManager::TempKey SettingsManager::string2Key_temp (const QString &keyStr
 void SettingsManager::writeSetting () {
     for (auto [key, value] : cache_const.asKeyValueRange())
         settings.setValue(key, value);
+    settings.sync();
 }

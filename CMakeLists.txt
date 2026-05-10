@@ -187,5 +187,13 @@ if (APPLE)
         target_sources(${PROJECT_NAME} PRIVATE "${APP_ICON}")
     endif ()
 endif ()
+if (ANDROID)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            QT_ANDROID_PACKAGE_NAME "eyderoe.ChartNavigation"
+            QT_ANDROID_APP_NAME "ChartNavigation"
+            QT_ANDROID_APP_ICON "@drawable/ic_launcher"
+            QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
+    )
+endif ()
 
 add_subdirectory(test)

@@ -32,7 +32,7 @@ jobs:
           echo "build_date=$date_value" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -211,6 +211,22 @@ jobs:
 
       - name: Build
         run: cmake --build "$BUILD_DIR" --config Release
+
+      # Debug APKs use ~/.android/debug.keystore. On fresh GitHub runners that file is created per job,
+      # so every artifact is signed differently and Android blocks upgrades over a previous install.
+      # Optional: add repo secret ANDROID_DEBUG_KEYSTORE_B64 = base64 of a fixed debug.keystore (e.g. copy yours from ~/.android/debug.keystore).
+      - name: Install stable debug keystore (optional)
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
+        run: |
+          if [ -n "${KEYSTORE_B64}" ]; then
+            mkdir -p ~/.android
+            echo "${KEYSTORE_B64}" | base64 -d > ~/.android/debug.keystore
+            chmod 600 ~/.android/debug.keystore
+            echo "Using ANDROID_DEBUG_KEYSTORE_B64 for consistent debug signing."
+          else
+            echo "No ANDROID_DEBUG_KEYSTORE_B64: each CI run may use a new debug keystore (uninstall old APK before installing a new one)."
+          fi
 
       - name: Package APK
         env:

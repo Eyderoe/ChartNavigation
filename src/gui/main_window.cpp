@@ -1,6 +1,9 @@
 #include "main_window.hpp"
 
 #include <QFileDialog>
+#include <QMenu>
+#include <QToolBar>
+#include <QToolButton>
 
 #include "main_widget.hpp"
 #include "options_widget.hpp"
@@ -26,6 +29,9 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
     setCentralWidget(stackedWidget);
     // 初始化动作组
     initActionGroup();
+    // 安卓特化 因为显示不了菜单栏
+    if constexpr (platform == MultiPlatform::androidOS)
+        menu2toolBar();
     // 初始化状态栏
     new StatusBar(ui->statusbar, ui->statusbar);
     // 连接信号
@@ -252,6 +258,29 @@ void main_window::initActionGroup () {
     sourceGroup = makeGroup(this, "_source_");
     tcasGroup = makeGroup(this, "_tcas_");
     altGroup = makeGroup(this, "_alt_");
+}
+
+/**
+ * @brief 把菜单栏转换为工具栏
+ */
+void main_window::menu2toolBar () {
+    auto *bar = ui->toolBar;
+    bar->addSeparator();
+    const auto addTopMenu = [bar](QMenu *menu) {
+        auto *btn = new QToolButton(bar);
+        btn->setText(menu->title());
+        btn->setMenu(menu);
+        btn->setPopupMode(QToolButton::InstantPopup);
+        btn->setToolButtonStyle(Qt::ToolButtonTextOnly);
+        btn->setFocusPolicy(Qt::NoFocus);
+        bar->addWidget(btn);
+    };
+    addTopMenu(ui->menu_file);
+    addTopMenu(ui->menu);
+    addTopMenu(ui->menu_2);
+    addTopMenu(ui->menu_3);
+
+    ui->menubar->hide();
 }
 
 void main_window::on_action_dark_triggered (const bool checked) {

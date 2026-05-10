@@ -1,4 +1,6 @@
 #include <QApplication>
+#include <QDir>
+#include <QStandardPaths>
 
 #include "XPlaneUDP.hpp"
 #include "gui/main_widget.hpp"
@@ -21,6 +23,11 @@ int main (int argc, char *argv[]) {
     setDarkTheme(&app);
     // 设置
     QSettings::setDefaultFormat(QSettings::IniFormat);
+    if constexpr (platform == MultiPlatform::androidOS) {
+        const QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+        if (QDir().mkpath(configDir))
+            QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, configDir);
+    }
     SettingsManager::instance();
     qDebug() << "QSettings path: " << QSettings().fileName();
     // 图标
@@ -30,8 +37,8 @@ int main (int argc, char *argv[]) {
     // 窗口
     main_window window;
     if constexpr (platform == MultiPlatform::androidOS) {
-        window.setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
-        window.showFullScreen();
+        window.setWindowTitle({});
+        window.showMaximized();
     } else {
         window.show();
     }

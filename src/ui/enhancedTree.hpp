@@ -2,7 +2,7 @@
 #define CHARTNAVIGATION_ENHANCEDTREE_HPP
 
 
-#include <qcoro/QCoroCore>
+#include <QCoro/QCoroCore>
 #include <unordered_set>
 
 #include "utils/settingManage.hpp"
