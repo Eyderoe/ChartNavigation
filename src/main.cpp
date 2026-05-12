@@ -14,6 +14,10 @@ int main (int argc, char *argv[]) {
     QApplication::setOrganizationName("Eyderoe");
     QApplication::setApplicationName("ChartNavigation");
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
+    // 多线程
+    const int maxThreads = qMax(2, QThread::idealThreadCount());
+    QThreadPool::globalInstance()->setMaxThreadCount(maxThreads);
+    qDebug() << "max thread num: " << maxThreads;
     // 翻译
     auto *qtTranslator = new QTranslator(&app);
     if (qtTranslator->load(":/trans/translation/qtbase_zh_CN.qm"))
@@ -23,11 +27,6 @@ int main (int argc, char *argv[]) {
     setDarkTheme(&app);
     // 设置
     QSettings::setDefaultFormat(QSettings::IniFormat);
-    if constexpr (platform == MultiPlatform::androidOS) {
-        const QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-        if (QDir().mkpath(configDir))
-            QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, configDir);
-    }
     SettingsManager::instance();
     qDebug() << "QSettings path: " << QSettings().fileName();
     // 图标

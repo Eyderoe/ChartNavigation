@@ -1,5 +1,7 @@
 #include "settingManage.hpp"
 
+#include "constValue.hpp"
+
 /**
  * @brief 用给定值列表初始化
  */
@@ -47,6 +49,10 @@ void SettingsManager::set (const ConstKey key, const QVariant &value, const bool
         it.value() = value;
     } else {
         cache_const[keyName] = value;
+    }
+    if constexpr (platform == MultiPlatform::androidOS) { // 因为安卓上退出的机制不太一样
+        settings.setValue(keyName, value);
+        settings.sync();
     }
     if (notEmit)
         return;

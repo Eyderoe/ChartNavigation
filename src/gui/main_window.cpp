@@ -198,6 +198,9 @@ void main_window::initConnect () {
     connect(ui->action_top, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::stayFront, checked);
     });
+    connect(ui->action_follow, &QAction::triggered, this, [&](const bool checked) {
+        SettingsManager::instance().set(SettingsManager::planeFollowed, checked);
+    });
     connect(sourceGroup, &QActionGroup::triggered, this, [&](const QAction *action) {
         if (action == ui->action_source_XPlane)
             SettingsManager::instance().set(SettingsManager::dataSource, static_cast<int>(SimulatorSource::xplane));
@@ -275,11 +278,10 @@ void main_window::menu2toolBar () {
         btn->setFocusPolicy(Qt::NoFocus);
         bar->addWidget(btn);
     };
-    addTopMenu(ui->menu_file);
-    addTopMenu(ui->menu);
-    addTopMenu(ui->menu_2);
-    addTopMenu(ui->menu_3);
-
+    auto menus = ui->menubar->findChildren<QMenu*>(QRegularExpression("^menu_top_*"));
+    std::ranges::sort(menus, std::ranges::less{}, &QMenu::objectName);
+    for (const auto menu : menus)
+        addTopMenu(menu);
     ui->menubar->hide();
 }
 

@@ -6,7 +6,6 @@
 #include "ui/themeColor.hpp"
 #include "utils/settingManage.hpp"
 
-using namespace nlohmann;
 
 /**
  * @brief 程序启动时初始化文件树和文件夹选择框
@@ -139,7 +138,7 @@ void main_widget::loadPdfFileMapping () {
     // 航图文件可用性 ZUCK-3P-01
     mappingFile.open(QIODevice::ReadOnly);
     QTextStream stream(&mappingFile);
-    auto airportConfig = json::parse(stream.readAll().toUtf8().constData());
+    auto airportConfig = nlohmann::json::parse(stream.readAll().toUtf8().constData());
     const auto it = airportConfig.find(baseName.toStdString());
     if (it == airportConfig.end()) {
         fileData = {};
@@ -155,7 +154,7 @@ void main_widget::loadPdfFileMapping () {
  */
 main_widget::MappingInfo main_widget::loadPdfPageMapping (const int pageNum) {
     // 页码可用性
-    const basic_json<> *availableData{nullptr};
+    const nlohmann::basic_json<> *availableData{nullptr};
     for (const auto &pageConfig : fileData) {
         if (const auto &header = pageConfig[0]; header["page"] == pageNum - 1) {
             availableData = &pageConfig;

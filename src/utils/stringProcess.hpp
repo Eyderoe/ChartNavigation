@@ -11,7 +11,9 @@ concept StrRangeT = std::ranges::forward_range<R> && StrT<std::ranges::range_ref
 template <StrRangeT R>
 std::string join (R &&range, std::string_view sep);
 
-std::string toHex(const char *data, int length);
+std::string toHex (const char *data, int length);
+std::vector<std::string_view> split (std::string_view str, std::string_view delimiters = " \t\n\r\f\v",
+                                     bool skipEmpty = true);
 
 
 /**

@@ -23,14 +23,14 @@
      <height>24</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu_file">
+   <widget class="QMenu" name="menu_top_1_file">
     <property name="title">
      <string>文件</string>
     </property>
     <addaction name="action_load_file"/>
     <addaction name="action_load_folder"/>
    </widget>
-   <widget class="QMenu" name="menu_2">
+   <widget class="QMenu" name="menu_top_3_window">
     <property name="title">
      <string>窗口</string>
     </property>
@@ -39,14 +39,14 @@
     <addaction name="action_show_thumb"/>
     <addaction name="action_scale"/>
    </widget>
-   <widget class="QMenu" name="menu_3">
+   <widget class="QMenu" name="menu_top_4_about">
     <property name="title">
      <string>关于</string>
     </property>
     <addaction name="action_setting"/>
     <addaction name="action_thank"/>
    </widget>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="menu_top_2_simu">
     <property name="title">
      <string>模拟器</string>
     </property>
@@ -60,7 +60,7 @@
     </widget>
     <widget class="QMenu" name="menu_5">
      <property name="title">
-      <string>TCAS</string>
+      <string>TCAS范围</string>
      </property>
      <addaction name="action_tcas_nm30"/>
      <addaction name="action_tcas_nm6"/>
@@ -75,15 +75,24 @@
      <addaction name="action_alt_feet"/>
      <addaction name="action_alt_meter"/>
     </widget>
+    <widget class="QMenu" name="menu_2">
+     <property name="title">
+      <string>飞行器信息</string>
+     </property>
+     <addaction name="action_symbol_base"/>
+     <addaction name="action_symbol_extend"/>
+     <addaction name="action_symbol_full"/>
+    </widget>
     <addaction name="action_follow"/>
     <addaction name="menu_4"/>
     <addaction name="menu_5"/>
     <addaction name="menu_6"/>
+    <addaction name="menu_2"/>
    </widget>
-   <addaction name="menu_file"/>
-   <addaction name="menu"/>
-   <addaction name="menu_2"/>
-   <addaction name="menu_3"/>
+   <addaction name="menu_top_1_file"/>
+   <addaction name="menu_top_2_simu"/>
+   <addaction name="menu_top_3_window"/>
+   <addaction name="menu_top_4_about"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -353,6 +362,39 @@
    </property>
    <property name="text">
     <string>米(m)</string>
+   </property>
+  </action>
+  <action name="action_symbol_base">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>基本符号</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_symbol_extend">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>扩展符号</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_symbol_full">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>完整符号</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
  </widget>

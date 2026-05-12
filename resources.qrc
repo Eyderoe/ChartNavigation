@@ -28,4 +28,7 @@
         <file>translation/qt_zh_CN.qm</file>
         <file>translation/qtbase_zh_CN.qm</file>
     </qresource>
+    <qresource prefix="/doc">
+        <file>resources/documents/wtc.json</file>
+    </qresource>
 </RCC>
