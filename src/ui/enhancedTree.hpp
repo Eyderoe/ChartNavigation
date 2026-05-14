@@ -5,7 +5,7 @@
 #include <QCoro/QCoroCore>
 #include <unordered_set>
 
-#include "utils/settingManage.hpp"
+#include "services/settingManage.hpp"
 
 
 class Node;

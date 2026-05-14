@@ -1,6 +1,6 @@
 #include "settingManage.hpp"
 
-#include "constValue.hpp"
+#include "utils/constValue.hpp"
 
 /**
  * @brief 用给定值列表初始化
@@ -134,7 +134,7 @@ void SettingsManager::broadcast () {
 
             case dataSource:
             case tcasRange:
-            case altMode:
+            case infoMode:
                 emit settingChanged(enumKey, get(enumKey, 0));
                 break;
 

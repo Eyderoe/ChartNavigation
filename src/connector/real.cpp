@@ -81,6 +81,7 @@ realAdapter::realAdapter () {
     datarefMap["trk"] = 5;
     datarefMap["vs"] = 6;
     datarefMap["flightId"] = 7;
+    datarefMap["icao"] = 8;
 }
 
 void realAdapter::setCallback (const std::function<void  (bool)> &callbackFunc) {

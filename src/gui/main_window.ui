@@ -67,14 +67,6 @@
      <addaction name="action_tcas_none"/>
      <addaction name="action_tcas_all"/>
     </widget>
-    <widget class="QMenu" name="menu_6">
-     <property name="title">
-      <string>高度显示</string>
-     </property>
-     <addaction name="action_alt_none"/>
-     <addaction name="action_alt_feet"/>
-     <addaction name="action_alt_meter"/>
-    </widget>
     <widget class="QMenu" name="menu_2">
      <property name="title">
       <string>飞行器信息</string>
@@ -86,7 +78,6 @@
     <addaction name="action_follow"/>
     <addaction name="menu_4"/>
     <addaction name="menu_5"/>
-    <addaction name="menu_6"/>
     <addaction name="menu_2"/>
    </widget>
    <addaction name="menu_top_1_file"/>
@@ -338,30 +329,6 @@
    </property>
    <property name="toolTip">
     <string>不显示其他飞行器</string>
-   </property>
-  </action>
-  <action name="action_alt_none">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>不显示</string>
-   </property>
-  </action>
-  <action name="action_alt_feet">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>英尺(ft)</string>
-   </property>
-  </action>
-  <action name="action_alt_meter">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>米(m)</string>
    </property>
   </action>
   <action name="action_symbol_base">

@@ -39,7 +39,7 @@ class SettingsManager : public QObject {
             dataFolder, // 数据文件夹 String
             onlyDisplayPdf, // 是否只显示PDF bool
             tcasRange, // TCAS显示范围 TcasMode(int)
-            altMode, // 高度显示设置 AltMode(int)
+            infoMode, // 飞行器信息 InfoMode(int)
             showThumb, // 显示缩略图 bool
         };
         enum TempKey { // 仅在程序运行时存在的
@@ -50,7 +50,7 @@ class SettingsManager : public QObject {
             simuConnect, // 模拟器连接 bool
             latitu, // 纬度 double
             longitu, // 经度 double
-            aglevel, // 离地高度 int
+            altitu, // 高度 int
             pageRotate, // 页面旋转角度 int
         };
         Q_ENUM(ConstKey)

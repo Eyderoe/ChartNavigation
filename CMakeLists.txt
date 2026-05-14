@@ -80,8 +80,8 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/main_window.cpp
         src/gui/main_window.ui
         src/connector/plane.proto
-        src/utils/settingManage.cpp
-        src/utils/settingManage.hpp
+        src/services/settingManage.cpp
+        src/services/settingManage.hpp
         src/connector/real.cpp
         src/connector/real.hpp
         src/gui/about_dialog.cpp
@@ -94,6 +94,8 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/enroute_widget.ui
         src/utils/noaaGlobe.cpp
         src/utils/noaaGlobe.hpp
+        src/services/dataProvider.cpp
+        src/services/dataProvider.hpp
 )
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES

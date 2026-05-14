@@ -2,7 +2,7 @@
 #include "utils/stringProcess.hpp"
 #include "utils/constValue.hpp"
 #include "utils/geographic.hpp"
-#include "utils/settingManage.hpp"
+#include "services/settingManage.hpp"
 
 #include <ranges>
 
@@ -114,15 +114,15 @@ void PdfView::initConnect () {
                         }
                         break;
                     }
-                    case SettingsManager::altMode: {
-                        switch (const auto mode = static_cast<AltMode>(val.toInt()); mode) {
-                            case AltMode::none:
-                            case AltMode::feet:
-                            case AltMode::meter:
-                                altMode = mode;
+                    case SettingsManager::infoMode: {
+                        switch (const auto mode = static_cast<InfoMode>(val.toInt()); mode) {
+                            case InfoMode::base:
+                            case InfoMode::extend:
+                            case InfoMode::full:
+                                infoMode = mode;
                                 break;
                             default:
-                                altMode = AltMode::none;
+                                infoMode = InfoMode::base;
                         }
                         break;
                     }
@@ -338,18 +338,6 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
             altDescribe += "↓";
         else
             altDescribe += " ";
-        switch (altMode) { // 原始高度
-            case AltMode::none:
-                break;
-            case AltMode::feet:
-                altDescribe += QString("(%1 ft)").arg(static_cast<int>(alt * m2ft));
-                break;
-            case AltMode::meter:
-                altDescribe += QString("(%1 m)").arg(static_cast<int>(alt));
-                break;
-            default:
-                assert(false && "inop alt mode");
-        }
         drawStrokedText(10, 15, flightId);
         drawStrokedText(10, 25, altDescribe);
     }
@@ -374,16 +362,6 @@ void PdfView::setColorTheme (const bool darkTheme) {
 }
 
 /**
- * @brief 设置TCAS和高度模式
- * @param tcas 模式
- * @param alt 模式
- */
-void PdfView::setTcasInfo (const TcasMode tcas, const AltMode alt) {
-    tcasMode = tcas;
-    altMode = alt;
-}
-
-/**
  * @brief 更新机模的基本信息
  */
 void PdfView::simuInfoUpdate () {
@@ -400,6 +378,7 @@ void PdfView::simuInfoUpdate () {
     SettingsManager &ins = SettingsManager::instance();
     ins.set(SettingsManager::latitu, static_cast<double>(multiLatVal[0]));
     ins.set(SettingsManager::longitu, static_cast<double>(multiLonVal[0]));
+    ins.set(SettingsManager::altitu, static_cast<double>(multiAltVal[0]));
     // 映射不可用
     if (!transActive)
         return;

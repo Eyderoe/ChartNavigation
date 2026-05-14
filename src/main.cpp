@@ -7,7 +7,7 @@
 #include "ui/themeColor.hpp"
 #include "gui/main_window.hpp"
 #include "utils/constValue.hpp"
-#include "utils/settingManage.hpp"
+#include "services/settingManage.hpp"
 
 int main (int argc, char *argv[]) {
     QApplication app(argc, argv);

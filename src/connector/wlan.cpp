@@ -68,6 +68,11 @@ bool wlanUdp::getDataref (const DatarefIdx &dataref, std::span<float> container,
             for (int i = 0; i < available; ++i)
                 std::ranges::copy(planes[i].flight().toStdString(), container.begin() + i * 8);
             break;
+        case 8:
+            std::ranges::fill(container, 0);
+            for (int i = 0; i < available; ++i)
+                std::ranges::copy(planes[i].icao().toStdString(), container.begin() + i * 8);
+            break;
         default:
             // 永远达不到的真实
             std::ranges::fill(container, defaultValue);
@@ -130,6 +135,7 @@ wlanAdapter::wlanAdapter () {
     datarefMap["trk"] = 5;
     datarefMap["vs"] = 6;
     datarefMap["flightId"] = 7;
+    datarefMap["icao"] = 8;
 }
 
 void wlanAdapter::setCallback (const std::function<void  (bool)> &callbackFunc) {

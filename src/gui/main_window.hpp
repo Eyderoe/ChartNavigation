@@ -28,11 +28,11 @@ class main_window : public QMainWindow {
         main_widget *pdfBrowser;
         enroute_widget *enroute;
         QStackedWidget *stackedWidget;
-        QActionGroup *sourceGroup{nullptr}, *tcasGroup{nullptr}, *altGroup{nullptr};
+        QActionGroup *sourceGroup{nullptr}, *tcasGroup{nullptr}, *infoGroup{nullptr};
 
         void setDataSourceGroup (int val) const;
         void setTcasRangeGroup (int val) const;
-        void setAltModeGroup (int val) const;
+        void setInfoModeGroup (int val) const;
         void initConnect ();
         void initActionGroup ();
         void menu2toolBar();

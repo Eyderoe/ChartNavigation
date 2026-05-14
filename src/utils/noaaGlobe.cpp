@@ -149,6 +149,14 @@ short NoaaGlobeView::getAlt (const float latitude, float longitude) {
         return -500;
     return alt[row * columns + column];
 }
+/**
+ * @brief 获取某点高度
+ * @param location {经度,纬度}
+ * @return 高度(米), 数据不可用为-500
+ */
+short NoaaGlobeView::getAlt (const std::pair<float, float> &location) {
+    return getAlt(location.first, location.second);
+}
 
 char NoaaGlobeView::getTileName (const float latitude, const float longitude) {
     const int row = (latitude > 50) ? 0 : (latitude > 0) ? 1 : (latitude > -50) ? 2 : 3;

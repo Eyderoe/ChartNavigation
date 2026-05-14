@@ -4,7 +4,7 @@
 #include "options_widget.hpp"
 #include "ui/enhancedTree.hpp"
 #include "ui/themeColor.hpp"
-#include "utils/settingManage.hpp"
+#include "services/settingManage.hpp"
 
 
 /**

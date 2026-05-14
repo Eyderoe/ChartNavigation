@@ -14,7 +14,7 @@
 #include "ui/themeColor.hpp"
 #include "ui/pdfView.hpp"
 #include "ui/stackedWidget.hpp"
-#include "utils/settingManage.hpp"
+#include "services/settingManage.hpp"
 #include "utils/constValue.hpp"
 
 
@@ -103,19 +103,19 @@ void main_window::setTcasRangeGroup (int val) const {
     }
 }
 
-void main_window::setAltModeGroup (int val) const {
-    switch (static_cast<AltMode>(val)) {
-        case AltMode::none:
-            ui->action_alt_none->setChecked(true);
+void main_window::setInfoModeGroup (int val) const {
+    switch (static_cast<InfoMode>(val)) {
+        case InfoMode::base:
+            ui->action_symbol_base->setChecked(true);
             break;
-        case AltMode::feet:
-            ui->action_alt_feet->setChecked(true);
+        case InfoMode::extend:
+            ui->action_symbol_extend->setChecked(true);
             break;
-        case AltMode::meter:
-            ui->action_alt_meter->setChecked(true);
+        case InfoMode::full:
+            ui->action_symbol_full->setChecked(true);
             break;
         default:
-            assert(false && "need to update switch case. [main_window::setAltModeGroup]");
+            assert(false && "need to update switch case. [main_window::setInfoModeGroup]");
     }
 }
 
@@ -137,8 +137,8 @@ void main_window::initConnect () {
                     case SettingsManager::tcasRange:
                         setTcasRangeGroup(val.toInt());
                         break;
-                    case SettingsManager::altMode:
-                        setAltModeGroup(val.toInt());
+                    case SettingsManager::infoMode:
+                        setInfoModeGroup(val.toInt());
                         break;
                     case SettingsManager::planeFollowed:
                         ui->action_follow->setChecked(val.toBool());
@@ -223,13 +223,13 @@ void main_window::initConnect () {
         else
             assert(false && "need to update if else. [main_window::initConnect]");
     });
-    connect(altGroup, &QActionGroup::triggered, this, [&](const QAction *action) {
-        if (action == ui->action_alt_none)
-            SettingsManager::instance().set(SettingsManager::altMode, static_cast<int>(AltMode::none));
-        else if (action == ui->action_alt_feet)
-            SettingsManager::instance().set(SettingsManager::altMode, static_cast<int>(AltMode::feet));
-        else if (action == ui->action_alt_meter)
-            SettingsManager::instance().set(SettingsManager::altMode, static_cast<int>(AltMode::meter));
+    connect(infoGroup, &QActionGroup::triggered, this, [&](const QAction *action) {
+        if (action == ui->action_symbol_base)
+            SettingsManager::instance().set(SettingsManager::infoMode, static_cast<int>(InfoMode::base));
+        else if (action == ui->action_symbol_extend)
+            SettingsManager::instance().set(SettingsManager::infoMode, static_cast<int>(InfoMode::extend));
+        else if (action == ui->action_symbol_full)
+            SettingsManager::instance().set(SettingsManager::infoMode, static_cast<int>(InfoMode::full));
         else
             assert(false && "need to update if else. [main_window::initConnect]");
     });
@@ -260,7 +260,7 @@ QActionGroup* makeGroup (QWidget *widget, const QString &contain) {
 void main_window::initActionGroup () {
     sourceGroup = makeGroup(this, "_source_");
     tcasGroup = makeGroup(this, "_tcas_");
-    altGroup = makeGroup(this, "_alt_");
+    infoGroup = makeGroup(this, "_symbol_");
 }
 
 /**

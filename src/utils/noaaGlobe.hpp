@@ -39,6 +39,7 @@ class NoaaGlobeView {
     public:
         explicit NoaaGlobeView (const std::filesystem::path &folder);
         short getAlt (float latitude, float longitude);
+        short getAlt (const std::pair<float,float> &location);
     private:
         static char getTileName (float latitude, float longitude);
 

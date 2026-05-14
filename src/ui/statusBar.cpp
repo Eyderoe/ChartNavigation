@@ -3,7 +3,7 @@
 
 #include "utils/constValue.hpp"
 
-StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
+StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent), globe("/Users/eyderoe/GLOBE") {
     // 状态栏基本外观
     auto addSeparator = [bar] () {
         auto *line = new QFrame(bar);
@@ -34,7 +34,7 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
                 switch (key) {
                     case SettingsManager::dataSource: {
                         simu.first = static_cast<SimulatorSource>(val.toInt());
-                        hasUpdate = true;
+                        updateSimu = true;
                         break;
                     }
                     default:
@@ -47,33 +47,27 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
                 switch (key) {
                     case SettingsManager::affineError:
                         affine.first = val.toDouble();
+                        updateAffine = true;
                         break;
                     case SettingsManager::affineQuality:
                         affine.second = static_cast<AffineQuality>(val.toInt());
+                        updateAffine = true;
                         break;
                     case SettingsManager::simuConnect:
                         simu.second = val.toBool();
+                        updateSimu = true;
                         break;
                     case SettingsManager::latitu:
                         plane.first.first = val.toDouble();
+                        updatePlane = true;
                         break;
                     case SettingsManager::longitu:
                         plane.first.second = val.toDouble();
+                        updatePlane = true;
                         break;
-                    case SettingsManager::aglevel:
+                    case SettingsManager::altitu:
                         plane.second = val.toInt();
-                        break;
-                    default:
-                        break;
-                }
-                switch (key) {
-                    case SettingsManager::affineError:
-                    case SettingsManager::affineQuality:
-                    case SettingsManager::simuConnect:
-                    case SettingsManager::latitu:
-                    case SettingsManager::longitu:
-                    case SettingsManager::aglevel:
-                        hasUpdate = true;
+                        updatePlane = true;
                         break;
                     default:
                         break;
@@ -82,51 +76,64 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
 }
 
 void StatusBar::update () {
-    if (!hasUpdate)
+    if (!updateSimu && !updatePlane && !updateAffine)
         return;
-    hasUpdate = false;
     // 模拟器
-    QString simuStr;
-    switch (simu.first) {
-        case SimulatorSource::wlan:
-            simuStr = "局域网";
-            break;
-        case SimulatorSource::real:
-            simuStr = "现实";
-            break;
-        case SimulatorSource::xplane:
-        default:
-            simuStr = "XPlane";
-            break;
-    }
-    simuStr += simu.second ? " 在线" : " 离线";
-    simuLabel->setText(simuStr);
-    // 信息
-    std::string infoText;
-    if (simu.second)
-        infoText = std::format("({:.3f}, {:.3f}) AGL:{}ft", plane.first.first, plane.first.second, plane.second);
-    else
-        infoText = "(-, -) AGL:-ft";
-    planeLabel->setText(QString::fromStdString(infoText));
-    // 仿射变换 [误差:- 质量:-]
-    if (std::isnan(affine.first)) {
-        affineLabel->setText("误差:- 质量:-");
-    } else {
-        QString quality;
-        switch (affine.second) {
-            case AffineQuality::bad:
-                quality = "差";
+    if (updateSimu) {
+        updateSimu = false;
+        QString simuStr;
+        switch (simu.first) {
+            case SimulatorSource::wlan:
+                simuStr = "局域网";
                 break;
-            case AffineQuality::hmmm:
-                quality = "中";
+            case SimulatorSource::real:
+                simuStr = "现实";
                 break;
-            case AffineQuality::good:
-                quality = "好";
-                break;
-            case AffineQuality::inop:
+            case SimulatorSource::xplane:
             default:
+                simuStr = "XPlane";
                 break;
         }
-        affineLabel->setText(QString("误差:%1 质量:%2").arg(affine.first, 0, 'f', 1).arg(quality));
+        simuStr += simu.second ? " 在线" : " 离线";
+        simuLabel->setText(simuStr);
+    }
+    // 信息
+    if (updatePlane) {
+        updatePlane = false;
+        // 离地高
+        const int ground = globe.getAlt(plane.first); // 都是米后面要转换成英制
+        const int agl = plane.second - ground;
+        // 信息
+        std::string infoText;
+        if (simu.second)
+            infoText = std::format("({:.3f}, {:.3f}) AGL:{}ft", plane.first.first, plane.first.second,
+                                   (ground == -500) ? '-' : static_cast<int>(agl * m2ft));
+        else
+            infoText = "(-,-) AGL:-ft";
+        planeLabel->setText(QString::fromStdString(infoText));
+    }
+    // 仿射变换 [误差:- 质量:-]
+    if (updateAffine) {
+        updateAffine = false;
+        if (std::isnan(affine.first)) {
+            affineLabel->setText("误差:- 质量:-");
+        } else {
+            QString quality;
+            switch (affine.second) {
+                case AffineQuality::bad:
+                    quality = "差";
+                    break;
+                case AffineQuality::hmmm:
+                    quality = "中";
+                    break;
+                case AffineQuality::good:
+                    quality = "好";
+                    break;
+                case AffineQuality::inop:
+                default:
+                    break;
+            }
+            affineLabel->setText(QString("误差:%1 质量:%2").arg(affine.first, 0, 'f', 1).arg(quality));
+        }
     }
 }

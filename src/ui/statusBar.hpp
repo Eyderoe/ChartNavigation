@@ -2,9 +2,11 @@
 #define CHARTNAVIGATION_STATUSBAR_HPP
 
 #include "connector/allAdapter.hpp"
-#include "utils/settingManage.hpp"
+#include "services/settingManage.hpp"
 #include "utils/geographic.hpp"
 #include "utils/affineTransformer.hpp"
+#include "utils/noaaGlobe.hpp"
+
 
 class StatusBar : public QObject {
         Q_OBJECT
@@ -14,10 +16,11 @@ class StatusBar : public QObject {
         QStatusBar *bar;
         QLabel *simuLabel, *planeLabel, *affineLabel;
         QTimer timer;
+        NoaaGlobeView globe;
         std::pair<SimulatorSource, bool> simu; // 模拟器
         std::pair<Point2D, int> plane; // 信息
         std::pair<double, AffineQuality> affine; // 仿射变换
-        bool hasUpdate{false};
+        bool updateSimu{false},updatePlane{false},updateAffine{false};
 
         void update();
 };
