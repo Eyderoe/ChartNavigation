@@ -17,6 +17,7 @@ class wlanUdp {
     public:
         wlanUdp ();
         ~wlanUdp ();
+        void close() const;
         void setCallback (const std::function<void  (bool)> &callbackFunc);
         bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue);
     private:

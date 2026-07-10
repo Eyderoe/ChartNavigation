@@ -27,6 +27,11 @@ wlanUdp::~wlanUdp () {
         worker.join();
 }
 
+void wlanUdp::close () const {
+    if (callback)
+        callback(false);
+}
+
 void wlanUdp::setCallback (const std::function<void  (bool)> &callbackFunc) {
     callback = callbackFunc;
 }
@@ -142,7 +147,9 @@ void wlanAdapter::setCallback (const std::function<void  (bool)> &callbackFunc) 
     wlan.setCallback(callbackFunc);
 }
 
-void wlanAdapter::close () {}
+void wlanAdapter::close () {
+    wlan.close();
+}
 
 DatarefIdx wlanAdapter::addDatarefArray (const std::string &dataref, int32_t freq) {
     const auto it = datarefMap.find(dataref);

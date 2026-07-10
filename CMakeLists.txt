@@ -96,6 +96,8 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/utils/noaaGlobe.hpp
         src/services/dataProvider.cpp
         src/services/dataProvider.hpp
+        src/reserveCode/observe.cpp
+        src/reserveCode/observe.hpp
 )
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES

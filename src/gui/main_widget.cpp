@@ -138,7 +138,13 @@ void main_widget::loadPdfFileMapping () {
     // 航图文件可用性 ZUCK-3P-01
     mappingFile.open(QIODevice::ReadOnly);
     QTextStream stream(&mappingFile);
-    auto airportConfig = nlohmann::json::parse(stream.readAll().toUtf8().constData());
+    auto airportConfig = nlohmann::json{};
+    try {
+        airportConfig = nlohmann::json::parse(stream.readAll().toUtf8().constData());
+    } catch (nlohmann::json::parse_error &ex) {
+        qDebug() << mappingFilePath << " 解析失败";
+        return;
+    }
     const auto it = airportConfig.find(baseName.toStdString());
     if (it == airportConfig.end()) {
         fileData = {};

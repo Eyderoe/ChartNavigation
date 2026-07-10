@@ -3,7 +3,7 @@
 
 #include "utils/constValue.hpp"
 
-StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent), globe("/Users/eyderoe/GLOBE") {
+StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
     // 状态栏基本外观
     auto addSeparator = [bar] () {
         auto *line = new QFrame(bar);
@@ -56,6 +56,7 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent), globe
                     case SettingsManager::simuConnect:
                         simu.second = val.toBool();
                         updateSimu = true;
+                        updatePlane = true;
                         break;
                     case SettingsManager::latitu:
                         plane.first.first = val.toDouble();
@@ -63,10 +64,6 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent), globe
                         break;
                     case SettingsManager::longitu:
                         plane.first.second = val.toDouble();
-                        updatePlane = true;
-                        break;
-                    case SettingsManager::altitu:
-                        plane.second = val.toInt();
                         updatePlane = true;
                         break;
                     default:
@@ -100,14 +97,10 @@ void StatusBar::update () {
     // 信息
     if (updatePlane) {
         updatePlane = false;
-        // 离地高
-        const int ground = globe.getAlt(plane.first); // 都是米后面要转换成英制
-        const int agl = plane.second - ground;
-        // 信息
         std::string infoText;
         if (simu.second)
             infoText = std::format("({:.3f}, {:.3f}) AGL:{}ft", plane.first.first, plane.first.second,
-                                   (ground == -500) ? '-' : static_cast<int>(agl * m2ft));
+                                   plane.second == -500 ? '-' : plane.second);
         else
             infoText = "(-,-) AGL:-ft";
         planeLabel->setText(QString::fromStdString(infoText));

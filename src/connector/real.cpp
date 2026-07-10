@@ -23,6 +23,11 @@ realPos::realPos () {
     }
 }
 
+void realPos::close () const {
+    if (callback)
+        callback(false);
+}
+
 void realPos::setCallback (const std::function<void  (bool)> &callbackFunc) {
     callback = callbackFunc;
 }
@@ -35,7 +40,7 @@ bool realPos::getDataref (const DatarefIdx &dataref, std::span<float> container,
 
     // 数据可用
     auto copy2array = [&](const double value) {
-        container[0] = value;
+        container[0] = static_cast<float>(value);
         std::ranges::fill(container.begin() + 1, container.end(), defaultValue);
     };
     switch (dataref.idx) {
@@ -88,7 +93,9 @@ void realAdapter::setCallback (const std::function<void  (bool)> &callbackFunc) 
     realPosition.setCallback(callbackFunc);
 }
 
-void realAdapter::close () {}
+void realAdapter::close () {
+    realPosition.close();
+}
 
 DatarefIdx realAdapter::addDatarefArray (const std::string &dataref, int32_t freq) {
     const auto it = datarefMap.find(dataref);

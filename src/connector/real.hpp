@@ -8,12 +8,13 @@ class realPos : public QObject {
         Q_OBJECT
     public:
         realPos ();
+        void close () const;
         void setCallback (const std::function<void  (bool)> &callbackFunc);
         bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) const;
         void setFrequency (int32_t freq) const;
     private:
         QGeoPositionInfoSource *source{nullptr};
-        double lat, lon,alt, trk;
+        double lat, lon, alt, trk;
         bool state{false};
         std::function<void  (bool)> callback{nullptr};
 
@@ -29,7 +30,7 @@ class realAdapter : public InterfaceSimu {
         bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) override;
     private:
         realPos realPosition;
-        std::map<std::string,int> datarefMap;
+        std::map<std::string, int> datarefMap;
 };
 
 #endif //CHARTNAVIGATION_REAL_HPP

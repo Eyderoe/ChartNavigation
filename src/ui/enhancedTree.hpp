@@ -99,4 +99,5 @@ int traverseRead (const QDir &folder, Parent *parentNode, const int depth) {
     return pdfFileCount;
 }
 
+
 #endif //CHARTNAVIGATION_ENHANCEDTREE_HPP

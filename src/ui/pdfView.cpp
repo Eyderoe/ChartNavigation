@@ -19,7 +19,6 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     // 接收器切换
     SettingsManager &ins = SettingsManager::instance();
     const SimulatorSource source = static_cast<SimulatorSource>(ins.get(SettingsManager::dataSource, 0).toInt());
-    qDebug() << "data source: " << static_cast<int>(source);
     switch (source) {
         case SimulatorSource::xplane:
             connector = std::make_unique<xpAdapter>();
@@ -287,12 +286,21 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         QFont font;
         font.setBold(true);
         painter.setFont(font);
-        const QPen outlinePen(Qt::black, 0.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        painter.setRenderHint(QPainter::TextAntialiasing, true);
+        const QBrush outlineBrush(Qt::black);
         const QBrush textBrush(Qt::white);
         auto drawStrokedText = [&](const int x_, const int y_, const QString &text) {
             QPainterPath path;
             path.addText(x_, y_, font, text);
-            painter.setPen(outlinePen);
+            QPainterPathStroker stroker;
+            stroker.setWidth(1.6);
+            stroker.setCapStyle(Qt::RoundCap);
+            stroker.setJoinStyle(Qt::MiterJoin);
+            stroker.setMiterLimit(2.0);
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(outlineBrush);
+            QPainterPath outline = stroker.createStroke(path).subtracted(path);
+            painter.drawPath(outline);
             painter.setBrush(textBrush);
             painter.drawPath(path);
         };
@@ -337,9 +345,9 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         else if (vs <= -500)
             altDescribe += "↓";
         else
-            altDescribe += " ";
+            altDescribe += " ";;
+        drawStrokedText(-12, -17, altDescribe);
         drawStrokedText(10, 15, flightId);
-        drawStrokedText(10, 25, altDescribe);
     }
     // 绘制飞机
     painter.rotate(trk);
@@ -438,12 +446,15 @@ void PdfView::setConnector (int value) {
     switch (static_cast<SimulatorSource>(value)) {
         case SimulatorSource::xplane:
             connector = std::make_unique<xpAdapter>();
+            qDebug() << "data source: X-Plane";
             break;
         case SimulatorSource::wlan:
             connector = std::make_unique<wlanAdapter>();
+            qDebug() << "data source: Wlan";
             break;
         case SimulatorSource::real:
             connector = std::make_unique<realAdapter>();
+            qDebug() << "data source: Real";
             break;
         default:
             assert(false && "need to update switch case. [PdfView::setConnector]");
@@ -452,8 +463,8 @@ void PdfView::setConnector (int value) {
 }
 
 void PdfView::setConnectState (const bool state) {
+    SettingsManager::instance().set(SettingsManager::simuConnect, state);
     if (state == connected)
         return;
     connected = state;
-    SettingsManager::instance().set(SettingsManager::simuConnect, state);
 }
