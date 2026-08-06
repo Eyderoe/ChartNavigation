@@ -2,9 +2,8 @@
 #define CHARTNAVIGATION_PDFVIEW_HPP
 
 #include <QtPdfWidgets/QPdfView>
-#include "XPlaneUDP.hpp"
 #include "utils/affineTransformer.hpp"
-#include "connector/allAdapter.hpp"
+#include "services/dataProvider.hpp"
 
 enum class TcasMode:int {
     nm30, nm6, none, all // 30NM9900,6NM1200ft,none,all
@@ -22,6 +21,7 @@ class PdfView final : public QPdfView {
         void setColorTheme (bool darkTheme);
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
         void closeSimu () const;
+        void setDataProvider (DataProvider *provider);
     protected:
         void wheelEvent (QWheelEvent *event) override;
         void mousePressEvent (QMouseEvent *event) override;
@@ -33,10 +33,7 @@ class PdfView final : public QPdfView {
         // 模拟器部分
         std::pair<double, double> trans (double latitude, double longitude);
         void drawPlane (QPainter &painter, int idx = 0);
-        void simuInfoUpdate ();
-        void simuInit ();
-        void setConnector (int value);
-        void setConnectState (bool state);
+        void onDataUpdated ();
         // 杂
         [[nodiscard]] QSizeF getDocSize () const;
 
@@ -54,14 +51,8 @@ class PdfView final : public QPdfView {
         AffineTransformer transformer{};
         bool transActive{false};
         // 模拟器
+        DataProvider *dataProvider{nullptr};
         QPixmap plane, otherPlane;
-        std::unique_ptr<InterfaceSimu> connector;
-        DatarefIdx multiId{}, multiLat{}, multiLon{}, multiAlt{}, multiTrk{}, multiVs{}, multiFlightId{};
-        std::array<float, 64> multiIdVal{}, multiLatVal{}, multiLonVal{}, multiAltVal{}, multiTrkVal{}, multiVsVal{};
-        std::array<float, 512> multiFlightIdVal{};
-        bool connected{false};
-        // 定时器
-        QTimer simuUpdateTimer;
     Q_SIGNALS:
         void zoomFactor_changed (double factor);
 };

@@ -2,15 +2,15 @@
 #define CHARTNAVIGATION_STACKEDWIDGET_HPP
 
 #include <QStackedWidget>
+#include "services/dataProvider.hpp"
 
 class StackedWidget : public QStackedWidget {
         Q_OBJECT
     public:
         explicit StackedWidget (QWidget *parent = nullptr);
+        [[nodiscard]] DataProvider* dataProvider () const;
     private:
-        std::map<std::string,char> turbuCate; // 尾流等级
-
-        void readTurbuCate ();
+        DataProvider *dataProviderPtr{nullptr};
 };
 
 #endif //CHARTNAVIGATION_STACKEDWIDGET_HPP

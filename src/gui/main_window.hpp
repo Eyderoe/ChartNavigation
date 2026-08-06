@@ -6,6 +6,7 @@
 #include "enroute_widget.hpp"
 #include "main_widget.hpp"
 #include "ui_enroute_widget.h"
+#include "ui/stackedWidget.hpp"
 
 QT_BEGIN_NAMESPACE
 
@@ -27,7 +28,7 @@ class main_window : public QMainWindow {
         Ui::main_window *ui;
         main_widget *pdfBrowser;
         enroute_widget *enroute;
-        QStackedWidget *stackedWidget;
+        StackedWidget *stackedWidget;
         QActionGroup *sourceGroup{nullptr}, *tcasGroup{nullptr}, *infoGroup{nullptr};
 
         void setDataSourceGroup (int val) const;

@@ -5,6 +5,7 @@
 #include "ui/enhancedTree.hpp"
 #include "ui/themeColor.hpp"
 #include "services/settingManage.hpp"
+#include "services/dataProvider.hpp"
 
 
 /**
@@ -113,6 +114,10 @@ void main_widget::loadFolder (const QString &folder) const {
  */
 void main_widget::saveSplitter () const {
     SettingsManager::instance().set(SettingsManager::spliterSta, ui->splitter->saveState(), true);
+}
+
+void main_widget::setDataProvider (DataProvider *provider) {
+    ui->pdf_widget->setDataProvider(provider);
 }
 
 /**

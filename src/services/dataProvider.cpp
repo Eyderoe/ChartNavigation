@@ -2,12 +2,14 @@
 
 #include <QDebug>
 #include <cassert>
+#include <json.hpp>
 #include <stdexcept>
 
 #include "services/settingManage.hpp"
 
 
 DataProvider::DataProvider (QObject *parent) : QObject(parent) {
+    readTurbuCate();
     initConnect();
     // 接收器切换
     SettingsManager &ins = SettingsManager::instance();
@@ -120,6 +122,7 @@ void DataProvider::simuInfoUpdate () {
     ins.set(SettingsManager::latitu, static_cast<double>(multiLatVal[0]));
     ins.set(SettingsManager::longitu, static_cast<double>(multiLonVal[0]));
     ins.set(SettingsManager::altitu, static_cast<double>(multiAltVal[0]));
+    emit dataUpdated();
 }
 
 void DataProvider::simuInit () {
@@ -144,4 +147,26 @@ void DataProvider::setConnectState (const bool state) {
         return;
     connected = state;
     SettingsManager::instance().set(SettingsManager::simuConnect, state);
+}
+
+char DataProvider::getWakeCategory (const QString &icao) const {
+    const auto it = turbuCate.find(icao.toStdString());
+    return (it == turbuCate.end()) ? '\0' : it->second;
+}
+
+void DataProvider::readTurbuCate () {
+    QFile mappingFile(":/doc/resources/documents/wtc.json");
+    mappingFile.open(QIODevice::ReadOnly);
+    QTextStream stream(&mappingFile);
+    auto database = nlohmann::json{};
+    try {
+        database = nlohmann::json::parse(stream.readAll().toUtf8().constData());
+    } catch (nlohmann::json::parse_error &ex) {
+        qDebug() << mappingFile.fileName() << " 解析失败";
+        return;
+    }
+    for (const auto &item : database.items()) {
+        auto value = item.value().get<std::string>();
+        turbuCate[item.key()] = value[0];
+    }
 }

@@ -27,6 +27,9 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
     stackedWidget->addWidget(pdfBrowser);
     stackedWidget->addWidget(enroute);
     setCentralWidget(stackedWidget);
+    // 模拟器数据层
+    pdfBrowser->setDataProvider(stackedWidget->dataProvider());
+    enroute->setDataProvider(stackedWidget->dataProvider());
     // 初始化动作组
     initActionGroup();
     // 安卓特化 因为显示不了菜单栏

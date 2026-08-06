@@ -4,6 +4,7 @@
 #include "utils/geographic.hpp"
 #include "services/settingManage.hpp"
 
+#include <format>
 #include <ranges>
 
 
@@ -16,28 +17,6 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     // 地图绘制
     plane.load(":/map/resources/plane_small.png");
     otherPlane.load(":/map/resources/plane_small_2.png");
-    // 接收器切换
-    SettingsManager &ins = SettingsManager::instance();
-    const SimulatorSource source = static_cast<SimulatorSource>(ins.get(SettingsManager::dataSource, 0).toInt());
-    switch (source) {
-        case SimulatorSource::xplane:
-            connector = std::make_unique<xpAdapter>();
-            break;
-        case SimulatorSource::wlan:
-            connector = std::make_unique<wlanAdapter>();
-            break;
-        case SimulatorSource::real:
-            connector = std::make_unique<realAdapter>();
-            break;
-        default:
-            throw std::invalid_argument("inop adapter");
-    }
-    // 模拟器
-    simuInit();
-    // 定时器
-    simuUpdateTimer.setInterval(1000);
-    connect(&simuUpdateTimer, &QTimer::timeout, this, &PdfView::simuInfoUpdate);
-    simuUpdateTimer.start();
 }
 
 /**
@@ -62,6 +41,7 @@ void PdfView::setCenterOn (const bool center) {
  * @param data [[lati,longi,x,y],...]
  * @param rotateDegree 机模旋转角度 (显示=实际+rotateDegree)
  * @param threshold 筛选阈值
+ * @note 看 navi 才意识到, 在变换良好的情况下可以直接计算旋转角度啊, 没有写在这里的必要性
  */
 void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, const double rotateDegree,
                                const double threshold) {
@@ -83,7 +63,15 @@ void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, con
 }
 
 void PdfView::closeSimu () const {
-    connector->close();
+    if (dataProvider)
+        dataProvider->closeSimu();
+}
+
+void PdfView::setDataProvider (DataProvider *provider) {
+    if (dataProvider == provider)
+        return;
+    dataProvider = provider;
+    connect(dataProvider, &DataProvider::dataUpdated, this, &PdfView::onDataUpdated);
 }
 
 void PdfView::initConnect () {
@@ -92,10 +80,6 @@ void PdfView::initConnect () {
     connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
                 switch (key) {
-                    case SettingsManager::dataSource: {
-                        setConnector(val.toInt());
-                        break;
-                    }
                     case SettingsManager::planeFollowed: {
                         setCenterOn(val.toBool());
                         break;
@@ -204,7 +188,7 @@ void PdfView::paintEvent (QPaintEvent *event) {
     }
 
     bool check{true};
-    if (!connected) // xp已连接
+    if (!dataProvider || !dataProvider->isConnected()) // 模拟器已连接
         check = false;
     if (plane.isNull()) // 图片不可用
         check = false;
@@ -217,7 +201,8 @@ void PdfView::paintEvent (QPaintEvent *event) {
         // 自身
         drawPlane(painter);
         // 其他飞机
-        const size_t count = std::ranges::count_if(multiIdVal, [](const float value) { return value != 0.0f; });
+        const auto &idVal = dataProvider->getIdValues();
+        const size_t count = std::ranges::count_if(idVal, [](const float value) { return value != 0.0f; });
         for (int i = 1; i < count; ++i)
             drawPlane(painter, i);
     }
@@ -226,43 +211,27 @@ void PdfView::paintEvent (QPaintEvent *event) {
 /**
  * @brief 转换经纬度至当前可视范围坐标
  * @return (x,y)
+ * @note 发现有一些变量可以约掉, 让ai直接重写了, 看不懂就倒回去看手写的那版
  */
 std::pair<double, double> PdfView::trans (const double latitude, const double longitude) {
-    // 获取文档位置
     auto [x, y] = transformer.transform(latitude, longitude);
-    // 获取基本信息
     const auto viewSize = viewport()->size();
-    const auto *scree = screen();
-    const auto vertBar = verticalScrollBar(), horzBar = horizontalScrollBar();
-    const auto dpi = scree->logicalDotsPerInch();
-    const auto logicDocSize = zoomFactor() * getDocSize() * dpi / 72;
+    const auto scale = zoomFactor() * screen()->logicalDotsPerInch() / 72; // PDF点 → 设备像素
+    const auto logicDocSize = scale * getDocSize();
     const auto margin = documentMargins();
-    // x计算
-    double finalX{};
-    const double scaleX = x / getDocSize().width(); // 1 PDF (点)
-    double docX = scaleX * logicDocSize.width(); // 2 PDF (像素)
-    if (horzBar->minimum() == horzBar->maximum()) { // 非缩放状态
-        finalX = (viewSize.width() - logicDocSize.width()) / 2 + docX;
-    } else { // 缩放状态
-        docX += margin.left(); // 3 PDF+边缘 (像素)
-        const double barLength = horzBar->maximum() + horzBar->pageStep();
-        const double barLoc = docX / (logicDocSize.width() + margin.left() + margin.right()) * barLength; // 4 滚动条 (像素)
-        const double windowScale = (barLoc - horzBar->value()) / horzBar->pageStep(); // 5 滑动块 (比例)
-        finalX = viewSize.width() * windowScale;
-    }
-    // y计算
-    double finalY{};
-    const double scaleY = y / getDocSize().width();
-    double docY = scaleY * logicDocSize.width();
-    if (vertBar->minimum() == vertBar->maximum()) { // 非缩放状态
-        finalY = margin.top() + docY;
-    } else { // 缩放状态
-        docY += margin.top(); // 3 PDF+边缘 (像素)
-        const double barLength = vertBar->maximum() + vertBar->pageStep();
-        const double barLoc = docY / (logicDocSize.height() + margin.top() + margin.bottom()) * barLength; // 4 滚动条 (像素)
-        const double windowScale = (barLoc - vertBar->value()) / vertBar->pageStep(); // 5 滑动块 (比例)
-        finalY = viewSize.height() * windowScale;
-    }
+    const auto vertBar = verticalScrollBar(), horzBar = horizontalScrollBar();
+    const auto toView = [&](const double pos, const double docSize, const QScrollBar *bar,
+                            const double margin1, const double margin2,
+                            const int viewLen, const double offset) {
+        if (bar->minimum() == bar->maximum())
+            return offset + pos * scale;
+        const double barLoc = (pos * scale + margin1) / (docSize + margin1 + margin2) * (bar->maximum() + bar->pageStep());
+        return viewLen * (barLoc - bar->value()) / bar->pageStep();
+    };
+    const double finalX = toView(x, logicDocSize.width(), horzBar, margin.left(), margin.right(),
+                                 viewSize.width(), (viewSize.width() - logicDocSize.width()) / 2);
+    const double finalY = toView(y, logicDocSize.height(), vertBar, margin.top(), margin.bottom(),
+                                 viewSize.height(), margin.top());
     return {finalX, finalY};
 }
 
@@ -275,8 +244,14 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
     const bool isSelf = (idx == 0);
     painter.save();
     // 变量声明
-    const double latitude{multiLatVal[idx]}, longitude{multiLonVal[idx]}, vs{multiVsVal[idx]}, alt{multiAltVal[idx]};
-    double trk{multiTrkVal[idx]};
+    const auto &latVal = dataProvider->getLatValues();
+    const auto &lonVal = dataProvider->getLonValues();
+    const auto &altVal = dataProvider->getAltValues();
+    const auto &vsVal = dataProvider->getVsValues();
+    const auto &trkVal = dataProvider->getTrkValues();
+    const auto &flightIdVal = dataProvider->getFlightIdValues();
+    const double latitude{latVal[idx]}, longitude{lonVal[idx]}, vs{vsVal[idx]}, alt{altVal[idx]};
+    double trk{trkVal[idx]};
     // 移动坐标系
     auto [x,y] = trans(latitude, longitude);
     painter.translate(x, y);
@@ -305,8 +280,8 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
             painter.drawPath(path);
         };
         // tcas 判断
-        const double _distance = distanceSimple(latitude, longitude, multiLatVal[0], multiLonVal[0]);
-        const double _alt = std::abs(alt - multiAltVal[0]) * m2ft;
+        const double _distance = distanceSimple(latitude, longitude, latVal[0], lonVal[0]);
+        const double _alt = std::abs(alt - altVal[0]) * m2ft;
         bool notDisplay{false};
         switch (tcasMode) {
             case TcasMode::none:
@@ -331,10 +306,10 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         QString flightId;
         flightId.reserve(7);
         for (int i = 8 * idx; i < 8 * (idx + 1) - 1; ++i)
-            if (multiFlightIdVal[i] != 0)
-                flightId.append(QChar(static_cast<char>(multiFlightIdVal[i])));
+            if (flightIdVal[i] != 0)
+                flightId.append(QChar(static_cast<char>(flightIdVal[i])));
         // 高度信息
-        int deltaAlt = static_cast<int>(std::round((alt - multiAltVal[0]) * m2ft / 100));
+        int deltaAlt = static_cast<int>(std::round((alt - altVal[0]) * m2ft / 100));
         QString altDescribe;
         if (deltaAlt >= 0) // 高度差
             altDescribe = QString::fromStdString(std::format("+{:02d}", deltaAlt));
@@ -370,23 +345,11 @@ void PdfView::setColorTheme (const bool darkTheme) {
 }
 
 /**
- * @brief 更新机模的基本信息
+ * @brief 模拟器数据更新时刷新显示
  */
-void PdfView::simuInfoUpdate () {
-    if (!connected) // 未连接到模拟器
+void PdfView::onDataUpdated () {
+    if (!dataProvider || !dataProvider->isConnected()) // 未连接到模拟器
         return;
-    connector->getDataref(multiId, multiIdVal, 0);
-    connector->getDataref(multiLat, multiLatVal, 0);
-    connector->getDataref(multiLon, multiLonVal, 0);
-    connector->getDataref(multiAlt, multiAltVal, 0);
-    connector->getDataref(multiTrk, multiTrkVal, 0);
-    connector->getDataref(multiVs, multiVsVal, 0);
-    connector->getDataref(multiFlightId, multiFlightIdVal, 0);
-    // 设置更新
-    SettingsManager &ins = SettingsManager::instance();
-    ins.set(SettingsManager::latitu, static_cast<double>(multiLatVal[0]));
-    ins.set(SettingsManager::longitu, static_cast<double>(multiLonVal[0]));
-    ins.set(SettingsManager::altitu, static_cast<double>(multiAltVal[0]));
     // 映射不可用
     if (!transActive)
         return;
@@ -397,7 +360,7 @@ void PdfView::simuInfoUpdate () {
     }
 
     // 自身居中逻辑
-    auto [x,y] = trans(multiLatVal[0], multiLonVal[0]);
+    auto [x,y] = trans(dataProvider->getLatValues()[0], dataProvider->getLonValues()[0]);
     constexpr double edge{10};
     if ((x < -edge) || (x > viewport()->width() + edge))
         return;
@@ -417,54 +380,4 @@ void PdfView::simuInfoUpdate () {
         vertBar->setValue(qBound(vertBar->minimum(), newPos, vertBar->maximum()));
     }
     viewport()->update();
-}
-
-/**
- * @brief 初始化模拟器的一些东西
- */
-void PdfView::simuInit () {
-    constexpr int infoFreq = 1;
-    // AI或多人
-    multiId = connector->addDatarefArray("id", infoFreq);
-    multiLat = connector->addDatarefArray("lat", infoFreq);
-    multiLon = connector->addDatarefArray("lon", infoFreq);
-    multiAlt = connector->addDatarefArray("alt", infoFreq);
-    multiTrk = connector->addDatarefArray("trk", infoFreq);
-    multiVs = connector->addDatarefArray("vs", infoFreq);
-    multiFlightId = connector->addDatarefArray("flightId", infoFreq);
-    // 回调
-    connector->setCallback([this](const bool state) {
-        setConnectState(state);
-        qDebug() << "Simu-connect change state: " << state;
-    });
-}
-
-void PdfView::setConnector (int value) {
-    if (connector)
-        connector->close();
-    setConnectState(false);
-    switch (static_cast<SimulatorSource>(value)) {
-        case SimulatorSource::xplane:
-            connector = std::make_unique<xpAdapter>();
-            qDebug() << "data source: X-Plane";
-            break;
-        case SimulatorSource::wlan:
-            connector = std::make_unique<wlanAdapter>();
-            qDebug() << "data source: Wlan";
-            break;
-        case SimulatorSource::real:
-            connector = std::make_unique<realAdapter>();
-            qDebug() << "data source: Real";
-            break;
-        default:
-            assert(false && "need to update switch case. [PdfView::setConnector]");
-    }
-    simuInit();
-}
-
-void PdfView::setConnectState (const bool state) {
-    SettingsManager::instance().set(SettingsManager::simuConnect, state);
-    if (state == connected)
-        return;
-    connected = state;
 }

@@ -16,6 +16,7 @@ class main_widget;
 
 QT_END_NAMESPACE
 
+class DataProvider;
 
 class main_widget final : public QWidget {
         Q_OBJECT
@@ -30,6 +31,7 @@ class main_widget final : public QWidget {
         void loadPdfFile (const QString &filePath);
         void loadFolder (const QString &folder) const;
         void saveSplitter () const;
+        void setDataProvider (DataProvider *provider);
     private:
         Ui::main_widget *ui;
         QPdfDocument *document;
