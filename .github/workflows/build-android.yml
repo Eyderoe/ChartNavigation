@@ -212,21 +212,35 @@ jobs:
       - name: Build
         run: cmake --build "$BUILD_DIR" --config Release
 
-      # Debug APKs use ~/.android/debug.keystore. On fresh GitHub runners that file is created per job,
-      # so every artifact is signed differently and Android blocks upgrades over a previous install.
-      # Optional: add repo secret ANDROID_DEBUG_KEYSTORE_B64 = base64 of a fixed debug.keystore (e.g. copy yours from ~/.android/debug.keystore).
-      - name: Install stable debug keystore (optional)
-        env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
+      - name: Verify embedded qrc resources
         run: |
-          if [ -n "${KEYSTORE_B64}" ]; then
-            mkdir -p ~/.android
-            echo "${KEYSTORE_B64}" | base64 -d > ~/.android/debug.keystore
-            chmod 600 ~/.android/debug.keystore
-            echo "Using ANDROID_DEBUG_KEYSTORE_B64 for consistent debug signing."
-          else
-            echo "No ANDROID_DEBUG_KEYSTORE_B64: each CI run may use a new debug keystore (uninstall old APK before installing a new one)."
+          set -euo pipefail
+          shopt -s nullglob
+          so_files=("$BUILD_DIR"/libChartNavigation*.so)
+          if [ "${#so_files[@]}" -eq 0 ]; then
+            echo "libChartNavigation*.so not found in $BUILD_DIR"
+            ls -la "$BUILD_DIR" || true
+            exit 1
           fi
+          SO_FILE="${so_files[0]}"
+          echo "Checking $SO_FILE"
+          if strings "$SO_FILE" | grep -q "plane_small.png"; then
+            echo "OK: plane_small.png embedded in $SO_FILE"
+          else
+            echo "::warning::plane_small.png NOT found in $SO_FILE - qrc resources may be missing from Android build"
+          fi
+
+      # Release APKs must be signed with a FIXED keystore; on fresh GitHub runners the default
+      # debug keystore is regenerated per job, so every build would get a different signature
+      # and Android would block upgrades over a previous install.
+      # 自用程序: keystore 直接硬编码在 workflow 里(密钥会随仓库分发, 仅适合自娱自乐的项目)
+      - name: Install fixed release keystore
+        run: |
+          set -euo pipefail
+          echo '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' | base64 -d > "$RUNNER_TEMP/android-release.keystore"
+          chmod 600 "$RUNNER_TEMP/android-release.keystore"
+          echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/android-release.keystore" >> "$GITHUB_ENV"
+          echo "Using hard-coded release keystore for signing."
 
       - name: Package APK
         env:
@@ -259,13 +273,33 @@ jobs:
             --output "$BUILD_DIR/android-build" \
             --android-platform android-35 \
             --jdk "$JAVA_HOME" \
-            --gradle
+            --gradle \
+            --release \
+            --sign "$ANDROID_KEYSTORE_FILE" "ChartNavigationAndroid" \
+            --storepass "123" \
+            --keypass "123"
 
-          APK_BUILT="$BUILD_DIR/android-build/build/outputs/apk/debug/android-build-debug.apk"
-          APK_DEST="$BUILD_DIR/${PACKAGE_NAME}.apk"
-          if [ -f "$APK_BUILT" ]; then
-            cp "$APK_BUILT" "$APK_DEST"
+          # Qt 6.9 androiddeployqt names the signed artifact android-build-release-signed.apk;
+          # fall back to any non-unsigned release APK for other versions.
+          APK_BUILT="$BUILD_DIR/android-build/build/outputs/apk/release/android-build-release-signed.apk"
+          if [ ! -f "$APK_BUILT" ]; then
+            shopt -s nullglob
+            candidates=("$BUILD_DIR/android-build/build/outputs/apk/release/"*.apk)
+            for candidate in "${candidates[@]}"; do
+              case "$candidate" in
+                *unsigned*) continue ;;
+              esac
+              APK_BUILT="$candidate"
+              break
+            done
           fi
+          if [ ! -f "$APK_BUILT" ]; then
+            echo "Signed release APK not found; listing release outputs:"
+            ls -la "$BUILD_DIR/android-build/build/outputs/apk/release/" || true
+            exit 1
+          fi
+          APK_DEST="$BUILD_DIR/${PACKAGE_NAME}.apk"
+          cp "$APK_BUILT" "$APK_DEST"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6

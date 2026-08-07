@@ -41,6 +41,7 @@ class main_window : public QMainWindow {
         static void on_action_dark_triggered (bool checked);
         void openFile ();
         void openFolder ();
+        void grantFolderPermission ();
 };
 
 

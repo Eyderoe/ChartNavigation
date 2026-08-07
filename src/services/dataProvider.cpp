@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <cassert>
 #include <json.hpp>
+#include <set>
 #include <stdexcept>
 
 #include "services/settingManage.hpp"
@@ -31,7 +32,7 @@ DataProvider::DataProvider (QObject *parent) : QObject(parent) {
     // 模拟器
     simuInit();
     // 定时器
-    simuUpdateTimer.setInterval(1000);
+    simuUpdateTimer.setInterval(static_cast<int>(1000.0 / infoFreq));
     connect(&simuUpdateTimer, &QTimer::timeout, this, &DataProvider::simuInfoUpdate);
     simuUpdateTimer.start();
 }
@@ -93,18 +94,79 @@ const std::array<float, 512>& DataProvider::getFlightIdValues () const {
     return multiFlightIdVal;
 }
 
+const std::array<float, 512>& DataProvider::getFlightIcao () const {
+    return multiIcaoVal;
+}
+
 void DataProvider::initConnect () {
     const auto &setting = SettingsManager::instance();
+    // 存储设置
     connect(&setting, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &val) {
                 switch (key) {
                     case SettingsManager::dataSource:
                         setConnector(val.toInt());
                         break;
+                    case SettingsManager::tcasRange: {
+                        switch (const auto mode = static_cast<TcasMode>(val.toInt()); mode) {
+                            case TcasMode::nm30:
+                            case TcasMode::nm6:
+                            case TcasMode::none:
+                            case TcasMode::all:
+                                tcasMode = mode;
+                                break;
+                            default:
+                                tcasMode = TcasMode::nm30;
+                        }
+                        break;
+                    }
+                    case SettingsManager::infoMode: {
+                        switch (const auto mode = static_cast<InfoMode>(val.toInt()); mode) {
+                            case InfoMode::base:
+                            case InfoMode::extend:
+                            case InfoMode::full:
+                                infoMode = mode;
+                                break;
+                            default:
+                                infoMode = InfoMode::base;
+                        }
+                        break;
+                    }
+                    case SettingsManager::useCalGeoHeading:
+                        useCalGeo = val.toBool();
+                        break;
+                    case SettingsManager::showTrail:
+                        showTrail = val.toBool();
+                        break;
                     default:
                         break;
                 }
             });
+    // 临时设置
+}
+
+/**
+ * @brief 获取TCAS显示范围
+ * @return 当前TCAS范围模式
+ */
+TcasMode DataProvider::getTcasMode () const {
+    return tcasMode;
+}
+
+/**
+ * @brief 获取飞行器信息模式
+ * @return 当前信息模式
+ */
+InfoMode DataProvider::getInfoMode () const {
+    return infoMode;
+}
+
+bool DataProvider::getShowTrail () const {
+    return showTrail;
+}
+
+bool DataProvider::getUseCalGeo () const {
+    return useCalGeo;
 }
 
 void DataProvider::simuInfoUpdate () {
@@ -117,17 +179,36 @@ void DataProvider::simuInfoUpdate () {
     connector->getDataref(multiTrk, multiTrkVal, 0);
     connector->getDataref(multiVs, multiVsVal, 0);
     connector->getDataref(multiFlightId, multiFlightIdVal, 0);
+    connector->getDataref(multiIcao, multiIcaoVal, 0);
+    // 更新各航班轨迹 (航班号非空时可用)
+    const int intervalMs = static_cast<int>(1000.0 / infoFreq);
+    std::set<std::string> seen;
+    const size_t available = getAvailableNum();
+    for (size_t idx = 1; idx < available; ++idx) {
+        const std::string flightId = slice(multiFlightIdVal, static_cast<int>(idx)).toStdString();
+        if (flightId.empty())
+            continue;
+        seen.insert(flightId);
+        trails.try_emplace(flightId, intervalMs).first->second.addPoint({multiLatVal[idx], multiLonVal[idx]});
+    }
+    if (trails.size() >= 128) { // map 大小达到 128 后, 一次性清空已消失航班的轨迹
+        for (auto it = trails.begin(); it != trails.end();) {
+            if (!seen.contains(it->first))
+                it = trails.erase(it);
+            else
+                ++it;
+        }
+    }
     // 设置更新
     SettingsManager &ins = SettingsManager::instance();
-    ins.set(SettingsManager::latitu, static_cast<double>(multiLatVal[0]));
-    ins.set(SettingsManager::longitu, static_cast<double>(multiLonVal[0]));
-    ins.set(SettingsManager::altitu, static_cast<double>(multiAltVal[0]));
+    ins.set(SettingsManager::latitu, multiLatVal[0]);
+    ins.set(SettingsManager::longitu, multiLonVal[0]);
+    ins.set(SettingsManager::altitu, multiAltVal[0]);
     emit dataUpdated();
 }
 
 void DataProvider::simuInit () {
     // AI或多人
-    constexpr int infoFreq = 1;
     multiId = connector->addDatarefArray("id", infoFreq);
     multiLat = connector->addDatarefArray("lat", infoFreq);
     multiLon = connector->addDatarefArray("lon", infoFreq);
@@ -135,6 +216,7 @@ void DataProvider::simuInit () {
     multiTrk = connector->addDatarefArray("trk", infoFreq);
     multiVs = connector->addDatarefArray("vs", infoFreq);
     multiFlightId = connector->addDatarefArray("flightId", infoFreq);
+    multiIcao = connector->addDatarefArray("icao", infoFreq);
     // 回调
     connector->setCallback([this](const bool state) {
         setConnectState(state);
@@ -149,9 +231,47 @@ void DataProvider::setConnectState (const bool state) {
     SettingsManager::instance().set(SettingsManager::simuConnect, state);
 }
 
-char DataProvider::getWakeCategory (const QString &icao) const {
-    const auto it = turbuCate.find(icao.toStdString());
-    return (it == turbuCate.end()) ? '\0' : it->second;
+/**
+ * @brief 返回机型对应尾流等级
+ * @param icao 机型ICAO码
+ * @return 不可用时为空格
+ */
+char DataProvider::getWakeCategory (const std::string &icao) const {
+    const auto it = turbuCate.find(icao);
+    return (it == turbuCate.end()) ? ' ' : it->second;
+}
+
+/**
+ * @brief 获取航班地速
+ * @param flightId 航班号
+ * @return 地速 (节), 无该航班轨迹时为 0
+ */
+int DataProvider::getGroundSpeed (const std::string &flightId) const {
+    const auto it = trails.find(flightId);
+    return (it == trails.end()) ? 0 : it->second.calculateGroundSpeed();
+}
+
+/**
+ * @brief 获取航班计算航向
+ * @param flightId 航班号
+ * @return 计算航向 (度, 0~359), 无该航班轨迹时为 -1
+ */
+int DataProvider::getGeoHeading (const std::string &flightId) const {
+    const auto it = trails.find(flightId);
+    return (it == trails.end()) ? -1 : it->second.calculateGeoHeading();
+}
+
+std::deque<Point2D> DataProvider::getPoints (const std::string &flightId) {
+    const auto it = trails.find(flightId);
+    return (it == trails.end()) ? std::deque<Point2D>{} : it->second.getPoints();
+}
+
+/**
+ * @brief 获取可用航空器数量
+ * @return 数量
+ */
+size_t DataProvider::getAvailableNum () {
+    return std::ranges::count_if(multiIdVal, [](const float value) { return value != 0.0f; });
 }
 
 void DataProvider::readTurbuCate () {
@@ -159,14 +279,22 @@ void DataProvider::readTurbuCate () {
     mappingFile.open(QIODevice::ReadOnly);
     QTextStream stream(&mappingFile);
     auto database = nlohmann::json{};
-    try {
-        database = nlohmann::json::parse(stream.readAll().toUtf8().constData());
-    } catch (nlohmann::json::parse_error &ex) {
-        qDebug() << mappingFile.fileName() << " 解析失败";
-        return;
-    }
-    for (const auto &item : database.items()) {
-        auto value = item.value().get<std::string>();
-        turbuCate[item.key()] = value[0];
-    }
+    database = nlohmann::json::parse(stream.readAll().toUtf8().constData());
+    for (auto &[aftType, turbType] : database.items())
+        turbuCate[aftType] = turbType.get<std::string>()[0]; // json没有字符类型 只有取字符串再拿
+}
+
+/**
+ * @brief 从数组中按索引切出对应内容
+ * @param array 数组, 目前适用于航班号和机型ICAO码
+ * @param idx 航空器索引, 64->8*64
+ * @return 有效字符串
+ */
+QString slice (const std::array<float, 512> &array, const int idx) {
+    QString str;
+    str.reserve(8);
+    for (int i = 8 * idx; i < 8 * (idx + 1) - 1; ++i)
+        if (array[i] != 0)
+            str.append(QChar(static_cast<char>(array[i])));
+    return str;
 }

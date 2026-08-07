@@ -41,6 +41,8 @@ class SettingsManager : public QObject {
             tcasRange, // TCAS显示范围 TcasMode(int)
             infoMode, // 飞行器信息 InfoMode(int)
             showThumb, // 显示缩略图 bool
+            showTrail, // 显示飞行器航迹 bool
+            useCalGeoHeading, // 使用计算航向 bool
         };
         enum TempKey { // 仅在程序运行时存在的
             inopEnumItem_tempKey, // 兜底的怪东西

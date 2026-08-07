@@ -79,6 +79,8 @@
     <addaction name="menu_4"/>
     <addaction name="menu_5"/>
     <addaction name="menu_2"/>
+    <addaction name="action_show_trail"/>
+    <addaction name="action_cal_geo"/>
    </widget>
    <addaction name="menu_top_1_file"/>
    <addaction name="menu_top_2_simu"/>
@@ -362,6 +364,22 @@
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_show_trail">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>显示航空器轨迹</string>
+   </property>
+  </action>
+  <action name="action_cal_geo">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>使用计算航向</string>
    </property>
   </action>
  </widget>

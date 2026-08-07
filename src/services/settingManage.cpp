@@ -146,6 +146,8 @@ void SettingsManager::broadcast () {
 
             case showThumb:
             case scaleBarEnable:
+            case showTrail:
+            case useCalGeoHeading:
                 emit settingChanged(enumKey, get(enumKey, false));
                 break;
 

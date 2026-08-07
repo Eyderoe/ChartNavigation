@@ -5,13 +5,6 @@
 #include "utils/affineTransformer.hpp"
 #include "services/dataProvider.hpp"
 
-enum class TcasMode:int {
-    nm30, nm6, none, all // 30NM9900,6NM1200ft,none,all
-};
-enum class InfoMode:int {
-    base, extend, full // 基本符号，拓展符号，完整符号
-};
-
 // https://doc-snapshots.qt.io/qt6-6.9/qtpdf-index.html
 class PdfView final : public QPdfView {
         Q_OBJECT
@@ -44,9 +37,6 @@ class PdfView final : public QPdfView {
         bool centerOn{};
         bool isDark{};
         double rotate{}; // 地图映射文件得到，旋转灰机
-        double pdfRotate{}; // 按钮控制，旋转PDF
-        TcasMode tcasMode{TcasMode::nm30};
-        InfoMode infoMode{InfoMode::base};
         // 仿射变换
         AffineTransformer transformer{};
         bool transActive{false};

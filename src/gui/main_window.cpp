@@ -17,6 +17,13 @@
 #include "services/settingManage.hpp"
 #include "utils/constValue.hpp"
 
+#if defined(__ANDROID__)
+#include <QClipboard>
+#include <QCoreApplication>
+#include <QApplication>
+#include <QJniObject>
+#endif
+
 
 main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::main_window) {
     ui->setupUi(this);
@@ -33,8 +40,16 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
     // 初始化动作组
     initActionGroup();
     // 安卓特化 因为显示不了菜单栏
-    if constexpr (platform == MultiPlatform::androidOS)
+    if constexpr (platform == MultiPlatform::androidOS) {
+        // 权限按钮: 调起系统文件夹选择器获取SAF访问权限
+        auto *permissionMenu = new QMenu(tr("权限"), ui->menubar);
+        permissionMenu->setObjectName("menu_top_5_permission");
+        auto *permissionAction = permissionMenu->addAction(tr("获取文件夹权限"));
+        permissionAction->setToolTip(tr("选择文件夹并获取访问权限"));
+        connect(permissionAction, &QAction::triggered, this, &main_window::grantFolderPermission);
+        ui->menubar->addMenu(permissionMenu);
         menu2toolBar();
+    }
     // 初始化状态栏
     new StatusBar(ui->statusbar, ui->statusbar);
     // 连接信号
@@ -160,6 +175,11 @@ void main_window::initConnect () {
                     case SettingsManager::showThumb:
                         ui->action_show_thumb->setChecked(val.toBool());
                         break;
+                    case SettingsManager::showTrail:
+                        ui->action_show_trail->setChecked(val.toBool());
+                        break;
+                    case SettingsManager::useCalGeoHeading:
+                        ui->action_cal_geo->setChecked(val.toBool());
                     default:
                         break;
                 }
@@ -179,16 +199,6 @@ void main_window::initConnect () {
                 }
             });
     // QMainWindow动作
-    connect(ui->action_thank, &QAction::triggered, this, [&] () {
-        const auto dialog = new about_dialog(this);
-        dialog->show();
-    });
-    connect(ui->action_setting, &QAction::triggered, this, [&] () {
-        const auto options = new options_widget(this);
-        options->setWindowFlags(Qt::Window);
-        options->show();
-        options->setAttribute(Qt::WA_DeleteOnClose);
-    });
     connect(ui->action_dark, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::isDarkTheme, checked);
     });
@@ -204,6 +214,30 @@ void main_window::initConnect () {
     connect(ui->action_follow, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::planeFollowed, checked);
     });
+    connect(ui->action_cal_geo, &QAction::triggered, this, [&](const bool checked) {
+        SettingsManager::instance().set(SettingsManager::useCalGeoHeading, checked);
+    });
+    connect(ui->action_show_trail, &QAction::triggered, this, [&](const bool checked) {
+        SettingsManager::instance().set(SettingsManager::showTrail, checked);
+    });
+
+    connect(ui->action_thank, &QAction::triggered, this, [&] () {
+        const auto dialog = new about_dialog(this);
+        dialog->show();
+    });
+    connect(ui->action_setting, &QAction::triggered, this, [&] () {
+        const auto options = new options_widget(this);
+        options->setWindowFlags(Qt::Window);
+        options->show();
+        options->setAttribute(Qt::WA_DeleteOnClose);
+    });
+    connect(ui->action_load_file, &QAction::triggered, this, &main_window::openFile);
+    connect(ui->action_load_folder, &QAction::triggered, this, &main_window::openFolder);
+    connect(ui->action_switch, &QAction::triggered, this,
+            [this] () { stackedWidget->setCurrentIndex(mainPage.next()); });
+    connect(ui->action_rotate, &QAction::triggered, this,
+            [&] () { setting.set(SettingsManager::pageRotate, pageRotateDegree.next()); });
+
     connect(sourceGroup, &QActionGroup::triggered, this, [&](const QAction *action) {
         if (action == ui->action_source_XPlane)
             SettingsManager::instance().set(SettingsManager::dataSource, static_cast<int>(SimulatorSource::xplane));
@@ -236,12 +270,6 @@ void main_window::initConnect () {
         else
             assert(false && "need to update if else. [main_window::initConnect]");
     });
-    connect(ui->action_load_file, &QAction::triggered, this, &main_window::openFile);
-    connect(ui->action_load_folder, &QAction::triggered, this, &main_window::openFolder);
-    connect(ui->action_switch, &QAction::triggered, this,
-            [this] () { stackedWidget->setCurrentIndex(mainPage.next()); });
-    connect(ui->action_rotate, &QAction::triggered, this,
-            [&] () { setting.set(SettingsManager::pageRotate, pageRotateDegree.next()); });
 }
 
 /**
@@ -317,4 +345,43 @@ void main_window::openFolder () {
         return;
     // 读取文件夹
     pdfBrowser->loadFolder(dir);
+}
+
+/**
+ * @brief 持久化SAF目录授权
+ * @param uri 系统文件夹选择器返回的 content:// tree URI
+ * @note 不持久化的话, 设备重启后授权会丢失, 文件树又只能看到目录
+ */
+static void persistAndroidTreeUri (const QString &uri) {
+#if defined(__ANDROID__)
+    if (!uri.startsWith("content://"))
+        return;
+    // android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_PERMISSION
+    constexpr jint readWriteFlags = 0x1 | 0x2;
+    QJniObject androidUri = QJniObject::callStaticObjectMethod(
+        "android/net/Uri", "parse", "(Ljava/lang/String;)Landroid/net/Uri;",
+        QJniObject::fromString(uri).object());
+    // Qt 6.8+/6.9 的 context() 返回类型化 QtJniTypes::Context(JObject<ContextTag>),
+    // 可隐式转成 QJniObject, 再走经典 API 调 ContentResolver
+    QJniObject context = QNativeInterface::QAndroidApplication::context();
+    QJniObject resolver = context.callObjectMethod("getContentResolver",
+                                                   "()Landroid/content/ContentResolver;");
+    resolver.callMethod<void>("takePersistableUriPermission",
+                              "(Landroid/net/Uri;I)V", androidUri.object(), readWriteFlags);
+#endif
+}
+
+/**
+ * @brief 获取文件夹访问权限(仅安卓)
+ * @note 调起系统文件夹选择器(SAF), 持久化授权后把 content:// 路径复制到剪贴板
+ */
+void main_window::grantFolderPermission () {
+    auto option = QFileDialog::Options();
+    option |= QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
+    const QString dir = QFileDialog::getExistingDirectory(this, tr("选择文件夹以获取访问权限"),
+                                                          QDir::homePath(), option);
+    if (dir.isEmpty())
+        return;
+    persistAndroidTreeUri(dir); // 持久化授权, 避免设备重启后授权丢失
+    QApplication::clipboard()->setText(dir);
 }

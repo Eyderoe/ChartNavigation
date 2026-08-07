@@ -10,7 +10,7 @@ class realPos : public QObject {
         realPos ();
         void close () const;
         void setCallback (const std::function<void  (bool)> &callbackFunc);
-        bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) const;
+        [[nodiscard]] bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) const;
         void setFrequency (int32_t freq) const;
     private:
         QGeoPositionInfoSource *source{nullptr};

@@ -4,6 +4,7 @@
 #include "utils/geographic.hpp"
 #include "services/settingManage.hpp"
 
+#include <algorithm>
 #include <format>
 #include <ranges>
 
@@ -82,31 +83,6 @@ void PdfView::initConnect () {
                 switch (key) {
                     case SettingsManager::planeFollowed: {
                         setCenterOn(val.toBool());
-                        break;
-                    }
-                    case SettingsManager::tcasRange: {
-                        switch (const auto mode = static_cast<TcasMode>(val.toInt()); mode) {
-                            case TcasMode::nm30:
-                            case TcasMode::nm6:
-                            case TcasMode::none:
-                            case TcasMode::all:
-                                tcasMode = mode;
-                                break;
-                            default:
-                                tcasMode = TcasMode::nm30;
-                        }
-                        break;
-                    }
-                    case SettingsManager::infoMode: {
-                        switch (const auto mode = static_cast<InfoMode>(val.toInt()); mode) {
-                            case InfoMode::base:
-                            case InfoMode::extend:
-                            case InfoMode::full:
-                                infoMode = mode;
-                                break;
-                            default:
-                                infoMode = InfoMode::base;
-                        }
                         break;
                     }
                     default:
@@ -201,9 +177,7 @@ void PdfView::paintEvent (QPaintEvent *event) {
         // 自身
         drawPlane(painter);
         // 其他飞机
-        const auto &idVal = dataProvider->getIdValues();
-        const size_t count = std::ranges::count_if(idVal, [](const float value) { return value != 0.0f; });
-        for (int i = 1; i < count; ++i)
+        for (int i = 1; i < dataProvider->getAvailableNum(); ++i)
             drawPlane(painter, i);
     }
 }
@@ -225,7 +199,8 @@ std::pair<double, double> PdfView::trans (const double latitude, const double lo
                             const int viewLen, const double offset) {
         if (bar->minimum() == bar->maximum())
             return offset + pos * scale;
-        const double barLoc = (pos * scale + margin1) / (docSize + margin1 + margin2) * (bar->maximum() + bar->pageStep());
+        const double barLoc = (pos * scale + margin1) / (docSize + margin1 + margin2) * (bar->maximum() + bar->
+            pageStep());
         return viewLen * (barLoc - bar->value()) / bar->pageStep();
     };
     const double finalX = toView(x, logicDocSize.width(), horzBar, margin.left(), margin.right(),
@@ -235,12 +210,46 @@ std::pair<double, double> PdfView::trans (const double latitude, const double lo
     return {finalX, finalY};
 }
 
+QString altInfo (int deltaAlt, const float vs) {
+    QString altDescribe;
+    if (deltaAlt >= 0) // 高度差
+        altDescribe = QString::fromStdString(std::format("+{:02d}", deltaAlt));
+    else
+        altDescribe = QString::fromStdString(std::format("-{:02d}", -deltaAlt));
+    if (vs >= 500) // 高度趋势
+        altDescribe += "↑";
+    else if (vs <= -500)
+        altDescribe += "↓";
+    else
+        altDescribe += " ";
+    return altDescribe;
+}
+bool whetherShow (const Point2D &pos1, const Point2D &pos2, const float alt1, const float alt2,
+                  const TcasMode tcasMode) {
+    const double _distance = distanceSimple(pos1.first, pos1.second, pos2.first, pos2.second);
+    const double _alt = std::abs(alt1 - alt2) * m2ft;
+    switch (tcasMode) {
+        case TcasMode::none:
+            return false;
+        case TcasMode::nm30:
+            if (_distance > nm2m * 30 || _alt > 9900)
+                return false;
+            return true;
+        case TcasMode::nm6:
+            if (_distance > nm2m * 6 || _alt > 1200)
+                return false;
+            return true;
+        default:
+            assert(false && "inop tcas mode");
+    }
+}
 /**
  * @brief 绘制自身/其他飞机
  * @param painter 画笔
  * @param idx 飞机索引(0为自身)
  */
 void PdfView::drawPlane (QPainter &painter, const int idx) {
+    static std::map<std::string, char> turCat;
     const bool isSelf = (idx == 0);
     painter.save();
     // 变量声明
@@ -250,7 +259,8 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
     const auto &vsVal = dataProvider->getVsValues();
     const auto &trkVal = dataProvider->getTrkValues();
     const auto &flightIdVal = dataProvider->getFlightIdValues();
-    const double latitude{latVal[idx]}, longitude{lonVal[idx]}, vs{vsVal[idx]}, alt{altVal[idx]};
+    const auto &flightIcaoVal = dataProvider->getFlightIcao();
+    const float latitude{latVal[idx]}, longitude{lonVal[idx]}, vs{vsVal[idx]}, alt{altVal[idx]};
     double trk{trkVal[idx]};
     // 移动坐标系
     auto [x,y] = trans(latitude, longitude);
@@ -258,6 +268,7 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
     trk = std::fmod(trk + rotate + 360, 360);
     // 绘制信息
     if (!isSelf) {
+        // 笔刷
         QFont font;
         font.setBold(true);
         painter.setFont(font);
@@ -274,55 +285,69 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
             stroker.setMiterLimit(2.0);
             painter.setPen(Qt::NoPen);
             painter.setBrush(outlineBrush);
-            QPainterPath outline = stroker.createStroke(path).subtracted(path);
+            const QPainterPath outline = stroker.createStroke(path).subtracted(path);
             painter.drawPath(outline);
             painter.setBrush(textBrush);
             painter.drawPath(path);
         };
-        // tcas 判断
-        const double _distance = distanceSimple(latitude, longitude, latVal[0], lonVal[0]);
-        const double _alt = std::abs(alt - altVal[0]) * m2ft;
-        bool notDisplay{false};
-        switch (tcasMode) {
-            case TcasMode::none:
-                notDisplay = true;
-                break;
-            case TcasMode::nm30:
-                if (_distance > nm2m * 30 || _alt > 9900)
-                    notDisplay = true;
-                break;
-            case TcasMode::nm6:
-                if (_distance > nm2m * 6 || _alt > 1200)
-                    notDisplay = true;
-                break;
-            default:
-                assert(false && "inop tcas mode");
-        }
-        if (notDisplay) {
+        // tcas 范围判断是否显示
+        const bool show = whetherShow({latitude, longitude}, {latVal[0], lonVal[0]}, alt, altVal[0],
+                                      dataProvider->getTcasMode());
+        if (!show) {
             painter.restore();
             return;
         }
         // 航班信息
-        QString flightId;
-        flightId.reserve(7);
-        for (int i = 8 * idx; i < 8 * (idx + 1) - 1; ++i)
-            if (flightIdVal[i] != 0)
-                flightId.append(QChar(static_cast<char>(flightIdVal[i])));
+        const QString flightId = slice(flightIdVal, idx);
         // 高度信息
-        int deltaAlt = static_cast<int>(std::round((alt - altVal[0]) * m2ft / 100));
-        QString altDescribe;
-        if (deltaAlt >= 0) // 高度差
-            altDescribe = QString::fromStdString(std::format("+{:02d}", deltaAlt));
-        else
-            altDescribe = QString::fromStdString(std::format("-{:02d}", -deltaAlt));
-        if (vs >= 500) // 高度趋势
-            altDescribe += "↑";
-        else if (vs <= -500)
-            altDescribe += "↓";
-        else
-            altDescribe += " ";;
-        drawStrokedText(-12, -17, altDescribe);
-        drawStrokedText(10, 15, flightId);
+        const QString altDescribe = altInfo(static_cast<int>(std::round((alt - altVal[0]) * m2ft / 100)), vs);
+        // 尾流信息
+        const std::string flightIcao = slice(flightIcaoVal, idx).toStdString();
+        char cat;
+        if (const auto itLocal = turCat.find(flightIcao); itLocal == turCat.end()) {
+            cat = dataProvider->getWakeCategory(flightIcao);
+            turCat[flightIcao] = cat;
+        } else
+            cat = itLocal->second;
+        // 绘制信息
+        if (zoomFactor() > 0.45) {
+            switch (dataProvider->getInfoMode()) {
+                case InfoMode::full: // 完整符号(相对高度趋势, 航班号, 地速尾流)
+                    drawStrokedText(12, 20, QString::fromStdString(std::format("{} {}",
+                                                                               dataProvider->getGroundSpeed(
+                                                                                   flightId.toStdString()), cat)));
+                    [[fallthrough]];
+                case InfoMode::extend: // 扩展符号(相对高度趋势, 航班号)
+                    drawStrokedText(12, 8, flightId);
+                    [[fallthrough]];
+                case InfoMode::base: // 基本符号(相对高度趋势)
+                    drawStrokedText(12, -4, altDescribe);
+                    break;
+            }
+        }
+        // 计算航向
+        if (dataProvider->getUseCalGeo()) {
+            const int temp = dataProvider->getGeoHeading(flightId.toStdString());
+            trk = (temp != -1) ? temp : trk;
+        }
+        // 绘制航迹
+        if (dataProvider->getShowTrail()) {
+            const auto points = dataProvider->getPoints(flightId.toStdString());
+            const int size = static_cast<int>(points.size());
+            if (size >= 2) {
+                const int stride = std::max(1, (size + 9) / 10);
+                const int count = std::min(10, (size - 1) / stride + 1);
+                const auto sampled = std::views::iota(0, count)
+                    | std::views::transform([size, stride](const int i) { return size - 1 - i * stride; });
+                painter.setPen(Qt::NoPen);
+                painter.setBrush(QColor(239, 142, 92, 180));
+                for (const int ide : sampled) {
+                    const auto [px, py] = trans(points[static_cast<size_t>(ide)].first,
+                                                points[static_cast<size_t>(ide)].second);
+                    painter.drawEllipse(QPointF(px - x, py - y), 3, 3);
+                }
+            }
+        }
     }
     // 绘制飞机
     painter.rotate(trk);

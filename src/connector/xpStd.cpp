@@ -8,6 +8,7 @@ xpAdapter::xpAdapter () : xp(true) {
     datarefMap["trk"] = {"sim/cockpit2/tcas/targets/position/psi", 64};
     datarefMap["vs"] = {"sim/cockpit2/tcas/targets/position/vertical_speed", 64};
     datarefMap["flightId"] = {"sim/cockpit2/tcas/targets/flight_id", 512};
+    datarefMap["icao"] = {"sim/cockpit2/tcas/targets/icao_type", 512};
 }
 
 void xpAdapter::setCallback (const std::function<void  (bool)> &callbackFunc) {
