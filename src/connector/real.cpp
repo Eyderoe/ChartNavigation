@@ -10,8 +10,8 @@ realPos::realPos () {
                 lat = coord.latitude();
                 lon = coord.longitude();
                 trk = info.attribute(QGeoPositionInfo::Direction);
-                trk = qIsNaN(trk) ? 0 : trk; // nan可能导致绘制失效
-                alt = (coord.type() == QGeoCoordinate::Coordinate3D) ? coord.altitude() : 0;
+                trk = std::isnan(trk) ? 0 : trk; // nan可能导致绘制失效
+                alt = (coord.type() == QGeoCoordinate::Coordinate3D) ? coord.altitude() : 0; // 单位米
                 setState(true);
             } else {
                 setState(false);

@@ -8,7 +8,7 @@ template <typename R>
 concept DataContainer = std::ranges::forward_range<R> &&
         std::same_as<std::ranges::range_value_t<R>, std::vector<double>>;
 
-enum class AffineQuality { inop, bad, hmmm, good, }; // 仿射变换质量
+enum class AffineQuality { inop, bad, fine, good, }; // 仿射变换质量
 
 template <typename DataContainer>
 std::pair<Eigen::Vector3d, Eigen::Vector3d> doAffine (DataContainer &&data);

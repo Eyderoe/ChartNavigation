@@ -17,7 +17,10 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
     simuLabel = new QLabel("- 离线");
     bar->addWidget(simuLabel);
     addSeparator();
-    planeLabel = new QLabel("(-,-) AGL:-ft");
+    if constexpr (platform != MultiPlatform::androidOS)
+        planeLabel = new QLabel("(-,-) AGL:-ft");
+    else
+        planeLabel = new QLabel("(-,-) Alt:-ft");
     bar->addWidget(planeLabel);
     addSeparator();
     affineLabel = new QLabel("误差:- 质量:-");
@@ -66,6 +69,10 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
                         plane.first.second = val.toDouble();
                         updatePlane = true;
                         break;
+                    case SettingsManager::altRelat:
+                        plane.second = val.toInt();
+                        updatePlane = true;
+                        break;
                     default:
                         break;
                 }
@@ -98,11 +105,20 @@ void StatusBar::update () {
     if (updatePlane) {
         updatePlane = false;
         std::string infoText;
-        if (simu.second)
-            infoText = std::format("({:.3f}, {:.3f}) AGL:{}ft", plane.first.first, plane.first.second,
-                                   plane.second == -500 ? '-' : plane.second);
-        else
-            infoText = "(-,-) AGL:-ft";
+        auto &[lat, lon] = plane.first;
+        int altRela = plane.second;
+        if constexpr (platform != MultiPlatform::androidOS) {
+            if (simu.second) {
+                infoText = std::format("({:.3f}, {:.3f}) AGL:{}ft"
+                                       , lat, lon, altRela == -500 ? '-' : altRela);
+            } else
+                infoText = "(-,-) AGL:-ft";
+        } else {
+            if (simu.second) {
+                infoText = std::format("({:.3f}, {:.3f}) Alt:{}ft", lat, lon, altRela);
+            } else
+                infoText = "(-,-) Alt:-ft";
+        }
         planeLabel->setText(QString::fromStdString(infoText));
     }
     // 仿射变换 [误差:- 质量:-]
@@ -116,7 +132,7 @@ void StatusBar::update () {
                 case AffineQuality::bad:
                     quality = "差";
                     break;
-                case AffineQuality::hmmm:
+                case AffineQuality::fine:
                     quality = "中";
                     break;
                 case AffineQuality::good:

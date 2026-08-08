@@ -240,7 +240,7 @@ AffineQuality AffineTransformer::squareEvaluate () {
     if (totalError < toleranceGood)
         return AffineQuality::good;
     else if (totalError < toleranceMid)
-        return AffineQuality::hmmm;
+        return AffineQuality::fine;
     else
         return AffineQuality::bad;
 }

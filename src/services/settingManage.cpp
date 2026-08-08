@@ -128,6 +128,7 @@ void SettingsManager::broadcast () {
             case OptionWidgetGeo:
             case chartFolder:
             case dataFolder:
+            case globeFolder:
             case spliterSta:
                 emit settingChanged(enumKey, get(enumKey, {}));
                 break;

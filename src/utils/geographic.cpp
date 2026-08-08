@@ -34,8 +34,7 @@ int AircraftTrail::calculateGroundSpeed () const {
     // 相邻采样点距离之和 (惰性求值, 不拷贝轨迹数据)
     const auto segmentDistances = std::views::iota(0, count - 1)
             | std::views::transform([this, size, stride](const int i) {
-                return distanceSimple(points[static_cast<size_t>(size - 1 - i * stride)],
-                                      points[static_cast<size_t>(size - 1 - (i + 1) * stride)]);
+                return distanceSimple(points[size - 1 - i * stride], points[size - 1 - (i + 1) * stride]);
             });
     const double totalDistance = std::accumulate(segmentDistances.begin(), segmentDistances.end(), 0.0);
     const double speedMs = totalDistance / ((count - 1) * stride * interval) * 1000.0; // m/s
@@ -55,8 +54,7 @@ int AircraftTrail::calculateGeoHeading () const {
     // 相邻点航向转单位向量 (惰性求值, 不拷贝轨迹数据), pair = (东分量, 北分量)
     const auto segmentVectors = std::views::iota(0, count - 1)
             | std::views::transform([this, size, count](const int i) {
-                const double bearing = bearingSimple(points[static_cast<size_t>(size - count + i)],
-                                                     points[static_cast<size_t>(size - count + i + 1)]);
+                const double bearing = bearingSimple(points[size - count + i], points[size - count + i + 1]);
                 const double rad = bearing * std::numbers::pi / 180.0;
                 return std::pair{std::cos(rad), std::sin(rad)};
             });
@@ -129,8 +127,7 @@ double bearingSimple (const double lat1, const double lon1, const double lat2, c
     const double lon2_rad = lon2 * std::numbers::pi / 180.0;
     const double dLon = lon2_rad - lon1_rad;
     const double y = std::sin(dLon) * std::cos(lat2_rad);
-    const double x = std::cos(lat1_rad) * std::sin(lat2_rad)
-            - std::sin(lat1_rad) * std::cos(lat2_rad) * std::cos(dLon);
+    const double x = std::cos(lat1_rad) * std::sin(lat2_rad) - std::sin(lat1_rad) * std::cos(lat2_rad) * std::cos(dLon);
     return std::fmod(std::atan2(y, x) * 180.0 / std::numbers::pi + 360.0, 360.0); // 真航向 0~360
 }
 /**

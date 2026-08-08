@@ -239,9 +239,12 @@ bool whetherShow (const Point2D &pos1, const Point2D &pos2, const float alt1, co
             if (_distance > nm2m * 6 || _alt > 1200)
                 return false;
             return true;
+        case TcasMode::all:
+            return true;
         default:
             assert(false && "inop tcas mode");
     }
+    return false;
 }
 /**
  * @brief 绘制自身/其他飞机
@@ -275,9 +278,12 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         painter.setRenderHint(QPainter::TextAntialiasing, true);
         const QBrush outlineBrush(Qt::black);
         const QBrush textBrush(Qt::white);
-        auto drawStrokedText = [&](const int x_, const int y_, const QString &text) {
+        auto drawStrokedText = [&]<typename Str>(const int x_, const int y_, const Str &text) {
             QPainterPath path;
-            path.addText(x_, y_, font, text);
+            if constexpr (std::is_same_v<Str, QString>)
+                path.addText(x_, y_, font, text);
+            else if constexpr (std::is_same_v<Str, std::string>)
+                path.addText(x_, y_, font, QString::fromStdString(text));
             QPainterPathStroker stroker;
             stroker.setWidth(1.6);
             stroker.setCapStyle(Qt::RoundCap);
@@ -298,53 +304,54 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
             return;
         }
         // 航班信息
-        const QString flightId = slice(flightIdVal, idx);
+        const auto flightId = slice<std::string>(flightIdVal, idx);
         // 高度信息
         const QString altDescribe = altInfo(static_cast<int>(std::round((alt - altVal[0]) * m2ft / 100)), vs);
         // 尾流信息
-        const std::string flightIcao = slice(flightIcaoVal, idx).toStdString();
+        const auto flightIcao = slice<std::string>(flightIcaoVal, idx);
         char cat;
         if (const auto itLocal = turCat.find(flightIcao); itLocal == turCat.end()) {
             cat = dataProvider->getWakeCategory(flightIcao);
             turCat[flightIcao] = cat;
         } else
             cat = itLocal->second;
+        std::string catStr = (cat == ' ') ? std::format("({})", flightIcao) : std::string({cat}); // 查询不到回退到机型
         // 绘制信息
-        if (zoomFactor() > 0.45) {
+        bool tooSmall = (zoomFactor() < 0.45);
+        if (!tooSmall) {
             switch (dataProvider->getInfoMode()) {
-                case InfoMode::full: // 完整符号(相对高度趋势, 航班号, 地速尾流)
-                    drawStrokedText(12, 20, QString::fromStdString(std::format("{} {}",
-                                                                               dataProvider->getGroundSpeed(
-                                                                                   flightId.toStdString()), cat)));
-                    [[fallthrough]];
+                case InfoMode::full: { // 完整符号(相对高度趋势, 航班号, 地速尾流)
+                    auto gs = dataProvider->getGroundSpeed(flightId);
+                    drawStrokedText(12, 20, std::format("{} {}", gs, catStr));
+                }
                 case InfoMode::extend: // 扩展符号(相对高度趋势, 航班号)
                     drawStrokedText(12, 8, flightId);
-                    [[fallthrough]];
                 case InfoMode::base: // 基本符号(相对高度趋势)
                     drawStrokedText(12, -4, altDescribe);
-                    break;
             }
         }
         // 计算航向
         if (dataProvider->getUseCalGeo()) {
-            const int temp = dataProvider->getGeoHeading(flightId.toStdString());
+            const int temp = dataProvider->getGeoHeading(flightId);
             trk = (temp != -1) ? temp : trk;
         }
         // 绘制航迹
+        constexpr int drawPointNum = 8;
         if (dataProvider->getShowTrail()) {
-            const auto points = dataProvider->getPoints(flightId.toStdString());
-            const int size = static_cast<int>(points.size());
-            if (size >= 2) {
-                const int stride = std::max(1, (size + 9) / 10);
-                const int count = std::min(10, (size - 1) / stride + 1);
+            const auto points = dataProvider->getPoints(flightId);
+            if (const int size = static_cast<int>(points.size()); size >= 2) {
+                const int stride = std::max(1, (size + (drawPointNum - 1)) / drawPointNum);
+                const int count = std::min(drawPointNum, (size - 1) / stride + 1);
                 const auto sampled = std::views::iota(0, count)
-                    | std::views::transform([size, stride](const int i) { return size - 1 - i * stride; });
+                        | std::views::transform([size, stride](const int i) { return size - 1 - i * stride; });
                 painter.setPen(Qt::NoPen);
-                painter.setBrush(QColor(239, 142, 92, 180));
+                int radius = (tooSmall) ? 2 : 3;
+                QColor trailColor(239, 142, 92, 200);
                 for (const int ide : sampled) {
-                    const auto [px, py] = trans(points[static_cast<size_t>(ide)].first,
-                                                points[static_cast<size_t>(ide)].second);
-                    painter.drawEllipse(QPointF(px - x, py - y), 3, 3);
+                    painter.setBrush(trailColor);
+                    const auto [px, py] = trans(points[ide].first, points[ide].second);
+                    painter.drawEllipse(QPointF(px - x, py - y), radius, radius);
+                    trailColor.setAlpha(trailColor.alpha() - 15);
                 }
             }
         }

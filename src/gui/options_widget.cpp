@@ -36,6 +36,7 @@ void options_widget::readSettings () const {
     // 文件
     ui->chartFolder_lineEdit->setText(ins.get(SettingsManager::chartFolder, "").toString());
     ui->mappingFoler_lineEdit->setText(ins.get(SettingsManager::dataFolder, "").toString());
+    ui->globeFoler_lineEdit->setText(ins.get(SettingsManager::globeFolder, "").toString());
     ui->onlyPdf_comboBox->setCurrentIndex(ins.get(SettingsManager::onlyDisplayPdf, true).toBool() ? 0 : 1);
 }
 
@@ -45,6 +46,10 @@ void options_widget::on_chartFolder_lineEdit_textEdited (const QString &arg1) {
 
 void options_widget::on_mappingFoler_lineEdit_textEdited (const QString &arg1) {
     SettingsManager::instance().set(SettingsManager::dataFolder, arg1, true);
+}
+
+void options_widget::on_globeFoler_lineEdit_textEdited (const QString &arg1) {
+    SettingsManager::instance().set(SettingsManager::globeFolder, arg1, true);
 }
 
 void options_widget::on_onlyPdf_comboBox_currentIndexChanged (int index) {

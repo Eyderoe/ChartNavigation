@@ -7,13 +7,17 @@
 #include <stdexcept>
 
 #include "services/settingManage.hpp"
+#include "utils/constValue.hpp"
 
 
 DataProvider::DataProvider (QObject *parent) : QObject(parent) {
+    SettingsManager &ins = SettingsManager::instance();
     readTurbuCate();
     initConnect();
+    // 高程数据
+    const auto globeFolder = ins.get(SettingsManager::globeFolder).toString().toStdString();
+    globeView = std::make_unique<NoaaGlobeView>(globeFolder);
     // 接收器切换
-    SettingsManager &ins = SettingsManager::instance();
     const SimulatorSource source = static_cast<SimulatorSource>(ins.get(SettingsManager::dataSource, 0).toInt());
     qDebug() << "data source: " << static_cast<int>(source);
     switch (source) {
@@ -185,25 +189,30 @@ void DataProvider::simuInfoUpdate () {
     std::set<std::string> seen;
     const size_t available = getAvailableNum();
     for (size_t idx = 1; idx < available; ++idx) {
-        const std::string flightId = slice(multiFlightIdVal, static_cast<int>(idx)).toStdString();
+        const auto flightId = slice<std::string>(multiFlightIdVal, static_cast<int>(idx));
         if (flightId.empty())
             continue;
         seen.insert(flightId);
         trails.try_emplace(flightId, intervalMs).first->second.addPoint({multiLatVal[idx], multiLonVal[idx]});
     }
     if (trails.size() >= 128) { // map 大小达到 128 后, 一次性清空已消失航班的轨迹
-        for (auto it = trails.begin(); it != trails.end();) {
-            if (!seen.contains(it->first))
-                it = trails.erase(it);
-            else
-                ++it;
-        }
+        std::erase_if(trails, [&](const auto &item) {
+            return !seen.contains(item.first);
+        });
     }
-    // 设置更新
+    // 状态栏更新
     SettingsManager &ins = SettingsManager::instance();
     ins.set(SettingsManager::latitu, multiLatVal[0]);
     ins.set(SettingsManager::longitu, multiLonVal[0]);
-    ins.set(SettingsManager::altitu, multiAltVal[0]);
+    const int planeAlt = multiAltVal[0];
+    if constexpr (platform != MultiPlatform::androidOS) {
+        const int groundAlt = globeView->getAlt(multiLatVal[0], multiLonVal[0]);
+        int agl = (groundAlt == -500) ? -500 : (planeAlt - groundAlt) * m2ft;
+        agl = ((agl != -500) && (agl < 0)) ? 0 : agl;
+        ins.set(SettingsManager::altRelat, agl);
+    } else {
+        ins.set(SettingsManager::altRelat, planeAlt * m2ft);
+    }
     emit dataUpdated();
 }
 
@@ -266,6 +275,10 @@ std::deque<Point2D> DataProvider::getPoints (const std::string &flightId) {
     return (it == trails.end()) ? std::deque<Point2D>{} : it->second.getPoints();
 }
 
+short DataProvider::getAlt (const float latitude, const float longitude) const {
+    return globeView->getAlt(latitude, longitude);
+}
+
 /**
  * @brief 获取可用航空器数量
  * @return 数量
@@ -282,19 +295,4 @@ void DataProvider::readTurbuCate () {
     database = nlohmann::json::parse(stream.readAll().toUtf8().constData());
     for (auto &[aftType, turbType] : database.items())
         turbuCate[aftType] = turbType.get<std::string>()[0]; // json没有字符类型 只有取字符串再拿
-}
-
-/**
- * @brief 从数组中按索引切出对应内容
- * @param array 数组, 目前适用于航班号和机型ICAO码
- * @param idx 航空器索引, 64->8*64
- * @return 有效字符串
- */
-QString slice (const std::array<float, 512> &array, const int idx) {
-    QString str;
-    str.reserve(8);
-    for (int i = 8 * idx; i < 8 * (idx + 1) - 1; ++i)
-        if (array[i] != 0)
-            str.append(QChar(static_cast<char>(array[i])));
-    return str;
 }

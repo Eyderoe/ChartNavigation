@@ -26,6 +26,7 @@ class options_widget final : public QWidget {
     private slots:
         static void on_chartFolder_lineEdit_textEdited(const QString &arg1);
         static void on_mappingFoler_lineEdit_textEdited(const QString &arg1);
+        static void on_globeFoler_lineEdit_textEdited(const QString &arg1);
         static void on_onlyPdf_comboBox_currentIndexChanged(int index);
 };
 

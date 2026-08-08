@@ -37,6 +37,7 @@ class SettingsManager : public QObject {
             scaleBarEnable, // 启用缩放条 bool
             chartFolder, // 航图文件夹 String
             dataFolder, // 数据文件夹 String
+            globeFolder, // 高程文件夹 String
             onlyDisplayPdf, // 是否只显示PDF bool
             tcasRange, // TCAS显示范围 TcasMode(int)
             infoMode, // 飞行器信息 InfoMode(int)
@@ -52,7 +53,7 @@ class SettingsManager : public QObject {
             simuConnect, // 模拟器连接 bool
             latitu, // 纬度 double
             longitu, // 经度 double
-            altitu, // 高度 int
+            altRelat, // 高度(安卓)/离地高 int
             pageRotate, // 页面旋转角度 int
         };
         Q_ENUM(ConstKey)
