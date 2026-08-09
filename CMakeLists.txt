@@ -98,6 +98,8 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/services/dataProvider.hpp
         src/reserveCode/observe.hpp
         src/reserveCode/typeErasure.hpp
+        src/utils/eventManage.hpp
+        src/utils/eventManage.cpp
 )
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES

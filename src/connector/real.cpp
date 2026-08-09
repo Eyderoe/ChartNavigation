@@ -108,3 +108,7 @@ DatarefIdx realAdapter::addDatarefArray (const std::string &dataref, int32_t fre
 bool realAdapter::getDataref (const DatarefIdx &dataref, const std::span<float> container, const float defaultValue) {
     return realPosition.getDataref(dataref, container, defaultValue);
 }
+
+std::string realAdapter::name () const {
+    return "real";
+}

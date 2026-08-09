@@ -30,3 +30,7 @@ bool xpAdapter::getDataref (const DatarefIdx &dataref, std::span<float> containe
     const eyderoe::XPlaneUdp::DatarefIndex idx(dataref.idx);
     return xp.getDataref(idx, container, defaultValue);
 }
+
+std::string xpAdapter::name () const {
+    return "xp";
+}

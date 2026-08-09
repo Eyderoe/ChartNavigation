@@ -129,6 +129,7 @@ void SettingsManager::broadcast () {
             case chartFolder:
             case dataFolder:
             case globeFolder:
+            case debugReplayFile:
             case spliterSta:
                 emit settingChanged(enumKey, get(enumKey, {}));
                 break;
@@ -149,6 +150,8 @@ void SettingsManager::broadcast () {
             case scaleBarEnable:
             case showTrail:
             case useCalGeoHeading:
+            case debugReplayData:
+            case debugStoreData:
                 emit settingChanged(enumKey, get(enumKey, false));
                 break;
 

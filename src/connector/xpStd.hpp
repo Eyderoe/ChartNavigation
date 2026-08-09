@@ -12,6 +12,7 @@ class xpAdapter : public InterfaceSimu {
         void close () override;
         DatarefIdx addDatarefArray (const std::string &dataref, int32_t freq) override;
         bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) override;
+        std::string name () const override;
     private:
         eyderoe::XPlaneUdp xp;
         std::map<std::string, std::pair<std::string, int>> datarefMap{};

@@ -18,6 +18,8 @@ class InterfaceSimu {
 
         virtual DatarefIdx addDatarefArray (const std::string &dataref, int32_t freq) =0;
         virtual bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) =0;
+
+        virtual std::string name () const =0;
 };
 
 

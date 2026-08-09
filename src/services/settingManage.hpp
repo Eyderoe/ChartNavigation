@@ -27,23 +27,31 @@ class SettingsManager : public QObject {
     public:
         enum ConstKey { // 要持续性存储的
             inopEnumItem_constKey, // 兜底的怪东西
+
             MainWindowGeo, // 主窗口尺寸 ByteArray
             MainWidgetSta, // 主窗口状态 ByteArray
             OptionWidgetGeo, // 设置窗口尺寸 ByteArray
             spliterSta, // 分割器状态 ByteArray
-            dataSource, // 数据源 SimulatorSource(int)
-            planeFollowed, // 居中飞机 bool
             stayFront, // 置顶窗口 bool
             scaleBarEnable, // 启用缩放条 bool
+
+            onlyDisplayPdf, // 是否只显示PDF bool
+            showThumb, // 显示缩略图 bool
+
+            dataSource, // 数据源 SimulatorSource(int)
+            planeFollowed, // 居中飞机 bool
+            tcasRange, // TCAS显示范围 TcasMode(int)
+            infoMode, // 飞行器信息 InfoMode(int)
+            showTrail, // 显示飞行器航迹 bool
+            useCalGeoHeading, // 使用计算航向 bool
+
             chartFolder, // 航图文件夹 String
             dataFolder, // 数据文件夹 String
             globeFolder, // 高程文件夹 String
-            onlyDisplayPdf, // 是否只显示PDF bool
-            tcasRange, // TCAS显示范围 TcasMode(int)
-            infoMode, // 飞行器信息 InfoMode(int)
-            showThumb, // 显示缩略图 bool
-            showTrail, // 显示飞行器航迹 bool
-            useCalGeoHeading, // 使用计算航向 bool
+
+            debugStoreData, // [Debug]保存数据 bool
+            debugReplayData, // [Debug]回放数据 bool
+            debugReplayFile, // [Debug]回放数据路径 String
         };
         enum TempKey { // 仅在程序运行时存在的
             inopEnumItem_tempKey, // 兜底的怪东西

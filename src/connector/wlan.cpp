@@ -161,3 +161,7 @@ DatarefIdx wlanAdapter::addDatarefArray (const std::string &dataref, int32_t fre
 bool wlanAdapter::getDataref (const DatarefIdx &dataref, const std::span<float> container, float defaultValue) {
     return wlan.getDataref(dataref, container, defaultValue);
 }
+
+std::string wlanAdapter::name () const {
+    return "wlan";
+}

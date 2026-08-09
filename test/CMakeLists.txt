@@ -6,7 +6,7 @@ add_executable(unit_tests
         noaaGlobe_test.cpp
         ../src/utils/noaaGlobe.cpp
         ../src/utils/noaaGlobe.hpp
-        )
+)
 
 target_include_directories(unit_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../include

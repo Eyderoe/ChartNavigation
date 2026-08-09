@@ -1,6 +1,10 @@
 #include "dataProvider.hpp"
 
 #include <QDebug>
+#include <QDateTime>
+#include <QDir>
+#include <QDataStream>
+#include <QFile>
 #include <cassert>
 #include <json.hpp>
 #include <set>
@@ -12,8 +16,23 @@
 
 DataProvider::DataProvider (QObject *parent) : QObject(parent) {
     SettingsManager &ins = SettingsManager::instance();
-    readTurbuCate();
+    readTurbulenceCategory();
     initConnect();
+    // Debug 用途
+    debugStoreData = ins.get(SettingsManager::debugStoreData, false).toBool();
+    debugReplayData = ins.get(SettingsManager::debugReplayData, false).toBool();
+    debugStoreData = debugStoreData && !debugReplayData;
+    if (debugStoreData) {
+        const QString filePath = QDir::tempPath() + "/ChartNavigation-" + QDateTime::currentDateTime().
+                toString("yyyyMMdd-HHmmss") + ".txt";
+        replayData = std::make_unique<QFile>(filePath);
+        replayData->open(QIODevice::WriteOnly);
+        const QByteArray freqBlock = QByteArray::number(infoFreq) + "\n";
+        replayData->write("offsetTimeMs,0\n");
+        replayData->write(freqBlock);
+        startTime = QDateTime::currentMSecsSinceEpoch();
+        qDebug() << "QSettings path: " + filePath;
+    }
     // 高程数据
     const auto globeFolder = ins.get(SettingsManager::globeFolder).toString().toStdString();
     globeView = std::make_unique<NoaaGlobeView>(globeFolder);
@@ -34,11 +53,31 @@ DataProvider::DataProvider (QObject *parent) : QObject(parent) {
             throw std::invalid_argument("inop adapter");
     }
     // 模拟器
-    simuInit();
+    initSimulateDataConnect();
     // 定时器
-    simuUpdateTimer.setInterval(static_cast<int>(1000.0 / infoFreq));
-    connect(&simuUpdateTimer, &QTimer::timeout, this, &DataProvider::simuInfoUpdate);
-    simuUpdateTimer.start();
+    if (!debugReplayData) { // 正常情况
+        simuUpdateTimer.setInterval(static_cast<int>(1000.0 / infoFreq));
+        connect(&simuUpdateTimer, &QTimer::timeout, this, &DataProvider::simulateDataUpdate);
+        simuUpdateTimer.start();
+    } else { // 回放数据
+        fs::path replayFile = ins.get(SettingsManager::debugReplayFile).toString().toStdString();
+        eventManager = std::make_unique<EventManage>(replayFile);
+        connect(eventManager.get(), &EventManage::eventReady, this, [this](const Event &event) {
+            switch (event.type) {
+                case EventType::connectState:
+                    setConnectState(std::get<bool>(event.payload));
+                    break;
+                case EventType::simulateData:
+                    replayDataUpdate(event);
+                    break;
+            }
+        });
+        connect(eventManager.get(), &EventManage::finished, this, [this] {
+            qDebug() << "Replay finished";
+            setConnectState(false);
+        });
+        eventManager->start();
+    }
 }
 
 void DataProvider::closeSimu () const {
@@ -63,7 +102,7 @@ void DataProvider::setConnector (const int value) {
         default:
             assert(false && "need to update switch case. [DataProvider::setConnector]");
     }
-    simuInit();
+    initSimulateDataConnect();
 }
 
 bool DataProvider::isConnected () const {
@@ -173,7 +212,7 @@ bool DataProvider::getUseCalGeo () const {
     return useCalGeo;
 }
 
-void DataProvider::simuInfoUpdate () {
+void DataProvider::simulateDataUpdate () {
     if (!connected || !connector)
         return;
     connector->getDataref(multiId, multiIdVal, 0);
@@ -184,6 +223,35 @@ void DataProvider::simuInfoUpdate () {
     connector->getDataref(multiVs, multiVsVal, 0);
     connector->getDataref(multiFlightId, multiFlightIdVal, 0);
     connector->getDataref(multiIcao, multiIcaoVal, 0);
+    // Debug用途
+    if (debugStoreData) {
+        QByteArray payload;
+        QDataStream ds(&payload, QIODevice::WriteOnly);
+        ds << (QDateTime::currentMSecsSinceEpoch() - startTime)
+                << QByteArray("data");
+        auto writeArray = [&ds](const auto &arr) {
+            for (const float v : arr)
+                ds << v;
+        };
+        writeArray(multiIdVal);
+        writeArray(multiLatVal);
+        writeArray(multiLonVal);
+        writeArray(multiAltVal);
+        writeArray(multiTrkVal);
+        writeArray(multiVsVal);
+        writeArray(multiFlightIdVal);
+        writeArray(multiIcaoVal);
+        const QByteArray compressed = qCompress(payload, 1); // 大量的连续0, 有点压缩等级就行
+        replayData->write(QByteArray::number(QDateTime::currentMSecsSinceEpoch() - startTime));
+        replayData->write(",data,");
+        replayData->write(QByteArray::number(compressed.size()));
+        replayData->write("\n");
+        replayData->write(compressed);
+    }
+    processDataFrame();
+}
+
+void DataProvider::processDataFrame () {
     // 更新各航班轨迹 (航班号非空时可用)
     const int intervalMs = static_cast<int>(1000.0 / infoFreq);
     std::set<std::string> seen;
@@ -204,7 +272,7 @@ void DataProvider::simuInfoUpdate () {
     SettingsManager &ins = SettingsManager::instance();
     ins.set(SettingsManager::latitu, multiLatVal[0]);
     ins.set(SettingsManager::longitu, multiLonVal[0]);
-    const int planeAlt = multiAltVal[0];
+    const int planeAlt = static_cast<int>(multiAltVal[0]);
     if constexpr (platform != MultiPlatform::androidOS) {
         const int groundAlt = globeView->getAlt(multiLatVal[0], multiLonVal[0]);
         int agl = (groundAlt == -500) ? -500 : (planeAlt - groundAlt) * m2ft;
@@ -216,7 +284,7 @@ void DataProvider::simuInfoUpdate () {
     emit dataUpdated();
 }
 
-void DataProvider::simuInit () {
+void DataProvider::initSimulateDataConnect () {
     // AI或多人
     multiId = connector->addDatarefArray("id", infoFreq);
     multiLat = connector->addDatarefArray("lat", infoFreq);
@@ -230,6 +298,14 @@ void DataProvider::simuInit () {
     connector->setCallback([this](const bool state) {
         setConnectState(state);
         qDebug() << "Simu-connect change state: " << state;
+        if (debugStoreData) {
+            const QByteArray stateBlock = state ? QByteArray("true\n") : QByteArray("false\n");
+            replayData->write(QByteArray::number(QDateTime::currentMSecsSinceEpoch() - startTime));
+            replayData->write(",connectState,");
+            replayData->write(QByteArray::number(stateBlock.size()));
+            replayData->write("\n");
+            replayData->write(stateBlock);
+        }
     });
 }
 
@@ -287,7 +363,7 @@ size_t DataProvider::getAvailableNum () {
     return std::ranges::count_if(multiIdVal, [](const float value) { return value != 0.0f; });
 }
 
-void DataProvider::readTurbuCate () {
+void DataProvider::readTurbulenceCategory () {
     QFile mappingFile(":/doc/resources/documents/wtc.json");
     mappingFile.open(QIODevice::ReadOnly);
     QTextStream stream(&mappingFile);
@@ -295,4 +371,29 @@ void DataProvider::readTurbuCate () {
     database = nlohmann::json::parse(stream.readAll().toUtf8().constData());
     for (auto &[aftType, turbType] : database.items())
         turbuCate[aftType] = turbType.get<std::string>()[0]; // json没有字符类型 只有取字符串再拿
+}
+
+void DataProvider::replayDataUpdate (const Event &event) {
+    // simulateData: 解压后的 QDataStream 字节 = {相对时间, "data", 1408个float}
+    const auto &bytes = std::get<std::vector<uint8_t>>(event.payload);
+    QDataStream ds(QByteArray::fromRawData(reinterpret_cast<const char*>(bytes.data()),
+                                           static_cast<qsizetype>(bytes.size())));
+    qint64 time;
+    QByteArray tag;
+    ds >> time >> tag;
+    Q_UNUSED(time)
+    Q_UNUSED(tag)
+    auto readArray = [&ds](auto &arr) {
+        for (auto &v : arr)
+            ds >> v;
+    };
+    readArray(multiIdVal);
+    readArray(multiLatVal);
+    readArray(multiLonVal);
+    readArray(multiAltVal);
+    readArray(multiTrkVal);
+    readArray(multiVsVal);
+    readArray(multiFlightIdVal);
+    readArray(multiIcaoVal);
+    processDataFrame();
 }

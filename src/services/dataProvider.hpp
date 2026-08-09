@@ -12,6 +12,7 @@
 #include "connector/allAdapter.hpp"
 #include "utils/geographic.hpp"
 #include "utils/noaaGlobe.hpp"
+#include "utils/eventManage.hpp"
 
 
 enum class TcasMode:int {
@@ -63,18 +64,25 @@ class DataProvider : public QObject {
         int infoFreq{1}; // 信息更新频率 Hz
 
         std::map<std::string, char> turbuCate; // 尾流等级
+        std::unique_ptr<NoaaGlobeView> globeView; // 高程数据
         std::map<std::string, AircraftTrail> trails; // 各航班轨迹, 航班号非空时可用
         TcasMode tcasMode{TcasMode::nm30};
         InfoMode infoMode{InfoMode::base};
         bool showTrail{false}, useCalGeo{false};
 
-        std::unique_ptr<NoaaGlobeView> globeView;
+        bool debugStoreData, debugReplayData;
+        std::unique_ptr<QFile> replayData;
+        qint64 startTime;
+        std::unique_ptr<EventManage> eventManager;
 
         void initConnect ();
-        void simuInit ();
-        void simuInfoUpdate ();
+        void readTurbulenceCategory ();
+        void initSimulateDataConnect ();
         void setConnectState (bool state);
-        void readTurbuCate ();
+
+        void simulateDataUpdate ();
+        void replayDataUpdate (const Event &event);
+        void processDataFrame ();
     Q_SIGNALS:
         void dataUpdated ();
 };
