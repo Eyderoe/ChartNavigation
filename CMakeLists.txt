@@ -100,6 +100,11 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/reserveCode/typeErasure.hpp
         src/utils/eventManage.hpp
         src/utils/eventManage.cpp
+        src/gui/replay_control.cpp
+        src/gui/replay_control.hpp
+        src/gui/replay_control.ui
+        src/connector/replay.cpp
+        src/connector/replay.hpp
 )
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES

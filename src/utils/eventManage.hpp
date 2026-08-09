@@ -17,6 +17,7 @@ enum class EventType { connectState, simulateData, };
 struct Event {
     EventType type;
     int64_t time{};
+    // simulateData: 压缩后的字节, 使用时再解压
     std::variant<bool, std::vector<uint8_t>> payload;
 };
 
@@ -27,9 +28,18 @@ class EventManage : public QObject {
     public:
         explicit EventManage (fs::path replayDataPath, QObject *parent = nullptr);
         void start ();
+        void seekToEvent (size_t eventIndex);
+        void seekTimeMs (qint64 timeMs);
+        void seekPercent (int percent);
+        void stepEvents (int delta);
+        void stepPercent (int deltaPercent);
+        [[nodiscard]] size_t eventCount () const;
+        [[nodiscard]] size_t position () const;
+        [[nodiscard]] qint64 durationMs () const;
 
     Q_SIGNALS:
         void eventReady (const Event &event);
+        void progressChanged (qint64 timeMs);
         void finished ();
 
     private:

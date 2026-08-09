@@ -230,5 +230,3 @@ void main_widget::on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int co
 void main_widget::on_folder_comboBox_currentIndexChanged (const int index) {
     loadFolder(ui->folder_comboBox->itemData(index).toString());
 }
-
-void main_widget::on_scale_verticalSlider_valueChanged (int value) {}

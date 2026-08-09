@@ -97,6 +97,8 @@ void main_window::setDataSourceGroup (int val) const {
         case SimulatorSource::real:
             ui->action_source_real->setChecked(true);
             break;
+        case SimulatorSource::replay:
+            break;
         default:
             assert(false && "need to update switch case. [main_window::setDataSource]");
     }

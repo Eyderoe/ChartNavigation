@@ -46,7 +46,6 @@ class main_widget final : public QWidget {
         void on_pageNum_spinBox_valueChanged (int pageNum); // PDF文档页数切换
         void on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int column); // 文件树选择 -> 加载PDF文档
         void on_folder_comboBox_currentIndexChanged (int index); // 更换航图文件夹
-        void on_scale_verticalSlider_valueChanged (int value);
 };
 
 

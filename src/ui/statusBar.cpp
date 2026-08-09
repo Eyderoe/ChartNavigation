@@ -94,8 +94,12 @@ void StatusBar::update () {
                 simuStr = "现实";
                 break;
             case SimulatorSource::xplane:
-            default:
                 simuStr = "XPlane";
+                break;
+            case SimulatorSource::replay:
+                simuStr = "回放";
+                break;
+            default:
                 break;
         }
         simuStr += simu.second ? " 在线" : " 离线";

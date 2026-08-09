@@ -5,11 +5,13 @@
 #include <QObject>
 #include <QTimer>
 #include <array>
+#include <deque>
 #include <map>
 #include <memory>
 #include <string>
 
 #include "connector/allAdapter.hpp"
+#include "gui/replay_control.hpp"
 #include "utils/geographic.hpp"
 #include "utils/noaaGlobe.hpp"
 #include "utils/eventManage.hpp"
@@ -46,13 +48,19 @@ class DataProvider : public QObject {
         [[nodiscard]] char getWakeCategory (const std::string &icao) const; // 尾流等级
         [[nodiscard]] int getGroundSpeed (const std::string &flightId) const; // 地速, 不可用时为 0
         [[nodiscard]] int getGeoHeading (const std::string &flightId) const; // 计算航向, 不可用时为 -1
-        std::deque<Point2D> getPoints (const std::string &flightId);
-        short getAlt (float latitude, float longitude) const;
+        const std::deque<Point2D>& getPoints (const std::string &flightId);
+        [[nodiscard]] short getAlt (float latitude, float longitude) const;
 
         [[nodiscard]] TcasMode getTcasMode () const; // TCAS显示范围
         [[nodiscard]] InfoMode getInfoMode () const; // 飞行器信息模式
         [[nodiscard]] bool getShowTrail () const;
         [[nodiscard]] bool getUseCalGeo () const;
+
+        [[nodiscard]] bool isReplayMode () const;
+        [[nodiscard]] size_t replayEventCount () const;
+        void replayStepEvents (int delta);
+        void replayStepPercent (int deltaPercent);
+        void replaySeekPercent (int percent);
     private:
         std::unique_ptr<InterfaceSimu> connector;
         DatarefIdx multiId{}, multiLat{}, multiLon{}, multiAlt{}, multiTrk{}, multiVs{};
@@ -66,6 +74,7 @@ class DataProvider : public QObject {
         std::map<std::string, char> turbuCate; // 尾流等级
         std::unique_ptr<NoaaGlobeView> globeView; // 高程数据
         std::map<std::string, AircraftTrail> trails; // 各航班轨迹, 航班号非空时可用
+        std::deque<Point2D> emptyDeque{}; // 查无航班时返回的空轨迹
         TcasMode tcasMode{TcasMode::nm30};
         InfoMode infoMode{InfoMode::base};
         bool showTrail{false}, useCalGeo{false};
@@ -74,6 +83,7 @@ class DataProvider : public QObject {
         std::unique_ptr<QFile> replayData;
         qint64 startTime;
         std::unique_ptr<EventManage> eventManager;
+        replay_control *replayControl{nullptr}; // 挂在宿主窗口下, 生命周期由 Qt 父对象管理
 
         void initConnect ();
         void readTurbulenceCategory ();
@@ -85,6 +95,7 @@ class DataProvider : public QObject {
         void processDataFrame ();
     Q_SIGNALS:
         void dataUpdated ();
+        void replayProgressChanged (qint64 timeMs);
 };
 
 

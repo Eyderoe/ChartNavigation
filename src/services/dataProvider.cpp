@@ -10,6 +10,7 @@
 #include <set>
 #include <stdexcept>
 
+#include "settingManage.hpp"
 #include "services/settingManage.hpp"
 #include "utils/constValue.hpp"
 
@@ -31,13 +32,15 @@ DataProvider::DataProvider (QObject *parent) : QObject(parent) {
         replayData->write("offsetTimeMs,0\n");
         replayData->write(freqBlock);
         startTime = QDateTime::currentMSecsSinceEpoch();
-        qDebug() << "QSettings path: " + filePath;
+        qDebug() << "ReplayData path: " + filePath;
     }
     // 高程数据
     const auto globeFolder = ins.get(SettingsManager::globeFolder).toString().toStdString();
     globeView = std::make_unique<NoaaGlobeView>(globeFolder);
     // 接收器切换
-    const SimulatorSource source = static_cast<SimulatorSource>(ins.get(SettingsManager::dataSource, 0).toInt());
+    if (debugReplayData)
+        ins.set(SettingsManager::dataSource, 3);
+    SimulatorSource source = static_cast<SimulatorSource>(ins.get(SettingsManager::dataSource, 0).toInt());
     qDebug() << "data source: " << static_cast<int>(source);
     switch (source) {
         case SimulatorSource::xplane:
@@ -48,6 +51,9 @@ DataProvider::DataProvider (QObject *parent) : QObject(parent) {
             break;
         case SimulatorSource::real:
             connector = std::make_unique<realAdapter>();
+            break;
+        case SimulatorSource::replay:
+            connector = std::make_unique<replayAdapter>();
             break;
         default:
             throw std::invalid_argument("inop adapter");
@@ -60,8 +66,9 @@ DataProvider::DataProvider (QObject *parent) : QObject(parent) {
         connect(&simuUpdateTimer, &QTimer::timeout, this, &DataProvider::simulateDataUpdate);
         simuUpdateTimer.start();
     } else { // 回放数据
-        fs::path replayFile = ins.get(SettingsManager::debugReplayFile).toString().toStdString();
+        fs::path replayFile = ins.get(SettingsManager::debugReplayFile, "inop").toString().toStdString();
         eventManager = std::make_unique<EventManage>(replayFile);
+        connect(eventManager.get(), &EventManage::progressChanged, this, &DataProvider::replayProgressChanged);
         connect(eventManager.get(), &EventManage::eventReady, this, [this](const Event &event) {
             switch (event.type) {
                 case EventType::connectState:
@@ -76,6 +83,15 @@ DataProvider::DataProvider (QObject *parent) : QObject(parent) {
             qDebug() << "Replay finished";
             setConnectState(false);
         });
+        // 回放控制窗口, 只有回放模式会创建并显示; 挂在宿主窗口下, 随主窗口一起关闭
+        replayControl = new replay_control(qobject_cast<QWidget *>(parent));
+        replayControl->setWindowFlag(Qt::Window);
+        replayControl->setDuration(eventManager->durationMs());
+        connect(replayControl, &replay_control::stepEventsRequested, this, &DataProvider::replayStepEvents);
+        connect(replayControl, &replay_control::stepPercentRequested, this, &DataProvider::replayStepPercent);
+        connect(replayControl, &replay_control::seekPercentRequested, this, &DataProvider::replaySeekPercent);
+        connect(this, &DataProvider::replayProgressChanged, replayControl, &replay_control::setPosition);
+        replayControl->show();
         eventManager->start();
     }
 }
@@ -99,6 +115,9 @@ void DataProvider::setConnector (const int value) {
         case SimulatorSource::real:
             connector = std::make_unique<realAdapter>();
             break;
+        case SimulatorSource::replay:
+            connector = std::make_unique<replayAdapter>();
+            break;
         default:
             assert(false && "need to update switch case. [DataProvider::setConnector]");
     }
@@ -107,6 +126,29 @@ void DataProvider::setConnector (const int value) {
 
 bool DataProvider::isConnected () const {
     return connected;
+}
+
+bool DataProvider::isReplayMode () const {
+    return debugReplayData;
+}
+
+size_t DataProvider::replayEventCount () const {
+    return eventManager ? eventManager->eventCount() : 0;
+}
+
+void DataProvider::replayStepEvents (const int delta) {
+    if (eventManager)
+        eventManager->stepEvents(delta);
+}
+
+void DataProvider::replayStepPercent (const int deltaPercent) {
+    if (eventManager)
+        eventManager->stepPercent(deltaPercent);
+}
+
+void DataProvider::replaySeekPercent (const int percent) {
+    if (eventManager)
+        eventManager->seekPercent(percent);
 }
 
 const std::array<float, 64>& DataProvider::getIdValues () const {
@@ -346,9 +388,9 @@ int DataProvider::getGeoHeading (const std::string &flightId) const {
     return (it == trails.end()) ? -1 : it->second.calculateGeoHeading();
 }
 
-std::deque<Point2D> DataProvider::getPoints (const std::string &flightId) {
+const std::deque<Point2D>& DataProvider::getPoints (const std::string &flightId) {
     const auto it = trails.find(flightId);
-    return (it == trails.end()) ? std::deque<Point2D>{} : it->second.getPoints();
+    return (it == trails.end()) ? emptyDeque : it->second.getPoints();
 }
 
 short DataProvider::getAlt (const float latitude, const float longitude) const {
@@ -374,15 +416,14 @@ void DataProvider::readTurbulenceCategory () {
 }
 
 void DataProvider::replayDataUpdate (const Event &event) {
-    // simulateData: 解压后的 QDataStream 字节 = {相对时间, "data", 1408个float}
+    // simulateData: payload 是压缩后的 QDataStream 字节, 使用时先解压
     const auto &bytes = std::get<std::vector<uint8_t>>(event.payload);
-    QDataStream ds(QByteArray::fromRawData(reinterpret_cast<const char*>(bytes.data()),
-                                           static_cast<qsizetype>(bytes.size())));
+    QByteArray uncompressed = qUncompress(reinterpret_cast<const uchar*>(bytes.data()),
+                                          static_cast<qsizetype>(bytes.size()));
+    QDataStream ds(&uncompressed, QIODevice::ReadOnly);
     qint64 time;
     QByteArray tag;
     ds >> time >> tag;
-    Q_UNUSED(time)
-    Q_UNUSED(tag)
     auto readArray = [&ds](auto &arr) {
         for (auto &v : arr)
             ds >> v;
