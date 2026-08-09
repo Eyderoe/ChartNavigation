@@ -16,6 +16,7 @@
 #include "ui/stackedWidget.hpp"
 #include "services/settingManage.hpp"
 #include "utils/constValue.hpp"
+#include "utils/androidDebug.hpp"
 
 #if defined(__ANDROID__)
 #include <QClipboard>
@@ -41,11 +42,16 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
     initActionGroup();
     // 安卓特化 因为显示不了菜单栏
     if constexpr (platform == MultiPlatform::androidOS) {
+        // Debug文本复制按钮：
+        auto *debugMenu = new QMenu(tr("调试"), ui->menubar);
+        debugMenu->setObjectName("menu_top_4_debug");
+        auto *debugAction = debugMenu->addAction(tr("复制Debug文本"));
+        connect(debugAction, &QAction::triggered, this, &main_window::copyAndroidDebugText);
+        ui->menubar->addMenu(debugMenu);
         // 权限按钮: 调起系统文件夹选择器获取SAF访问权限
         auto *permissionMenu = new QMenu(tr("权限"), ui->menubar);
         permissionMenu->setObjectName("menu_top_5_permission");
         auto *permissionAction = permissionMenu->addAction(tr("获取文件夹权限"));
-        permissionAction->setToolTip(tr("选择文件夹并获取访问权限"));
         connect(permissionAction, &QAction::triggered, this, &main_window::grantFolderPermission);
         ui->menubar->addMenu(permissionMenu);
         menu2toolBar();
@@ -386,4 +392,12 @@ void main_window::grantFolderPermission () {
         return;
     persistAndroidTreeUri(dir); // 持久化授权, 避免设备重启后授权丢失
     QApplication::clipboard()->setText(dir);
+}
+
+/**
+ * @brief 复制Debug文本到剪贴板(仅安卓)
+ * @note androidDebugText 定义于 utils/androidDebug.hpp, 保存调试过程中累积的文本
+ */
+void main_window::copyAndroidDebugText () {
+    QApplication::clipboard()->setText(androidDebugText);
 }

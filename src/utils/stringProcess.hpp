@@ -1,7 +1,12 @@
 #ifndef CHARTNAVIGATION_STRINGPROCESS_HPP
 #define CHARTNAVIGATION_STRINGPROCESS_HPP
 
+#include <concepts>
+#include <cstddef>
+#include <ranges>
 #include <string>
+#include <string_view>
+#include <vector>
 
 template <typename T>
 concept StrT = std::convertible_to<T, std::string_view>;

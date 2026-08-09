@@ -62,6 +62,9 @@ jobs:
 
       - name: Install system dependencies
         run: |
+          # GitHub Actions macOS runner images ship an untrusted aws/tap,
+          # which newer Homebrew refuses to work around. We don't need it.
+          brew untap aws/tap 2>/dev/null || true
           brew install autoconf autoconf-archive automake libtool protobuf
 
       - name: Cache vcpkg

@@ -14,7 +14,7 @@ class replay_control;
 QT_END_NAMESPACE
 
 class replay_control : public QWidget {
-    Q_OBJECT
+        Q_OBJECT
     public:
         explicit replay_control (QWidget *parent = nullptr);
         ~replay_control () override;
@@ -25,13 +25,17 @@ class replay_control : public QWidget {
         void stepEventsRequested (int delta);
         void stepPercentRequested (int deltaPercent);
         void seekPercentRequested (int percent);
-
+        void seekTimeRequested (qint64 timeMs);
+        void pauseRequested ();
+        void resumeRequested ();
     private:
         Ui::replay_control *ui;
         qint64 duration{0};
         bool updating{false};
 
         void initConnect ();
+        void jumpToInputTime ();
+        bool eventFilter (QObject *watched, QEvent *event) override;
 };
 
 

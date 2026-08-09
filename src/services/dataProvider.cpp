@@ -84,12 +84,15 @@ DataProvider::DataProvider (QObject *parent) : QObject(parent) {
             setConnectState(false);
         });
         // 回放控制窗口, 只有回放模式会创建并显示; 挂在宿主窗口下, 随主窗口一起关闭
-        replayControl = new replay_control(qobject_cast<QWidget *>(parent));
+        replayControl = new replay_control(qobject_cast<QWidget*>(parent));
         replayControl->setWindowFlag(Qt::Window);
         replayControl->setDuration(eventManager->durationMs());
         connect(replayControl, &replay_control::stepEventsRequested, this, &DataProvider::replayStepEvents);
         connect(replayControl, &replay_control::stepPercentRequested, this, &DataProvider::replayStepPercent);
         connect(replayControl, &replay_control::seekPercentRequested, this, &DataProvider::replaySeekPercent);
+        connect(replayControl, &replay_control::seekTimeRequested, this, &DataProvider::replaySeekTime);
+        connect(replayControl, &replay_control::pauseRequested, this, &DataProvider::replayPause);
+        connect(replayControl, &replay_control::resumeRequested, this, &DataProvider::replayResume);
         connect(this, &DataProvider::replayProgressChanged, replayControl, &replay_control::setPosition);
         replayControl->show();
         eventManager->start();
@@ -149,6 +152,21 @@ void DataProvider::replayStepPercent (const int deltaPercent) {
 void DataProvider::replaySeekPercent (const int percent) {
     if (eventManager)
         eventManager->seekPercent(percent);
+}
+
+void DataProvider::replaySeekTime (const qint64 timeMs) {
+    if (eventManager)
+        eventManager->seekTimeMs(timeMs);
+}
+
+void DataProvider::replayPause () {
+    if (eventManager)
+        eventManager->pause();
+}
+
+void DataProvider::replayResume () {
+    if (eventManager)
+        eventManager->resume();
 }
 
 const std::array<float, 64>& DataProvider::getIdValues () const {
@@ -437,4 +455,14 @@ void DataProvider::replayDataUpdate (const Event &event) {
     readArray(multiFlightIdVal);
     readArray(multiIcaoVal);
     processDataFrame();
+}
+
+PlaneDebug::PlaneDebug (DataProvider *provide, const int index) : provider(provide), idx(index) {}
+Point2D PlaneDebug::getPos () const {
+    auto lat = provider->getLatValues();
+    auto lon = provider->getLonValues();
+    return {lat[idx], lon[idx]};
+}
+std::string PlaneDebug::getPosStr () const {
+    return std::format("({:.6f}, {:.6f})", getPos().first, getPos().second);
 }

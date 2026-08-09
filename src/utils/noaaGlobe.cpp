@@ -1,5 +1,9 @@
 #include "noaaGlobe.hpp"
 
+#include <cctype>
+#include <cmath>
+#include <cstdint>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <numeric>

@@ -22,7 +22,35 @@ void EventManage::start () {
     }
     currentIndex = 0;
     baseMs = QDateTime::currentMSecsSinceEpoch();
+    paused = false;
+    remainingMs = 0;
     scheduleNext();
+}
+
+void EventManage::pause () {
+    if (paused || events.empty() || currentIndex >= events.size())
+        return;
+    if (timer.isActive()) {
+        // 记住距离下一个事件还有多久, 恢复时按这个时间继续
+        const qint64 target = baseMs + events[currentIndex].time + timeOffset;
+        const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
+        remainingMs = std::clamp(target - nowMs, qint64{0}, static_cast<qint64>(std::numeric_limits<int>::max()));
+        timer.stop();
+    }
+    paused = true;
+}
+
+void EventManage::resume () {
+    if (!paused)
+        return;
+    paused = false;
+    if (currentIndex >= events.size())
+        return;
+    // 以暂停点为锚重新计算 baseMs: 下一个事件在剩余时间后触发,
+    // 后续事件保持原有相对间隔, 而不是按最初的墙钟时刻追赶
+    baseMs = QDateTime::currentMSecsSinceEpoch() + remainingMs
+            - events[currentIndex].time - timeOffset;
+    timer.start(static_cast<int>(remainingMs));
 }
 
 size_t EventManage::eventCount () const {
@@ -68,8 +96,8 @@ void EventManage::seekPercent (const int percent) {
 void EventManage::stepEvents (const int delta) {
     if (events.empty())
         return;
-    const long long target = static_cast<long long>(currentIndex) + delta;
-    seekToEvent(static_cast<size_t>(std::clamp(target, 0LL, static_cast<long long>(events.size()) - 1)));
+    const qint64 target = static_cast<qint64>(currentIndex) + delta;
+    seekToEvent(static_cast<size_t>(std::clamp(target, qint64{0}, static_cast<qint64>(events.size()) - 1)));
 }
 
 void EventManage::stepPercent (const int deltaPercent) {
@@ -87,9 +115,14 @@ void EventManage::scheduleNext () {
         return;
     }
     // 目标时刻 = 回放开始时刻 + 事件相对时间 + 偏移, 迟到了就立即补发
-    const int64_t target = baseMs + events[currentIndex].time + timeOffset;
-    const int64_t delay = std::clamp(target - QDateTime::currentMSecsSinceEpoch(),
-                                     int64_t{0}, static_cast<int64_t>(std::numeric_limits<int>::max()));
+    const qint64 target = baseMs + events[currentIndex].time + timeOffset;
+    const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
+    const qint64 delay = std::clamp(target - nowMs,
+                                    qint64{0}, static_cast<qint64>(std::numeric_limits<int>::max()));
+    if (paused) { // 暂停状态下只更新剩余时间, 不启动定时器, 跳转/步进后保持暂停
+        remainingMs = delay;
+        return;
+    }
     timer.start(static_cast<int>(delay));
 }
 
@@ -122,15 +155,17 @@ void EventManage::readData () {
             qWarning() << "EventManage: bad record line";
             break;
         }
-        const int64_t time = fields[0].toLongLong();
+        const qint64 time = fields[0].toLongLong();
         const QByteArray block = file.read(fields[2].toInt());
 
         if (fields[1] == "connectState") {
             events.push_back({EventType::connectState, time, block.startsWith('t')});
         } else if (fields[1] == "data") {
             // 保存压缩后的数据, 使用时再解压
-            events.push_back({EventType::simulateData, time,
-                              std::vector<uint8_t>(block.begin(), block.end())});
+            events.push_back({
+                EventType::simulateData, time,
+                std::vector<uint8_t>(block.begin(), block.end())
+            });
         } else {
             qWarning() << "EventManage: unknown record type:" << fields[1];
         }

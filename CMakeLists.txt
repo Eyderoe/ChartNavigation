@@ -105,6 +105,7 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/replay_control.ui
         src/connector/replay.cpp
         src/connector/replay.hpp
+        src/utils/androidDebug.hpp
 )
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES
@@ -182,6 +183,7 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endforeach (QT_LIB)
 endif ()
 if (APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "Minimum macOS version to target for deployment" FORCE)
     set_target_properties(${PROJECT_NAME} PROPERTIES
             MACOSX_BUNDLE TRUE
             MACOSX_BUNDLE_DEVELOPMENT_REGION "zh_CN"

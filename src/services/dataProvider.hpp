@@ -61,6 +61,9 @@ class DataProvider : public QObject {
         void replayStepEvents (int delta);
         void replayStepPercent (int deltaPercent);
         void replaySeekPercent (int percent);
+        void replaySeekTime (qint64 timeMs);
+        void replayPause ();
+        void replayResume ();
     private:
         std::unique_ptr<InterfaceSimu> connector;
         DatarefIdx multiId{}, multiLat{}, multiLon{}, multiAlt{}, multiTrk{}, multiVs{};
@@ -96,6 +99,17 @@ class DataProvider : public QObject {
     Q_SIGNALS:
         void dataUpdated ();
         void replayProgressChanged (qint64 timeMs);
+};
+
+
+class PlaneDebug {
+    public:
+        PlaneDebug (DataProvider *provide, int index);
+        Point2D getPos () const; // <纬度,经度>
+        std::string getPosStr () const; // ({:.4f},{:.4f})
+    private:
+        DataProvider *provider{nullptr};
+        int idx;
 };
 
 

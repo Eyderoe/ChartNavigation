@@ -8,6 +8,8 @@
 #include <format>
 #include <ranges>
 
+#include "utils/androidDebug.hpp"
+
 
 PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     initConnect();
@@ -103,6 +105,15 @@ void PdfView::initConnect () {
             });
 }
 
+/**
+ * @brief 转换经纬度至当前可视范围坐标
+ * @param position <纬度,经度>
+ * @return (x,y)
+ */
+std::pair<double, double> PdfView::trans (const Point2D &position) {
+    return trans(position.first, position.second);
+}
+
 void PdfView::wheelEvent (QWheelEvent *event) {
     // 缩放计算
     const double oldZoom = zoomFactor();
@@ -174,10 +185,7 @@ void PdfView::paintEvent (QPaintEvent *event) {
     if (check) {
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setRenderHint(QPainter::SmoothPixmapTransform);
-        // 自身
-        drawPlane(painter);
-        // 其他飞机
-        for (int i = 1; i < dataProvider->getAvailableNum(); ++i)
+        for (int i = 0; i < dataProvider->getAvailableNum(); ++i)
             drawPlane(painter, i);
     }
 }
@@ -380,16 +388,16 @@ void PdfView::setColorTheme (const bool darkTheme) {
  * @brief 模拟器数据更新时刷新显示
  */
 void PdfView::onDataUpdated () {
-    if (!dataProvider || !dataProvider->isConnected()) // 未连接到模拟器
+    // 未连接到模拟器
+    if (!dataProvider || !dataProvider->isConnected())
         return;
     // 映射不可用
     if (!transActive)
         return;
     // 不使用居中
-    if (!centerOn || dragging) {
-        viewport()->update();
+    viewport()->update(); // 保证至少更新下, 不然自身不处于viewport()中其它不会更新
+    if (!centerOn || dragging)
         return;
-    }
 
     // 自身居中逻辑
     auto [x,y] = trans(dataProvider->getLatValues()[0], dataProvider->getLonValues()[0]);

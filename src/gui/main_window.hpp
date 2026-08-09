@@ -30,18 +30,20 @@ class main_window : public QMainWindow {
         enroute_widget *enroute;
         StackedWidget *stackedWidget;
         QActionGroup *sourceGroup{nullptr}, *tcasGroup{nullptr}, *infoGroup{nullptr};
+        QString forAndroidDebug; // Debug文本
 
         void setDataSourceGroup (int val) const;
         void setTcasRangeGroup (int val) const;
         void setInfoModeGroup (int val) const;
         void initConnect ();
         void initActionGroup ();
-        void menu2toolBar();
+        void menu2toolBar ();
     private Q_SLOTS:
         static void on_action_dark_triggered (bool checked);
         void openFile ();
         void openFolder ();
         void grantFolderPermission ();
+        void copyAndroidDebugText ();
 };
 
 

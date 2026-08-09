@@ -24,6 +24,7 @@ class PdfView final : public QPdfView {
     private:
         void initConnect ();
         // 模拟器部分
+        std::pair<double, double> trans (const Point2D &position);
         std::pair<double, double> trans (double latitude, double longitude);
         void drawPlane (QPainter &painter, int idx = 0);
         void onDataUpdated ();

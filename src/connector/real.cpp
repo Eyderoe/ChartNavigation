@@ -10,7 +10,7 @@ realPos::realPos () {
                 lat = coord.latitude();
                 lon = coord.longitude();
                 trk = info.attribute(QGeoPositionInfo::Direction);
-                trk = std::isnan(trk) ? 0 : trk; // nan可能导致绘制失效
+                trk = qIsNaN(trk) ? 0 : trk; // nan可能导致绘制失效
                 alt = (coord.type() == QGeoCoordinate::Coordinate3D) ? coord.altitude() : 0; // 单位米
                 setState(true);
             } else {
@@ -46,7 +46,7 @@ bool realPos::getDataref (const DatarefIdx &dataref, std::span<float> container,
     };
     switch (dataref.idx) {
         case 1: // id
-            copy2array(0);
+            copy2array(1);
             break;
         case 2:
             copy2array(lat);
