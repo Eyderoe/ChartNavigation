@@ -16,14 +16,7 @@
 #include "ui/stackedWidget.hpp"
 #include "services/settingManage.hpp"
 #include "utils/constValue.hpp"
-#include "utils/androidDebug.hpp"
-
-#if defined(__ANDROID__)
-#include <QClipboard>
-#include <QCoreApplication>
-#include <QApplication>
-#include <QJniObject>
-#endif
+#include "utils/android.hpp"
 
 
 main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::main_window) {
@@ -42,18 +35,22 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
     initActionGroup();
     // 安卓特化 因为显示不了菜单栏
     if constexpr (platform == MultiPlatform::androidOS) {
-        // Debug文本复制按钮：
-        auto *debugMenu = new QMenu(tr("调试"), ui->menubar);
-        debugMenu->setObjectName("menu_top_4_debug");
-        auto *debugAction = debugMenu->addAction(tr("复制Debug文本"));
-        connect(debugAction, &QAction::triggered, this, &main_window::copyAndroidDebugText);
-        ui->menubar->addMenu(debugMenu);
+        // 先禁用一些东西
+        ui->action_load_folder->setVisible(false); // 程序直接暴死
+        // 统一放在安卓菜单下面
+        auto *androidMenu = new QMenu("安卓", ui->menubar);
+        androidMenu->setObjectName("menu_top_5_android");
+        // Debug文本复制按钮
+        const auto *debugAction = androidMenu->addAction("复制Debug文本");
+        connect(debugAction, &QAction::triggered, this, &copyAndroidDebugText);
         // 权限按钮: 调起系统文件夹选择器获取SAF访问权限
-        auto *permissionMenu = new QMenu(tr("权限"), ui->menubar);
-        permissionMenu->setObjectName("menu_top_5_permission");
-        auto *permissionAction = permissionMenu->addAction(tr("获取文件夹权限"));
-        connect(permissionAction, &QAction::triggered, this, &main_window::grantFolderPermission);
-        ui->menubar->addMenu(permissionMenu);
+        const auto *permissionAction = androidMenu->addAction("获取文件夹权限(SAF)");
+        connect(permissionAction, &QAction::triggered, this, &grantFolderPermission);
+        ui->menubar->addMenu(androidMenu);
+        // 权限按钮: 跳转到 设置 → 特殊应用权限 → 所有文件访问
+        const auto *allFilesAction = androidMenu->addAction("所有文件访问权限");
+        connect(allFilesAction, &QAction::triggered, this, &grantAllFilesPermission);
+
         menu2toolBar();
     }
     // 初始化状态栏
@@ -243,8 +240,6 @@ void main_window::initConnect () {
     connect(ui->action_load_folder, &QAction::triggered, this, &main_window::openFolder);
     connect(ui->action_switch, &QAction::triggered, this,
             [this] () { stackedWidget->setCurrentIndex(mainPage.next()); });
-    connect(ui->action_rotate, &QAction::triggered, this,
-            [&] () { setting.set(SettingsManager::pageRotate, pageRotateDegree.next()); });
 
     connect(sourceGroup, &QActionGroup::triggered, this, [&](const QAction *action) {
         if (action == ui->action_source_XPlane)
@@ -353,51 +348,4 @@ void main_window::openFolder () {
         return;
     // 读取文件夹
     pdfBrowser->loadFolder(dir);
-}
-
-/**
- * @brief 持久化SAF目录授权
- * @param uri 系统文件夹选择器返回的 content:// tree URI
- * @note 不持久化的话, 设备重启后授权会丢失, 文件树又只能看到目录
- */
-static void persistAndroidTreeUri (const QString &uri) {
-#if defined(__ANDROID__)
-    if (!uri.startsWith("content://"))
-        return;
-    // android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_PERMISSION
-    constexpr jint readWriteFlags = 0x1 | 0x2;
-    QJniObject androidUri = QJniObject::callStaticObjectMethod(
-        "android/net/Uri", "parse", "(Ljava/lang/String;)Landroid/net/Uri;",
-        QJniObject::fromString(uri).object());
-    // Qt 6.8+/6.9 的 context() 返回类型化 QtJniTypes::Context(JObject<ContextTag>),
-    // 可隐式转成 QJniObject, 再走经典 API 调 ContentResolver
-    QJniObject context = QNativeInterface::QAndroidApplication::context();
-    QJniObject resolver = context.callObjectMethod("getContentResolver",
-                                                   "()Landroid/content/ContentResolver;");
-    resolver.callMethod<void>("takePersistableUriPermission",
-                              "(Landroid/net/Uri;I)V", androidUri.object(), readWriteFlags);
-#endif
-}
-
-/**
- * @brief 获取文件夹访问权限(仅安卓)
- * @note 调起系统文件夹选择器(SAF), 持久化授权后把 content:// 路径复制到剪贴板
- */
-void main_window::grantFolderPermission () {
-    auto option = QFileDialog::Options();
-    option |= QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
-    const QString dir = QFileDialog::getExistingDirectory(this, tr("选择文件夹以获取访问权限"),
-                                                          QDir::homePath(), option);
-    if (dir.isEmpty())
-        return;
-    persistAndroidTreeUri(dir); // 持久化授权, 避免设备重启后授权丢失
-    QApplication::clipboard()->setText(dir);
-}
-
-/**
- * @brief 复制Debug文本到剪贴板(仅安卓)
- * @note androidDebugText 定义于 utils/androidDebug.hpp, 保存调试过程中累积的文本
- */
-void main_window::copyAndroidDebugText () {
-    QApplication::clipboard()->setText(androidDebugText);
 }

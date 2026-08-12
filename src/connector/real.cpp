@@ -109,6 +109,10 @@ bool realAdapter::getDataref (const DatarefIdx &dataref, const std::span<float> 
     return realPosition.getDataref(dataref, container, defaultValue);
 }
 
-std::string realAdapter::name () const {
+std::string realAdapter::getName () const {
     return "real";
+}
+
+SimulatorSource realAdapter::getType () const {
+    return SimulatorSource::real;
 }

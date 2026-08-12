@@ -8,6 +8,10 @@ DatarefIdx replayAdapter::addDatarefArray (const std::string &dataref, int32_t f
 bool replayAdapter::getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) {
     return false;
 }
-std::string replayAdapter::name () const {
+std::string replayAdapter::getName () const {
     return "replay";
+}
+
+SimulatorSource replayAdapter::getType () const {
+    return SimulatorSource::replay;
 }

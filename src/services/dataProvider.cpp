@@ -131,6 +131,10 @@ bool DataProvider::isConnected () const {
     return connected;
 }
 
+SimulatorSource DataProvider::getSimulatorSource () const {
+    return connector->getType();
+}
+
 bool DataProvider::isReplayMode () const {
     return debugReplayData;
 }

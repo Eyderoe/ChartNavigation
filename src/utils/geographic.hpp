@@ -11,7 +11,7 @@ class AircraftTrail {
     public:
         explicit AircraftTrail (int interval);
         [[nodiscard]] int calculateGroundSpeed () const;
-        int calculateGeoHeading () const;
+        [[nodiscard]] int calculateGeoHeading () const;
         std::deque<Point2D>& getPoints ();
         void addPoint (Point2D point);
     private:

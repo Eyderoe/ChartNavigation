@@ -113,13 +113,12 @@ void StatusBar::update () {
         int altRela = plane.second;
         if constexpr (platform != MultiPlatform::androidOS) {
             if (simu.second) {
-                infoText = std::format("({:.3f}, {:.3f}) AGL:{}ft"
-                                       , lat, lon, altRela == -500 ? '-' : altRela);
+                infoText = std::format("({:.3f}, {:.3f}) AGL:{}ft", lat, lon, altRela == -500 ? '-' : altRela);
             } else
                 infoText = "(-,-) AGL:-ft";
         } else {
             if (simu.second) {
-                infoText = std::format("({:.3f}, {:.3f}) Alt:{}ft", lat, lon, altRela);
+                infoText = std::format("({:.5f}, {:.5f}) Alt:{}ft", lat, lon, altRela);
             } else
                 infoText = "(-,-) Alt:-ft";
         }

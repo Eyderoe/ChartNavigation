@@ -99,7 +99,6 @@
     <bool>false</bool>
    </attribute>
    <addaction name="action_follow"/>
-   <addaction name="action_rotate"/>
    <addaction name="action_add"/>
    <addaction name="action_switch"/>
    <addaction name="action_dark"/>
@@ -266,24 +265,6 @@
    </property>
    <property name="text">
     <string>现实</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::MenuRole::NoRole</enum>
-   </property>
-  </action>
-  <action name="action_rotate">
-   <property name="icon">
-    <iconset resource="../../resources.qrc">
-     <normaloff>:/toolbar/resources/toolbarIcon/rotate.svg</normaloff>:/toolbar/resources/toolbarIcon/rotate.svg</iconset>
-   </property>
-   <property name="text">
-    <string>旋转</string>
-   </property>
-   <property name="toolTip">
-    <string>旋转文件</string>
-   </property>
-   <property name="visible">
-    <bool>false</bool>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

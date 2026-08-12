@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.28)
-project(ChartNavigation)
-
 #-DCMAKE_PREFIX_PATH="D:/Qt/Qt6/6.9.3/mingw_64"
 #-DCMAKE_PREFIX_PATH="/Users/eyderoe/Qt/6.9.3/macos/lib/cmake"
-if (MINGW AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0))
-    message(FATAL_ERROR "MinGW-w64 version must be 13.x, got ${CMAKE_CXX_COMPILER_VERSION}")
-endif ()
-if (ANDROID)
-    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
-    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
-endif ()
+
+# 版本号, 适用于安卓, mac和win意义不大
+set(APP_VERSION_MAJOR 2)
+set(APP_VERSION_MINOR 1)
+set(APP_VERSION_PATCH 5)
+set(APP_VERSION "${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_PATCH}")
+math(EXPR APP_VERSION_CODE "${APP_VERSION_MAJOR}*10000 + ${APP_VERSION_MINOR}*100 + ${APP_VERSION_PATCH}")
+
+project(ChartNavigation)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,6 +18,10 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 
+if (ANDROID)
+    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+endif ()
 find_package(Boost CONFIG)
 find_package(GeographicLib REQUIRED)
 if (NOT TARGET GeographicLib::GeographicLib AND GeographicLib_LIBRARIES)
@@ -105,7 +109,8 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/replay_control.ui
         src/connector/replay.cpp
         src/connector/replay.hpp
-        src/utils/androidDebug.hpp
+        src/utils/android.cpp
+        src/utils/android.hpp
 )
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES
@@ -134,6 +139,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         QCoro6::Core
 )
 if (WIN32)
+    set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/windows/app.ico")
+    configure_file(
+            "${CMAKE_CURRENT_SOURCE_DIR}/windows/app.rc.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/app.rc"
+            @ONLY
+    )
+    target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/app.rc")
+
     target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32)
     target_link_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:Debug>:-mconsole>
@@ -154,6 +167,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 
 
+if (MINGW AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0))
+    message(FATAL_ERROR "MinGW-w64 version must be 13.x, got ${CMAKE_CXX_COMPILER_VERSION}")
+endif ()
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(DEBUG_SUFFIX)
     if (MSVC AND CMAKE_BUILD_TYPE MATCHES "Debug")
@@ -206,6 +222,8 @@ if (ANDROID)
             QT_ANDROID_APP_NAME "ChartNavigation"
             QT_ANDROID_APP_ICON "@drawable/ic_launcher"
             QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
+            QT_ANDROID_VERSION_CODE "${APP_VERSION_CODE}"
+            QT_ANDROID_VERSION_NAME "${APP_VERSION}"
     )
 endif ()
 

@@ -3,6 +3,8 @@
 #include <rapidhash.h>
 
 #include "enhancedTree.hpp"
+
+#include "utils/android.hpp"
 #include "utils/constValue.hpp"
 
 
@@ -32,6 +34,12 @@ uint64_t Node::getHash () {
     if (hash)
         return hash;
     // 否则开始计算
+    if constexpr (platform == MultiPlatform::androidOS) {
+        if (!androidMasterAccess()) {
+            QString temp = QDateTime::currentDateTime().toString("MMdd") + baseDir;
+            return rapidhash(temp.constData(), temp.size() * sizeof(QChar));
+        }
+    }
     QFile file(baseDir);
     if (!file.open(QIODevice::ReadOnly))
         return 0;
@@ -56,11 +64,12 @@ void Node::switchColor () {
 Tree::Tree (QWidget *parent) : QTreeWidget(parent) {
     const SettingsManager &ins = SettingsManager::instance();
     // 缓存目录
+    constexpr int cacheFileMax = (platform == MultiPlatform::androidOS) ? 20 : 1000;
     cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     qDebug() << "Cache path: " << cacheDir.path();
     if (!cacheDir.exists() && !cacheDir.mkpath(".")) {
         qDebug() << "缓存目录创建失败";
-    } else if (cacheDir.count() > 1000) {
+    } else if (cacheDir.count() > cacheFileMax) {
         shouldClean = true;
     }
     // 连接
@@ -156,7 +165,7 @@ void Tree::collapse (const QTreeWidgetItem *item) {
 /**
  * @brief 异步加载文件的缩略图
  * @param item 节点
- * @note 只要进入这个函数,缩略图就一定会生成
+ * @note 只要进入这个函数,缩略图就一定会生成.然后每次展开目录都会进来一次
  */
 QCoro::Task<> Tree::loadThumb (Node *item) const {
     auto renderTask = [](const QString &pdfPath, const QString &thumbPath) -> QImage {
@@ -188,8 +197,13 @@ QCoro::Task<> Tree::loadThumb (Node *item) const {
     };
 
     // 没有选择加载缩略图 先删除缩略图
-    if (!showThumbPic)
+    if (!showThumbPic) {
         item->setIcon(0, {});
+        if constexpr (platform == MultiPlatform::androidOS) {
+            if (androidMasterAccess())
+                co_return ;
+        }
+    }
     // 检查目录下有没有
     std::string hash;
     if (item->hash)

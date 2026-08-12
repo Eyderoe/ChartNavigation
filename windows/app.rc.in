@@ -1,0 +1,29 @@
+IDI_ICON1 ICON "@APP_ICON@"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION @APP_VERSION_MAJOR@,@APP_VERSION_MINOR@,@APP_VERSION_PATCH@,0
+ PRODUCTVERSION @APP_VERSION_MAJOR@,@APP_VERSION_MINOR@,@APP_VERSION_PATCH@,0
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS 0x00040004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "eyderoe"
+            VALUE "FileDescription", "Chart Navigation"
+            VALUE "FileVersion", "@APP_VERSION@"
+            VALUE "InternalName", "ChartNavigation"
+            VALUE "OriginalFilename", "ChartNavigation.exe"
+            VALUE "ProductName", "ChartNavigation"
+            VALUE "ProductVersion", "@APP_VERSION@"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END

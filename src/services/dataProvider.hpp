@@ -35,6 +35,7 @@ class DataProvider : public QObject {
         void closeSimu () const;
         void setConnector (int value);
         [[nodiscard]] bool isConnected () const;
+        [[nodiscard]] SimulatorSource getSimulatorSource () const;
 
         size_t getAvailableNum ();
         [[nodiscard]] const std::array<float, 64>& getIdValues () const;

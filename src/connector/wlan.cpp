@@ -162,6 +162,10 @@ bool wlanAdapter::getDataref (const DatarefIdx &dataref, const std::span<float> 
     return wlan.getDataref(dataref, container, defaultValue);
 }
 
-std::string wlanAdapter::name () const {
+std::string wlanAdapter::getName () const {
     return "wlan";
+}
+
+SimulatorSource wlanAdapter::getType () const {
+    return SimulatorSource::wlan;
 }

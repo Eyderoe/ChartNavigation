@@ -31,6 +31,10 @@ bool xpAdapter::getDataref (const DatarefIdx &dataref, std::span<float> containe
     return xp.getDataref(idx, container, defaultValue);
 }
 
-std::string xpAdapter::name () const {
+std::string xpAdapter::getName () const {
     return "xp";
+}
+
+SimulatorSource xpAdapter::getType () const {
+    return SimulatorSource::xplane;
 }

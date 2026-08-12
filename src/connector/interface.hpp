@@ -5,6 +5,13 @@
 #include <span>
 
 
+enum class SimulatorSource {
+    xplane,
+    wlan,
+    real,
+    replay,
+};
+
 struct DatarefIdx {
     size_t idx;
 };
@@ -19,7 +26,8 @@ class InterfaceSimu {
         virtual DatarefIdx addDatarefArray (const std::string &dataref, int32_t freq) =0;
         virtual bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) =0;
 
-        virtual std::string name () const =0;
+        virtual std::string getName () const =0;
+        virtual SimulatorSource getType () const =0;
 };
 
 

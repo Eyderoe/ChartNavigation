@@ -47,7 +47,8 @@ class wlanAdapter : public InterfaceSimu {
         void close () override;
         DatarefIdx addDatarefArray (const std::string &dataref, int32_t freq) override;
         bool getDataref (const DatarefIdx &dataref, std::span<float> container, float defaultValue) override;
-        std::string name () const override;
+        std::string getName () const override;
+        SimulatorSource getType () const override;
     private:
         wlanUdp wlan;
         std::map<std::string, int> datarefMap;

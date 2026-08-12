@@ -62,7 +62,6 @@ template <NodeT Parent>
 int traverseRead (const QDir &folder, Parent *parentNode, const int depth) {
     static SettingsManager &ins = SettingsManager::instance();
     static const bool onlyPdf = ins.get(SettingsManager::onlyDisplayPdf, true).toBool();
-
     if (depth > 4)
         return 0;
     int pdfFileCount = 0;

@@ -62,7 +62,6 @@ class SettingsManager : public QObject {
             latitu, // 纬度 double
             longitu, // 经度 double
             altRelat, // 高度(安卓)/离地高 int
-            pageRotate, // 页面旋转角度 int
         };
         Q_ENUM(ConstKey)
         Q_ENUM(TempKey)
