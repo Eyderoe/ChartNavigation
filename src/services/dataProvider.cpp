@@ -99,6 +99,10 @@ DataProvider::DataProvider (QObject *parent) : QObject(parent) {
     }
 }
 
+DataProvider::~DataProvider () {
+    closeSimu();
+}
+
 void DataProvider::closeSimu () const {
     if (connector)
         connector->close();

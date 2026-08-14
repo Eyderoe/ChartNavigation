@@ -1,9 +1,13 @@
-# ChartNavigation
+# Chart Navigation
 
-围绕包含地理信息的航图进行的一些工作。主要两方面，在航图上叠加飞行器当前位置，在航路数据上叠加航图和飞行器当前位置。多平台支持
+围绕包含地理信息的航图进行的一些工作。两方面主要，在航图上叠加飞行器当前位置，和在航路数据上叠加航图和飞行器当前位置。多平台支持
 
 - Win, Mac：唯二的游戏平台，在滑行和进近阶段效果非常不错
 - Android：在现实生活中，为无聊的飞行增添一点乐趣
+
+<p align="center">
+  <img src="resources/screenshoot/show_day.png" width="60%" alt="Screenshot">
+</p>
 
 ## 疯批
 

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <format>
@@ -132,7 +133,7 @@ class XPlaneUdp {
             bool isArray; // 是否是数组
         };
 
-        bool closed{false};
+        std::atomic<bool> closed{false};
         // 数据
         std::vector<DatarefInfo> dataRefs;
         std::vector<float> values;
@@ -150,7 +151,7 @@ class XPlaneUdp {
         std::thread worker; // io_content驱动
         int planeInfoFreq{}; // 基本信息频率
         // 回调
-        bool state{false}; // xp状态
+        std::atomic<bool> state{false}; // xp状态
         std::function<void  (bool)> callback{nullptr}; // 回调
 
         void setState (bool newState);
@@ -365,21 +366,20 @@ inline void XPlaneUdp::stop () {
  * @brief 彻底关闭 UDP
  */
 inline void XPlaneUdp::close () {
-    if (callback)
-        setState(false);
-    if (closed)
+    if (closed.exchange(true))
         return;
-    closed = true;
-    if (xpSocket.is_open()) {
+    // 先取消所有挂起的异步操作
+    if (xpSocket.is_open())
         xpSocket.cancel();
-        xpSocket.close();
-    }
     multicastSocket.cancel();
-    multicastSocket.close();
     workGuard.reset();
-    io_context.stop();
     if (worker.joinable())
         worker.join();
+    if (xpSocket.is_open())
+        xpSocket.close();
+    multicastSocket.close();
+    if (state.exchange(false) && callback)
+        callback(false);
 }
 
 /**
@@ -523,11 +523,11 @@ inline void XPlaneUdp::getPlaneInfo (PlaneInfo &infoDst) const {
  * @param newState 新状态
  */
 inline void XPlaneUdp::setState (const bool newState) {
-    if (newState == state)
+    if (newState == state.load())
         return;
     if (newState && autoReconnect)
         reconnect();
-    state = newState;
+    state.store(newState);
     if (callback)
         callback(newState);
 }

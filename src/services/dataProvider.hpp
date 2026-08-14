@@ -32,6 +32,7 @@ class DataProvider : public QObject {
         Q_OBJECT
     public:
         explicit DataProvider (QObject *parent = nullptr);
+        ~DataProvider () override;
         void closeSimu () const;
         void setConnector (int value);
         [[nodiscard]] bool isConnected () const;

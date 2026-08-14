@@ -20,11 +20,10 @@ wlanUdp::wlanUdp () : workGuard(asio::make_work_guard(io_context))
 
 wlanUdp::~wlanUdp () {
     multicastSocket.cancel();
-    multicastSocket.close();
     workGuard.reset();
-    io_context.stop();
     if (worker.joinable())
         worker.join();
+    multicastSocket.close();
 }
 
 void wlanUdp::close () const {
@@ -106,8 +105,13 @@ asio::awaitable<void> wlanUdp::detect () {
         auto buffer = std::make_shared<std::array<char, 1472>>();
         timer.expires_after(std::chrono::seconds(3));
         timer.async_wait([this](const auto &ec) { if (!ec)setState(false); });
+        boost::system::error_code ec;
         const size_t receiveBytes = co_await multicastSocket.async_receive_from(
-            asio::buffer(*buffer), senderEndpoint, asio::use_awaitable);
+            asio::buffer(*buffer), senderEndpoint, asio::redirect_error(ec));
+        if (ec == asio::error::operation_aborted)
+            co_return;
+        if (ec)
+            continue;
         receiveDataProcess(buffer, receiveBytes, senderEndpoint);
         timer.cancel();
     }

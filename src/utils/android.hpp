@@ -17,6 +17,7 @@ bool hasManageExternalStorage ();
 inline QString androidDebugText;
 inline QMutex androidDebugMutex;
 
+
 /**
  * @brief 是否有"所有文件访问权限"(惰性获取)
  * @note 不能在全局初始化时调用 hasManageExternalStorage(), 那时 JNI 环境尚未就绪;
