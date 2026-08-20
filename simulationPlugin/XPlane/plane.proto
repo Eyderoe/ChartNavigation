@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message Plane{
+  int32 id = 1;
+  float lat = 2;
+  float lon = 3;
+  sint32 alt = 4;
+  int32 trk = 5;
+  sint32 vs = 6;
+  string flight = 7;
+  string icao = 8;
+}
+
+message Planes{
+  repeated Plane planes = 1;
+}

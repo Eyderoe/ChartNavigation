@@ -3,7 +3,7 @@
 #include "json.hpp"
 #include "options_widget.hpp"
 #include "ui/enhancedTree.hpp"
-#include "ui/themeColor.hpp"
+#include "ui/theme.hpp"
 #include "services/settingManage.hpp"
 #include "services/dataProvider.hpp"
 

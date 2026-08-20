@@ -106,7 +106,7 @@ jobs:
         run: |
           & $env:VCPKG_ROOT/vcpkg.exe install `
             boost-system boost-asio boost-dynamic-bitset boost-pool `
-            geographiclib `
+            geographiclib sqlitecpp `
             --triplet x64-mingw-dynamic
 
       - name: Build qcoro from source (against aqt Qt6, avoids vcpkg qtbase conflict)
@@ -150,6 +150,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $env:INSTALL_DIR | Out-Null
           Copy-Item $env:BUILD_DIR/$env:PROJECT_NAME.exe $env:INSTALL_DIR/
           Copy-Item $env:BUILD_DIR/*.dll $env:INSTALL_DIR/ -ErrorAction SilentlyContinue
+          Copy-Item "$env:VCPKG_ROOT/installed/x64-mingw-dynamic/bin/*.dll" $env:INSTALL_DIR/ -ErrorAction SilentlyContinue
           if (Test-Path "$env:GITHUB_WORKSPACE/example") {
             Copy-Item "$env:GITHUB_WORKSPACE/example" "$env:INSTALL_DIR/example" -Recurse -Force
           }

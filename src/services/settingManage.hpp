@@ -44,6 +44,7 @@ class SettingsManager : public QObject {
             infoMode, // 飞行器信息 InfoMode(int)
             showTrail, // 显示飞行器航迹 bool
             useCalGeoHeading, // 使用计算航向 bool
+            unitConvert, // 选择的单位 string: "0 3 1 1"
 
             chartFolder, // 航图文件夹 String
             dataFolder, // 数据文件夹 String
@@ -90,7 +91,6 @@ class SettingsManager : public QObject {
 };
 
 
-inline CycleIdx mainPage(2);
-inline CycleIdx pageRotateDegree{0, 270, 180, 90};
+inline CycleIdx mainPage(3);
 
 #endif //CHARTNAVIGATION_SETTINGMANAGE_HPP

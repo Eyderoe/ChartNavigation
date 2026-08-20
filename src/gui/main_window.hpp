@@ -5,6 +5,7 @@
 
 #include "enroute_widget.hpp"
 #include "main_widget.hpp"
+#include "note_widget.hpp"
 #include "ui_enroute_widget.h"
 #include "ui/stackedWidget.hpp"
 
@@ -28,6 +29,7 @@ class main_window : public QMainWindow {
         Ui::main_window *ui;
         main_widget *pdfBrowser;
         enroute_widget *enroute;
+        note_widget *note;
         StackedWidget *stackedWidget;
         QActionGroup *sourceGroup{nullptr}, *tcasGroup{nullptr}, *infoGroup{nullptr};
         QString forAndroidDebug; // Debug文本

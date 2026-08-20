@@ -13,7 +13,7 @@ class PdfView final : public QPdfView {
         void setCenterOn (bool center);
         void setColorTheme (bool darkTheme);
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
-        void closeSimu () const;
+        void closeSimulation () const;
         void setDataProvider (DataProvider *provider);
     protected:
         void wheelEvent (QWheelEvent *event) override;

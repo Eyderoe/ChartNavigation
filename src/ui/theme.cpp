@@ -1,4 +1,4 @@
-#include "themeColor.hpp"
+#include "theme.hpp"
 
 #include "QStyle"
 
@@ -29,4 +29,18 @@ void setLightTheme (QApplication *a) {
         sheet = ts.readAll();
     }
     app->setStyleSheet(sheet);
+}
+
+/**
+ * @brief 去掉在qdarkstyle下comboBox选项前面那一个框并匹配长度以容纳所有字符
+ * @param comboBox 选项框
+ * @param extra 额外空间
+ * @note 发病机制不明
+ */
+void expandComboBox (const QComboBox *comboBox, const int extra) {
+    auto *view = comboBox->view();
+    view->setItemDelegate(new QStyledItemDelegate(view));
+    view->setTextElideMode(Qt::ElideNone);
+    const int width = view->sizeHintForColumn(0);
+    view->setMinimumWidth(width + extra);
 }

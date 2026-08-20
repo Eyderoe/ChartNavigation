@@ -5,7 +5,7 @@
 #include <memory>
 
 
-// 一种脱离Qt框架实现QPointer的方法
+// 一种脱离Qt框架实现QPointer的方法. 不对, 感觉和普通的shared_ptr差不多啊
 template <typename T>
 class SafePtr {
     class Proxy {

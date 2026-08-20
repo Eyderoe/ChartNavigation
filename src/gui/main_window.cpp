@@ -8,10 +8,11 @@
 #include "main_widget.hpp"
 #include "options_widget.hpp"
 #include "about_dialog.hpp"
+#include "note_widget.hpp"
 #include "ui_main_window.h"
 #include "connector/allAdapter.hpp"
 #include "ui/statusBar.hpp"
-#include "ui/themeColor.hpp"
+#include "ui/theme.hpp"
 #include "ui/pdfView.hpp"
 #include "ui/stackedWidget.hpp"
 #include "services/settingManage.hpp"
@@ -25,8 +26,10 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
     stackedWidget = new StackedWidget(this);
     pdfBrowser = new main_widget(this);
     enroute = new enroute_widget(this);
+    note = new note_widget(this);
     stackedWidget->addWidget(pdfBrowser);
     stackedWidget->addWidget(enroute);
+    stackedWidget->addWidget(note);
     setCentralWidget(stackedWidget);
     // 模拟器数据层
     pdfBrowser->setDataProvider(stackedWidget->dataProvider());

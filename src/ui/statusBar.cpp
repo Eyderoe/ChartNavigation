@@ -4,7 +4,6 @@
 #include "utils/constValue.hpp"
 
 StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
-    // 状态栏基本外观
     auto addSeparator = [bar] () {
         auto *line = new QFrame(bar);
         line->setFrameShape(QFrame::VLine);
@@ -13,6 +12,7 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
         line->setStyleSheet("color: gray; background-color: gray;");
         bar->addWidget(line);
     };
+    // 状态栏基本外观
     this->bar = bar;
     simuLabel = new QLabel("- 离线");
     bar->addWidget(simuLabel);
@@ -26,6 +26,13 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
     affineLabel = new QLabel("误差:- 质量:-");
     bar->addWidget(affineLabel);
     affine.first = NaN;
+    // 安卓特化定位误差
+    if constexpr (platform == MultiPlatform::androidOS) {
+        device = std::make_unique<PositionDevice>();
+        addSeparator();
+        errorLabel = new QLabel("定位精度不可用");
+        bar->addWidget(errorLabel);
+    }
     // 定时器
     timer.setInterval(1000);
     connect(&timer, &QTimer::timeout, this, &StatusBar::update);
@@ -147,5 +154,12 @@ void StatusBar::update () {
             }
             affineLabel->setText(QString("误差:%1 质量:%2").arg(affine.first, 0, 'f', 1).arg(quality));
         }
+    }
+    // 安卓特化, 也不是啥高级东西 跟着他们一起更新就好
+    if constexpr (platform == MultiPlatform::androidOS) {
+        QString text = getPosDeviceInfo(device.get());
+        bool textAvailable = !text.isEmpty();
+        bool locatAvailable = SettingsManager::instance().get(SettingsManager::dataSource).toInt() == 2;
+        errorLabel->setText((textAvailable && locatAvailable) ? text : "定位精度不可用");
     }
 }

@@ -31,4 +31,7 @@
     <qresource prefix="/doc">
         <file>resources/documents/wtc.json</file>
     </qresource>
+    <qresource prefix="/preset">
+        <file>resources/documents/chinaFlightLevel.png</file>
+    </qresource>
 </RCC>

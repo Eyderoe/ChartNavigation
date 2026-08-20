@@ -15,6 +15,8 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <ranges>
 #include <shared_mutex>
 #include <string>
@@ -30,7 +32,7 @@ constexpr bool IS_WIN = true;
 constexpr bool IS_WIN = false;
 #endif
 
-static constexpr std::string MULTI_CAST_GROUP{"239.255.1.1"};
+inline const std::string MULTI_CAST_GROUP{"239.255.1.1"};
 static constexpr unsigned short MULTI_CAST_PORT{49707};
 
 template <typename T>
@@ -72,11 +74,9 @@ void unpack (const CharList &container, size_t offset, First &first, Rests &... 
 class BufferPool {
     struct BufferPro {
         std::array<char, 1472> data{};
-        size_t length;
-        BufferPro () : length(0) { std::memset(data.data(), 0x00, data.size()); }
     };
     public:
-        static std::shared_ptr<std::array<char, 1472>> getBuffer (size_t length);
+        static std::shared_ptr<std::array<char, 1472>> getBuffer ();
     private:
         static void recycleBuffer (BufferPro *buffer);
 };
@@ -132,6 +132,10 @@ class XPlaneUdp {
             bool available; // 是否可用
             bool isArray; // 是否是数组
         };
+        struct QueueData {
+            std::shared_ptr<std::array<char, 1472>> data;
+            size_t size;
+        };
 
         std::atomic<bool> closed{false};
         // 数据
@@ -141,10 +145,14 @@ class XPlaneUdp {
         std::unordered_map<std::string, size_t> exist;
         PlaneInfo info{.track = -999};
         mutable std::shared_mutex dataMutex;
+        std::queue<QueueData> queue;
+        std::mutex queueMutex; // 发送队列互斥锁
+        bool flushPending{false}; // 是否已有定时器在运行
         // 网络
         bool autoReconnect; // 自动重连
         asio::io_context io_context{}; // 上下文
         asio::executor_work_guard<asio::io_context::executor_type> workGuard;
+        asio::steady_timer flushTimer{io_context}; // 100ms批量发送定时器
         ip::udp::socket multicastSocket{io_context}; // 监听多播
         ip::udp::socket xpSocket{io_context}; // xp通信
         ip::udp::endpoint xpEndpoint; // xp端口
@@ -160,6 +168,7 @@ class XPlaneUdp {
         asio::awaitable<void> detect ();
         void sendData (const std::shared_ptr<std::array<char, 1472>> &data, size_t size);
         asio::awaitable<void> send (std::shared_ptr<std::array<char, 1472>> data, size_t size);
+        asio::awaitable<void> flushQueue ();
         void receiveData ();
         asio::awaitable<void> receive ();
         void receiveDataProcess (const std::shared_ptr<std::array<char, 1472>> &data, size_t size,
@@ -264,8 +273,7 @@ bool XPlaneUdp::getDataref (const DatarefIndex &dataref, T &container, float def
 template <Container T>
 void XPlaneUdp::setDataref (const std::string &dataref, const T &value) {
     for (int i = 0; i < value.size(); ++i) {
-        const size_t bufferSize = packSize(0, DATAREF_SET_HEAD, value.at(i), std::format("{}[{}]", dataref, i), '\x00');
-        const auto buffer = BufferPool::getBuffer(bufferSize);
+        const auto buffer = BufferPool::getBuffer();
         pack(*buffer, 0, DATAREF_SET_HEAD, value.at(i), std::format("{}[{}]", dataref, i), '\x00');
         sendData(buffer, 509);
     }
@@ -273,14 +281,11 @@ void XPlaneUdp::setDataref (const std::string &dataref, const T &value) {
 
 /**
  * @brief 获取一个 array<char, 1472>
- * @param length 会使用的长度
  * @return 智能指针包含的数组
  */
-inline std::shared_ptr<std::array<char, 1472>> BufferPool::getBuffer (const size_t length) {
+inline std::shared_ptr<std::array<char, 1472>> BufferPool::getBuffer () {
     BufferPro *buffer = boost::pool_allocator<BufferPro>::allocate(1);
     new(buffer) BufferPro();
-    buffer->length = length;
-    std::memset(buffer->data.data(), 0x00, buffer->data.size());
     auto deleter = [](std::array<char, 1472> *ptr) {
         auto *buffer_ = reinterpret_cast<BufferPro*>(ptr);
         recycleBuffer(buffer_);
@@ -290,7 +295,6 @@ inline std::shared_ptr<std::array<char, 1472>> BufferPool::getBuffer (const size
 
 inline void BufferPool::recycleBuffer (BufferPro *buffer) {
     if (buffer) {
-        std::memset(buffer->data.data(), 0x00, buffer->length);
         buffer->~BufferPro();
         boost::pool_allocator<BufferPro>::deallocate(buffer, 1);
     }
@@ -340,8 +344,7 @@ inline void XPlaneUdp::reconnect (const bool del) {
             continue;
         for (int i = start; i <= end; ++i) {
             std::string combine = isArray ? std::format("{}[{}]", name, i - start) : name;
-            const size_t size = packSize(0, DATAREF_GET_HEAD, del ? 0 : freq, i, combine);
-            auto buffer = BufferPool::getBuffer(size);
+            auto buffer = BufferPool::getBuffer();
             pack(*buffer, 0, DATAREF_GET_HEAD, del ? 0 : freq, i, combine);
             sendData(buffer, 413);
         }
@@ -350,7 +353,7 @@ inline void XPlaneUdp::reconnect (const bool del) {
     if (planeInfoFreq == 0)
         return;
     const std::string sentence = std::format("{}{}\x00", BASIC_INFO_HEAD, del ? 0 : planeInfoFreq);
-    const auto buffer2 = BufferPool::getBuffer(sentence.size());
+    const auto buffer2 = BufferPool::getBuffer();
     pack(*buffer2, 0, sentence);
     sendData(buffer2, sentence.size());
 }
@@ -372,6 +375,7 @@ inline void XPlaneUdp::close () {
     if (xpSocket.is_open())
         xpSocket.cancel();
     multicastSocket.cancel();
+    asio::post(io_context, [this] { flushTimer.cancel(); }); // 立即结束100ms发送定时器
     workGuard.reset();
     if (worker.joinable())
         worker.join();
@@ -396,8 +400,7 @@ inline XPlaneUdp::DatarefIndex XPlaneUdp::addDataref (const std::string &dataref
     }
     size_t start = findSpace(1);
     dataRefs.emplace_back(name, start, start, freq, true, false);
-    const size_t size = packSize(0, DATAREF_GET_HEAD, freq, start, name);
-    const auto buffer = BufferPool::getBuffer(size);
+    const auto buffer = BufferPool::getBuffer();
     pack(*buffer, 0, DATAREF_GET_HEAD, freq, start, name);
     sendData(buffer, 413);
     exist[name] = dataRefs.size() - 1;
@@ -419,8 +422,7 @@ inline XPlaneUdp::DatarefIndex XPlaneUdp::addDatarefArray (const std::string &da
     dataRefs.emplace_back(dataref, start, start + length - 1, freq, true, true);
     for (int i = 0; i < length; ++i) {
         std::string name = std::format("{}[{}]", dataref, i);
-        const size_t size{packSize(0, DATAREF_GET_HEAD, freq, start + i, name)};
-        auto buffer = BufferPool::getBuffer(size);
+        auto buffer = BufferPool::getBuffer();
         pack(*buffer, 0, DATAREF_GET_HEAD, freq, start + i, name);
         sendData(buffer, 413);
     }
@@ -468,15 +470,12 @@ inline void XPlaneUdp::changeDatarefFreq (const DatarefIndex &dataref, const int
         }
     }
     if (!ref.isArray) {
-        const size_t bufferSize = packSize(0, DATAREF_GET_HEAD, freq, ref.start, ref.name);
-        const auto buffer = BufferPool::getBuffer(bufferSize);
+        const auto buffer = BufferPool::getBuffer();
         pack(*buffer, 0, DATAREF_GET_HEAD, freq, ref.start, ref.name);
         sendData(buffer, 413);
     } else {
         for (size_t i = 0; i < size; ++i) {
-            const size_t bufferSize = packSize(0, DATAREF_GET_HEAD, freq, ref.start,
-                                               std::format("{}[{}]", ref.name, i));
-            const auto buffer = BufferPool::getBuffer(bufferSize);
+            const auto buffer = BufferPool::getBuffer();
             pack(*buffer, 0, DATAREF_GET_HEAD, freq, ref.start + i, std::format("{}[{}]", ref.name, i));
             sendData(buffer, 413);
         }
@@ -491,8 +490,7 @@ inline void XPlaneUdp::changeDatarefFreq (const DatarefIndex &dataref, const int
  */
 inline void XPlaneUdp::setDataref (const std::string &dataref, const float value, int index) {
     const std::string name = (index == -1) ? dataref : std::format("{}[{}]", dataref, index);
-    const size_t bufferSize = packSize(0, DATAREF_SET_HEAD, value, name, '\x00');
-    const auto buffer = BufferPool::getBuffer(bufferSize);
+    const auto buffer = BufferPool::getBuffer();
     pack(*buffer, 0, DATAREF_SET_HEAD, value, name, '\x00');
     sendData(buffer, 509);
 }
@@ -505,7 +503,7 @@ inline void XPlaneUdp::addPlaneInfo (int freq) {
     planeInfoFreq = freq;
     const std::string sentence = std::format("{}{}\x00", BASIC_INFO_HEAD, freq);
     const size_t bufferSize = packSize(0, sentence);
-    const auto buffer = BufferPool::getBuffer(bufferSize);
+    const auto buffer = BufferPool::getBuffer();
     pack(*buffer, 0, sentence);
     sendData(buffer, bufferSize);
 }
@@ -577,7 +575,7 @@ inline asio::awaitable<void> XPlaneUdp::detect () {
     ip::udp::endpoint senderEndpoint;
     asio::steady_timer timer(co_await asio::this_coro::executor);
     while (!closed) {
-        auto buffer = BufferPool::getBuffer(0);
+        auto buffer = BufferPool::getBuffer();
         struct TimerCancelGuard {
             asio::steady_timer &timer_;
             ~TimerCancelGuard () { timer_.cancel(); }
@@ -608,7 +606,18 @@ inline asio::awaitable<void> XPlaneUdp::detect () {
 inline void XPlaneUdp::sendData (const std::shared_ptr<std::array<char, 1472>> &data, const size_t size) {
     if (closed || !xpSocket.is_open())
         return;
-    asio::co_spawn(io_context, send(data, size), asio::detached);
+    // 先放入队列
+    bool startFlush = false;
+    {
+        std::lock_guard lock(queueMutex);
+        queue.push(QueueData{data, size});
+        if (!flushPending) { // 队列首次被推入数据时启动定时发送
+            flushPending = true;
+            startFlush = true;
+        }
+    }
+    if (startFlush)
+        asio::co_spawn(io_context, flushQueue(), asio::detached);
 }
 
 inline asio::awaitable<void> XPlaneUdp::send (const std::shared_ptr<std::array<char, 1472>> data, const size_t size) {
@@ -616,6 +625,38 @@ inline asio::awaitable<void> XPlaneUdp::send (const std::shared_ptr<std::array<c
         co_return;
     boost::system::error_code ec;
     co_await xpSocket.async_send_to(asio::buffer(*data, size), xpEndpoint, asio::redirect_error(ec));
+}
+
+inline asio::awaitable<void> XPlaneUdp::flushQueue () {
+    while (true) {
+        flushTimer.expires_after(std::chrono::milliseconds(100));
+        boost::system::error_code ec;
+        co_await flushTimer.async_wait(asio::redirect_error(ec));
+        if (closed || !xpSocket.is_open())
+            break;
+
+        // 每100ms最多发送100条
+        std::array<QueueData, 100> batch;
+        size_t count = 0;
+        {
+            std::lock_guard lock(queueMutex);
+            while (count < batch.size() && !queue.empty()) {
+                batch[count++] = std::move(queue.front());
+                queue.pop();
+            }
+        }
+        for (size_t i = 0; i < count; ++i) {
+            if (closed || !xpSocket.is_open())
+                break;
+            asio::co_spawn(io_context, send(batch[i].data, batch[i].size), asio::detached);
+        }
+
+        std::lock_guard lock(queueMutex);
+        if (queue.empty() || closed || !xpSocket.is_open()) {
+            flushPending = false;
+            break;
+        }
+    }
 }
 
 /**
@@ -628,7 +669,7 @@ inline void XPlaneUdp::receiveData () {
 inline asio::awaitable<void> XPlaneUdp::receive () {
     ip::udp::endpoint temp;
     while (!closed && xpSocket.is_open()) {
-        auto buffer = BufferPool::getBuffer(0);
+        auto buffer = BufferPool::getBuffer();
         boost::system::error_code ec;
         const size_t receiveBytes = co_await xpSocket.async_receive_from(
             asio::buffer(*buffer), temp, asio::redirect_error(ec));

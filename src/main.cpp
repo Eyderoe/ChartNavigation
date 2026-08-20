@@ -4,7 +4,7 @@
 
 #include "XPlaneUDP.hpp"
 #include "gui/main_widget.hpp"
-#include "ui/themeColor.hpp"
+#include "ui/theme.hpp"
 #include "gui/main_window.hpp"
 #include "utils/constValue.hpp"
 #include "services/settingManage.hpp"
@@ -23,6 +23,8 @@ int main (int argc, char *argv[]) {
     if (qtTranslator->load(":/trans/translation/qtbase_zh_CN.qm"))
         QApplication::installTranslator(qtTranslator);
     // 主题
+    if constexpr (platform == MultiPlatform::winOS)
+        QApplication::setStyle("Fusion"); // Github Action 构建的可能会丢失组件框 不知道什么毛病
     setLightTheme(&app);
     setDarkTheme(&app);
     // 设置

@@ -66,7 +66,7 @@ void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, con
     qDebug() << std::format("RMS: {:.2f}, errors: [{}]", error, join(view, ", "));
 }
 
-void PdfView::closeSimu () const {
+void PdfView::closeSimulation () const {
     if (dataProvider)
         dataProvider->closeSimu();
 }
@@ -414,7 +414,7 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         }
     }
     // 安卓&现实GPS特化:
-    if constexpr (platform != MultiPlatform::androidOS) {
+    if constexpr (platform == MultiPlatform::androidOS) {
         static AircraftTrail trail(100); // 通过邪修(因为安卓现在默认1Hz), 延长至10分钟的点数据
         bool calGeo = SettingsManager::instance().get(SettingsManager::useCalGeoHeading, false).toBool();
         bool showTrail = SettingsManager::instance().get(SettingsManager::showTrail, false).toBool();

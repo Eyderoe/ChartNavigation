@@ -39,3 +39,33 @@ std::vector<std::string_view> split (const std::string_view str, const std::stri
     }
     return result;
 }
+
+/**
+ * @brief 分割字符串，类似 Python
+ * @param str 原始字符串
+ * @param delimiters 分隔符集合，默认为空白字符
+ * @param skipEmpty 是否跳过空字符串
+ * @return 包含分割后子字符串的 QList<QStringView>
+ */
+QList<QStringView> split (const QStringView str, const QStringView delimiters, const bool skipEmpty) {
+    QList<QStringView> result;
+    auto isDelimiter = [&](const QChar ch) { return delimiters.contains(ch); };
+    qsizetype first = 0;
+    while (first < str.size()) {
+        if (skipEmpty) {
+            while (first < str.size() && isDelimiter(str[first]))
+                ++first;
+        }
+        if (first >= str.size())
+            break;
+        qsizetype last = first;
+        while (last < str.size() && !isDelimiter(str[last]))
+            ++last;
+        if (!skipEmpty || last > first)
+            result.append(str.mid(first, last - first));
+        first = last;
+        if (!skipEmpty)
+            ++first;
+    }
+    return result;
+}

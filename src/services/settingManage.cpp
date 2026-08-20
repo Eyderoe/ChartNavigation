@@ -130,6 +130,7 @@ void SettingsManager::broadcast () {
             case dataFolder:
             case globeFolder:
             case debugReplayFile:
+            case unitConvert:
             case spliterSta:
                 emit settingChanged(enumKey, get(enumKey, {}));
                 break;

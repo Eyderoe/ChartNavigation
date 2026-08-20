@@ -96,7 +96,7 @@ jobs:
         run: |
           "$VCPKG_ROOT/vcpkg" install \
             boost-system boost-asio boost-dynamic-bitset boost-pool \
-            geographiclib \
+            geographiclib sqlitecpp \
             --triplet arm64-osx
 
       - name: Build qcoro from source (avoids vcpkg qtbase conflict)

@@ -5,6 +5,7 @@
 #include "XPlaneUDP.hpp"
 
 
+// 绷不住了 现在才发现 XPlane 自身的 dataref 接口在局域网中就有用
 class xpAdapter : public InterfaceSimu {
     public:
         xpAdapter ();

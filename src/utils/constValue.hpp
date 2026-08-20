@@ -19,9 +19,7 @@ const bool inMacSandbox = false;
 #endif
 
 constexpr double m2ft{3.28084};
-constexpr double ft2m{1 / m2ft};
 constexpr double nm2m{1852};
-constexpr double m2nm{1 / nm2m};
 constexpr double avgEarthRadius{6371008.8};
 
 constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
