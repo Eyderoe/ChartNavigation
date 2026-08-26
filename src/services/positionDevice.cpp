@@ -98,7 +98,7 @@ QString getPosDeviceInfo (PositionDevice *device) {
     // 速度
     const auto speed = device->getSpeed();
     if (speed != std::nullopt)
-        text += QString::asprintf("速度:%.1f节", (*speed) * 1.94);
+        text += QString::asprintf("速度:(%.1f节)", (*speed) * 1.94);
     // 定位精度
     const auto horiz = device->getHorizontalAccuracy();
     const auto vert = device->getVerticalAccuracy();

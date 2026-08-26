@@ -159,7 +159,7 @@ void StatusBar::update () {
     if constexpr (platform == MultiPlatform::androidOS) {
         QString text = getPosDeviceInfo(device.get());
         bool textAvailable = !text.isEmpty();
-        bool locatAvailable = SettingsManager::instance().get(SettingsManager::dataSource).toInt() == 2;
+        bool locatAvailable = simu.first == SimulatorSource::real;
         errorLabel->setText((textAvailable && locatAvailable) ? text : "定位精度不可用");
     }
 }

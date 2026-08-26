@@ -6,6 +6,7 @@
 #include <iostream>
 #include <numbers>
 #include <ranges>
+#include "constValue.hpp"
 #include "geographic.hpp"
 
 
@@ -160,7 +161,7 @@ std::pair<double, double> AffineTransformer::transform (const std::pair<double, 
  */
 std::pair<double, std::vector<double>> AffineTransformer::accEvaluate (const bool print) {
     double totalError{}, sumSquaredError{}, maxError{};
-    double minError = std::numeric_limits<double>::infinity();
+    double minError = Inf;
     const int n = static_cast<int>(data.size());
     std::vector<double> errors;
     errors.reserve(n);

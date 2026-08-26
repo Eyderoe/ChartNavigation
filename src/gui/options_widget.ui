@@ -47,96 +47,97 @@
          <property name="title">
           <string>文件</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
-            <item>
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>⚪ 航图文件夹：</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="chartFolder_lineEdit"/>
-            </item>
-           </layout>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>⚪ 航图文件夹：</string>
+            </property>
+           </widget>
           </item>
-          <item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="chartFolder_lineEdit"/>
+          </item>
+          <item row="1" column="0" colspan="2">
            <widget class="QLabel" name="label_remark_7">
             <property name="text">
              <string>放置航图的文件夹，多个文件夹以*间隔，程序启动时会遍历其中所有文件。</string>
             </property>
            </widget>
           </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <item>
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>⚪ 映射数据文件夹：</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="mappingFoler_lineEdit"/>
-            </item>
-           </layout>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>⚪ 映射数据文件夹：</string>
+            </property>
+           </widget>
           </item>
-          <item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="mappingFoler_lineEdit"/>
+          </item>
+          <item row="3" column="0" colspan="2">
            <widget class="QLabel" name="label_remark_8">
             <property name="text">
              <string>放置映射文件的文件夹，文件以机场为单位名称为ICAO.Tmap，具体参照example目录下示例。</string>
             </property>
            </widget>
           </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <item>
-             <widget class="QLabel" name="label_3">
-              <property name="text">
-               <string>⚪ 地形数据文件夹：</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="globeFoler_lineEdit"/>
-            </item>
-           </layout>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>⚪ 地形数据文件夹：</string>
+            </property>
+           </widget>
           </item>
-          <item>
+          <item row="4" column="1">
+           <widget class="QLineEdit" name="globeFoler_lineEdit"/>
+          </item>
+          <item row="5" column="0" colspan="2">
            <widget class="QLabel" name="label_remark_9">
             <property name="text">
              <string>GLOBE地理高程数据文件夹。</string>
             </property>
            </widget>
           </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_10">
-            <item>
-             <widget class="QLabel" name="label_26">
-              <property name="text">
-               <string>⚪ 文件显示选项：</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QComboBox" name="onlyPdf_comboBox">
-              <item>
-               <property name="text">
-                <string>仅PDF</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>所有文件</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-           </layout>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_27">
+            <property name="text">
+             <string>⚪ 导航数据文件：</string>
+            </property>
+           </widget>
           </item>
-          <item>
+          <item row="6" column="1">
+           <widget class="QLineEdit" name="airac_lineEdit"/>
+          </item>
+          <item row="7" column="0" colspan="2">
+           <widget class="QLabel" name="label_remark_10">
+            <property name="text">
+             <string>AIRAC导航数据文件。</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_26">
+            <property name="text">
+             <string>⚪ 文件显示选项：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1">
+           <widget class="QComboBox" name="onlyPdf_comboBox">
+            <item>
+             <property name="text">
+              <string>仅PDF</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>所有文件</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="9" column="0" colspan="2">
            <widget class="QLabel" name="label_remark_6">
             <property name="text">
              <string>文件树中对文件类型的筛选。</string>

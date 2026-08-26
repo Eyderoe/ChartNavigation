@@ -10,6 +10,7 @@
 
 #include "services/settingManage.hpp"
 #include "utils/stringProcess.hpp"
+#include "utils/constValue.hpp"
 
 
 note_widget::note_widget (QWidget *parent) : QWidget(parent), ui(new Ui::note_widget) {
@@ -46,17 +47,6 @@ void note_widget::fitChinaFlightLevelToWidth () const {
     ui->imageGraphicsView->horizontalScrollBar()->setValue(ui->imageGraphicsView->horizontalScrollBar()->minimum());
 }
 
-void note_widget::submitUnits () const {
-    // 设置单位
-    SettingsManager &manager = SettingsManager::instance();
-    auto comboBoxList = ui->unitConvert->findChildren<QComboBox*>();
-    std::vector<std::string> indexList;
-    for (const auto item : comboBoxList)
-        indexList.push_back(std::format("{}", item->currentIndex()));
-    const std::string finalStr = join(indexList, " ");
-    manager.set(SettingsManager::unitConvert, QString::fromStdString(finalStr), true);
-}
-
 bool note_widget::eventFilter (QObject *watched, QEvent *event) {
     if (watched == ui->imageGraphicsView->viewport() && event->type() == QEvent::Resize) {
         fitChinaFlightLevelToWidth();
@@ -82,6 +72,17 @@ void note_widget::initConnect () {
                         }
                         break;
                     }
+                    default:
+                        break;
+                }
+            });
+    // 临时设置
+    connect(&setting, qOverload<SettingsManager::TempKey, const QVariant&>(&SettingsManager::settingChanged), this,
+            [this](const SettingsManager::TempKey key, const QVariant &val) {
+                switch (key) {
+                    case SettingsManager::suicide:
+                        saveUnit(val.toBool());
+                        break;
                     default:
                         break;
                 }
@@ -130,6 +131,18 @@ std::tuple<QComboBox*, QLineEdit*, QComboBox*, QLineEdit*> note_widget::getUnit 
     auto *leo = ui->unitConvert->findChild<QLineEdit*>(le_pre + oppoEnd);
     auto *le = ui->unitConvert->findChild<QLineEdit*>(le_pre + end);
     return {cbo, leo, cb, le};
+}
+
+void note_widget::saveUnit (const bool save) const {
+    if (!save)
+        return;
+    SettingsManager &manager = SettingsManager::instance();
+    auto comboBoxList = ui->unitConvert->findChildren<QComboBox*>();
+    std::vector<std::string> indexList;
+    for (const auto item : comboBoxList)
+        indexList.push_back(std::format("{}", item->currentIndex()));
+    const std::string finalStr = join(indexList, " ");
+    manager.set(SettingsManager::unitConvert, QString::fromStdString(finalStr), true);
 }
 
 void note_widget::initUnit () const {
@@ -212,7 +225,8 @@ void note_widget::unitConvertChange () const {
         std::swap(cbo, cb);
         std::swap(leo, le);
     } else {
-        submitUnits();
+        if constexpr (platform == MultiPlatform::androidOS)
+            saveUnit();
     }
     // 可能的交换方向
     bool isNum;

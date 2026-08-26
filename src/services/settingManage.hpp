@@ -29,7 +29,7 @@ class SettingsManager : public QObject {
             inopEnumItem_constKey, // 兜底的怪东西
 
             MainWindowGeo, // 主窗口尺寸 ByteArray
-            MainWidgetSta, // 主窗口状态 ByteArray
+            MainWindowSta, // 主窗口状态 ByteArray
             OptionWidgetGeo, // 设置窗口尺寸 ByteArray
             spliterSta, // 分割器状态 ByteArray
             stayFront, // 置顶窗口 bool
@@ -63,6 +63,7 @@ class SettingsManager : public QObject {
             latitu, // 纬度 double
             longitu, // 经度 double
             altRelat, // 高度(安卓)/离地高 int
+            suicide, // 自刎归天 bool
         };
         Q_ENUM(ConstKey)
         Q_ENUM(TempKey)

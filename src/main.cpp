@@ -10,6 +10,8 @@
 #include "services/settingManage.hpp"
 
 int main (int argc, char *argv[]) {
+    if constexpr (platform == MultiPlatform::androidOS)
+        qputenv("QT_ANDROID_NO_FULLSCREEN_KEYBOARD", "1"); // 安卓输入法优化
     QApplication app(argc, argv);
     QApplication::setOrganizationName("Eyderoe");
     QApplication::setApplicationName("ChartNavigation");

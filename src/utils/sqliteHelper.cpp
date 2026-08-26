@@ -106,6 +106,22 @@ SQLiteDictRows Database::getDictRecords (const std::string &tableName, const SQL
 }
 
 /**
+ * @brief 执行参数化的只读查询
+ * @param sql SQL 语句
+ * @param parameters 按问号出现顺序绑定的参数
+ * @return 查询结果
+ */
+SQLiteRows Database::getRecords (const std::string &sql, const SQLiteRow &parameters) const {
+    SQLite::Statement query(*db, sql);
+    for (int index = 0; index < static_cast<int>(parameters.size()); ++index)
+        bindValue(query, index + 1, parameters[index]);
+    SQLiteRows rows;
+    while (query.executeStep())
+        rows.emplace_back(readResult(query));
+    return rows;
+}
+
+/**
  * @brief 添加数据
  * @param tableName 表名
  * @param rows 数据行

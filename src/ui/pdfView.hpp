@@ -15,6 +15,8 @@ class PdfView final : public QPdfView {
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
         void closeSimulation () const;
         void setDataProvider (DataProvider *provider);
+        void fetchScale ();
+        void zoomTo (double factor);
     protected:
         void wheelEvent (QWheelEvent *event) override;
         void mousePressEvent (QMouseEvent *event) override;

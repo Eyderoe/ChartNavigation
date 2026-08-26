@@ -3,7 +3,13 @@
 
 
 #include <SQLiteCpp/SQLiteCpp.h>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -20,8 +26,6 @@ using SQLiteDictRows = std::vector<SQLiteDictRow>; // sqlite 多行
 
 constexpr auto null = std::monostate{};
 
-class Database;
-
 
 class Database {
     static void bindValue (SQLite::Statement &query, int index, const SQLiteVal &val);
@@ -34,6 +38,7 @@ class Database {
                                              const SQLiteDict &condition = {});
         [[nodiscard]] SQLiteDictRows getDictRecords (const std::string &tableName, const SQLiteAim &aim = {},
                                                      const SQLiteDict &condition = {});
+        [[nodiscard]] SQLiteRows getRecords (const std::string &sql, const SQLiteRow &parameters = {}) const;
         void addRecords (const std::string &tableName, const SQLiteRows &rows, const SQLiteAim &rowsName = {});
         void changeRecords (const std::string &tableName, const SQLiteDict &values,
                             const SQLiteDict &condition = {}) const;

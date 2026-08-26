@@ -35,7 +35,7 @@ class note_widget : public QWidget {
         void initConversation () const;
 
         [[nodiscard]] std::tuple<QComboBox*, QLineEdit*, QComboBox*, QLineEdit*> getUnit (const QString &name) const;
-        void submitUnits () const;
+        void saveUnit (bool save = true) const;
         void initUnit () const;
 
         void initAlfaTable () const;

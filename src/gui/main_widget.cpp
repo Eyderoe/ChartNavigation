@@ -30,7 +30,7 @@ void main_widget::initConnect () {
     ui->scale_verticalSlider->setValue(100);
     connect(ui->scale_verticalSlider, &QSlider::valueChanged, this, [this](const int value) {
         const double factor = value / 100.0;
-        ui->pdf_widget->setZoomFactor(factor);
+        ui->pdf_widget->zoomTo(factor);
     });
     connect(ui->pdf_widget, &PdfView::zoomFactor_changed, this, [this](double factor) {
         const int value = static_cast<int>(factor * 100);
@@ -50,6 +50,18 @@ void main_widget::initConnect () {
                         ui->splitter->restoreState(val.toByteArray());
                         break;
                     }
+                    default:
+                        break;
+                }
+            });
+    // 临时设置
+    connect(&setting, qOverload<SettingsManager::TempKey, const QVariant&>(&SettingsManager::settingChanged), this,
+            [this](const SettingsManager::TempKey key, const QVariant &val) {
+                switch (key) {
+                    case SettingsManager::suicide:
+                        if (val.toBool())
+                            saveSplitter();
+                        break;
                     default:
                         break;
                 }
@@ -94,10 +106,12 @@ void main_widget::loadPdfFile (const QString &filePath) {
     if (const QFile file(pdfPath); !file.exists())
         return;
     pdfFilePath = pdfPath;
-    ui->pageNum_spinBox->setEnabled(true);
-    document->load(pdfPath);
-    loadPdfFileMapping();
     on_pageNum_spinBox_valueChanged(0);
+    if (document->load(pdfPath) == QPdfDocument::Error::None) {
+        ui->pageNum_spinBox->setEnabled(true);
+        loadPdfFileMapping();
+        ui->pdf_widget->fetchScale();
+    }
 }
 
 /**
@@ -109,8 +123,7 @@ void main_widget::loadFolder (const QString &folder) const {
 }
 
 /**
- * @brief 保存分割buju
- * @note 改为 QMainWindows 后, closeEvent 无效
+ * @brief 保存分割器位置
  */
 void main_widget::saveSplitter () const {
     SettingsManager::instance().set(SettingsManager::spliterSta, ui->splitter->saveState(), true);

@@ -82,7 +82,7 @@ QVariant SettingsManager::get (const ConstKey key, const QVariant &defaultValue)
  * @param value 值
  * @param notEmit 是否不发射
  */
-void SettingsManager::set (const TempKey key, const QVariant &value, bool notEmit) {
+void SettingsManager::set (const TempKey key, const QVariant &value, const bool notEmit) {
     const QString keyName = key2String_temp(key);
     const auto it = cache_temp.find(keyName);
     if (it != cache_temp.end()) {
@@ -124,7 +124,7 @@ void SettingsManager::broadcast () {
                 break;
 
             case MainWindowGeo:
-            case MainWidgetSta:
+            case MainWindowSta:
             case OptionWidgetGeo:
             case chartFolder:
             case dataFolder:

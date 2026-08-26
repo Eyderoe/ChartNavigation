@@ -26,8 +26,8 @@ std::string toHex (const char *data, const int length) {
 std::vector<std::string_view> split (const std::string_view str, const std::string_view delimiters,
                                      const bool skipEmpty) {
     std::vector<std::string_view> result;
-    auto first = str.find_first_not_of(delimiters);
-    while (first != std::string_view::npos) {
+    size_t first = 0;
+    while (true) {
         auto last = str.find_first_of(delimiters, first);
         if (last == std::string_view::npos) {
             last = str.size();
@@ -35,7 +35,9 @@ std::vector<std::string_view> split (const std::string_view str, const std::stri
         if (!skipEmpty || last > first) {
             result.emplace_back(str.substr(first, last - first));
         }
-        first = str.find_first_not_of(delimiters, last);
+        if (last == str.size())
+            break;
+        first = last + 1;
     }
     return result;
 }

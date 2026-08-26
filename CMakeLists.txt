@@ -22,6 +22,8 @@ if (ANDROID)
     set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
     set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
 endif ()
+add_compile_definitions(SQLITE_ENABLE_RTREE=1)
+set(SQLITECPP_INTERNAL_SQLITE ON CACHE BOOL "" FORCE)
 find_package(Boost CONFIG)
 find_package(GeographicLib REQUIRED)
 find_package(SQLiteCpp REQUIRED)
@@ -122,6 +124,10 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/note_widget.cpp
         src/gui/note_widget.hpp
         src/gui/note_widget.ui
+        src/ui/enhancedMap.cpp
+        src/ui/enhancedMap.hpp
+        src/services/MapDataQuery.cpp
+        src/services/MapDataQuery.hpp
 )
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES

@@ -7,6 +7,7 @@
 
 #include "json.hpp"
 
+class QTreeWidgetItem;
 QT_BEGIN_NAMESPACE
 
 namespace Ui

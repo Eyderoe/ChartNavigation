@@ -1,6 +1,7 @@
 add_executable(unit_tests
         testMain.cpp
         stringProcess_test.cpp
+        ../src/utils/stringProcess.cpp
         noaaGlobe_test.cpp
         ../src/utils/noaaGlobe.cpp
         ../src/utils/noaaGlobe.hpp
@@ -9,6 +10,10 @@ add_executable(unit_tests
 target_include_directories(unit_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../include
         ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_precompile_headers(unit_tests PRIVATE
+        <QtCore>
 )
 
 target_link_libraries(unit_tests PRIVATE

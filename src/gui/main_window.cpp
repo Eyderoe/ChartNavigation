@@ -81,14 +81,10 @@ void main_window::setTheme (const Qt::ColorScheme colorScheme) {
 }
 
 void main_window::closeEvent (QCloseEvent *event) {
-    const auto centralWidget = dynamic_cast<QStackedWidget*>(this->centralWidget());
-    const auto pdfWidget = dynamic_cast<main_widget*>(centralWidget->widget(0));
-    pdfWidget->saveSplitter();
     SettingsManager &manager = SettingsManager::instance();
+    manager.set(SettingsManager::suicide, true);
     manager.set(SettingsManager::MainWindowGeo, saveGeometry(), true);
-    manager.set(SettingsManager::MainWidgetSta, saveState(), true);
-
-    manager.writeSetting();
+    manager.set(SettingsManager::MainWindowSta, saveState(), true);
     QMainWindow::closeEvent(event);
 }
 
@@ -154,7 +150,7 @@ void main_window::initConnect () {
                     case SettingsManager::MainWindowGeo:
                         restoreGeometry(val.toByteArray());
                         break;
-                    case SettingsManager::MainWidgetSta:
+                    case SettingsManager::MainWindowSta:
                         restoreState(val.toByteArray());
                         break;
                     case SettingsManager::dataSource:
@@ -329,8 +325,6 @@ void main_window::on_action_dark_triggered (const bool checked) {
 void main_window::openFile () {
     // 文件选择框的一坨
     auto option = QFileDialog::Options();
-    if ((platform == MultiPlatform::macOS) && !inMacSandbox)
-        option |= QFileDialog::DontUseNativeDialog;
     const QString fileName = QFileDialog::getOpenFileName(this, "选择文件", QDir::homePath()
                                                           , "文件 (*.pdf)", nullptr, option);
     if (fileName.isEmpty())
@@ -342,8 +336,6 @@ void main_window::openFile () {
 void main_window::openFolder () {
     // 文件选择框的一坨
     auto option = QFileDialog::Options();
-    if ((platform == MultiPlatform::macOS) && !inMacSandbox)
-        option |= QFileDialog::DontUseNativeDialog;
     option = option | QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
     const QString dir = QFileDialog::getExistingDirectory(this, "选择文件夹", QDir::homePath()
                                                           , option);

@@ -8,6 +8,7 @@
 #include <format>
 #include <ranges>
 #include <span>
+#include <QCursor>
 
 #include "utils/android.hpp"
 
@@ -78,6 +79,40 @@ void PdfView::setDataProvider (DataProvider *provider) {
     connect(dataProvider, &DataProvider::dataUpdated, this, &PdfView::onDataUpdated);
 }
 
+/**
+ * @brief 将页面缩放至能完整看见文档的尺寸
+ * @note 感觉比现在统一缩放比例好点
+ */
+void PdfView::fetchScale () {
+    const QMargins margin = documentMargins();
+    const QSizeF doc = getDocSize();
+    const int viewWidth = viewport()->size().width() - (margin.left() + margin.right());
+    const int viewHeight = viewport()->size().height() - (margin.top() + margin.bottom());
+    const double scaleWidth = viewWidth / doc.width();
+    const double scaleHeight = viewHeight / doc.height();
+    setZoomFactor(std::min(scaleWidth, scaleHeight));
+}
+
+/**
+ * @brief 以鼠标位置或当前可视区域中心为锚点缩放
+ */
+void PdfView::zoomTo (const double factor) {
+    const double oldZoom = zoomFactor();
+    const double newZoom = qBound(zoomMin, factor, zoomMax);
+    const QRectF viewportRect = viewport()->rect();
+    const QPointF mousePos = viewport()->mapFromGlobal(QCursor::pos());
+    const bool mouseInViewport = viewport()->underMouse() && viewportRect.contains(mousePos);
+    const QPointF zoomCenter = mouseInViewport ? mousePos : viewportRect.center();
+    const double logicX = (horizontalScrollBar()->value() + zoomCenter.x()) / oldZoom;
+    const double logicY = (verticalScrollBar()->value() + zoomCenter.y()) / oldZoom;
+
+    setZoomFactor(newZoom);
+    horizontalScrollBar()->setValue(static_cast<int>(logicX * newZoom - zoomCenter.x()));
+    verticalScrollBar()->setValue(static_cast<int>(logicY * newZoom - zoomCenter.y()));
+    emit zoomFactor_changed(newZoom);
+    viewport()->update();
+}
+
 void PdfView::initConnect () {
     const auto &setting = SettingsManager::instance();
     // 存储设置
@@ -117,24 +152,12 @@ std::pair<double, double> PdfView::trans (const Point2D &position) {
 
 void PdfView::wheelEvent (QWheelEvent *event) {
     // 缩放计算
-    const double oldZoom = zoomFactor();
-    double newZoom = oldZoom;
+    double newZoom = zoomFactor();
     if (event->angleDelta().y() > 0)
         newZoom *= 1.2;
     else
         newZoom *= 0.8;
-    newZoom = qBound(zoomMin, newZoom, zoomMax);
-    setZoomFactor(newZoom);
-    emit zoomFactor_changed(newZoom);
-    // 画布缩放
-    const QPointF mousePos = event->position();
-    const double logicX = (horizontalScrollBar()->value() + mousePos.x()) / oldZoom;
-    const double logicY = (verticalScrollBar()->value() + mousePos.y()) / oldZoom;
-    const int newScrollX = static_cast<int>(logicX * newZoom - mousePos.x());
-    const int newScrollY = static_cast<int>(logicY * newZoom - mousePos.y());
-    horizontalScrollBar()->setValue(newScrollX);
-    verticalScrollBar()->setValue(newScrollY);
-    this->viewport()->update();
+    zoomTo(newZoom);
 }
 
 void PdfView::mousePressEvent (QMouseEvent *event) {
@@ -293,11 +316,6 @@ template void drawStrokedText<std::string> (int x_, int y_, const std::string &t
 template <typename Transform>
 void drawTrailLine (QPainter &painter, const std::deque<Point2D> &points, const Transform &trans,
                     const double x, const double y, const bool tooSmall, const QColor &color) {
-    // 四种绘制方式：
-    // 1. drawPolyline 直接连点: 折线有尖角, 无重叠圆点, 只能单色
-    // 2. 分段平滑曲线: 每段独立 QPainterPath, 可逐段渐变, 但 RoundCap 重叠产生深色圆点
-    // 3. 同2但改 Qt::FlatCap: 无圆点且保留渐变, 首尾平头
-    // 4. 当前做法: 所有段拼成一条 QPainterPath 一次 drawPath: 无圆点, 渐变用 QLinearGradient
     const int size = static_cast<int>(points.size());
     if (size < 2)
         return;

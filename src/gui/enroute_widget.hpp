@@ -17,7 +17,6 @@ public:
     explicit enroute_widget(QWidget *parent = nullptr);
     ~enroute_widget() override;
     void setDataProvider (DataProvider *provider);
-
 private:
     Ui::enroute_widget *ui;
     DataProvider *dataProvider{nullptr};

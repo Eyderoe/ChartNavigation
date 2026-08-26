@@ -1,12 +1,14 @@
 #include "geographic.hpp"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <numbers>
 #include <numeric>
 #include <ranges>
 #include <utility>
 #include "constValue.hpp"
 #include <GeographicLib/Geodesic.hpp>
+
 
 /**
  * @brief 构造飞机轨迹
@@ -80,9 +82,175 @@ std::deque<Point2D>& AircraftTrail::getPoints () {
  * @param point 经纬度点 (纬度,经度)
  */
 void AircraftTrail::addPoint (Point2D point) {
+    if (point == Point2D(0, 0)) // 初始化时 点可能不可用
+        if (!points.empty())
+            point = points.back();
     points.push_back(std::move(point));
     while (static_cast<int>(points.size()) > maxSize)
         points.pop_front();
+}
+
+double normalizeLongitude (double longitude) {
+    constexpr double pi{std::numbers::pi};
+    longitude = std::fmod(longitude + pi, 2.0 * pi);
+    if (longitude < 0.0)
+        longitude += 2.0 * pi;
+    return longitude - pi;
+}
+double clampLatitude (const double latitude) {
+    constexpr double degreeToRadian{std::numbers::pi / 180.0};
+    constexpr double latitudeLimit{maxLat * degreeToRadian};
+    return std::clamp(latitude, -latitudeLimit, latitudeLimit);
+}
+/**
+ * @brief 重新设置投影参数
+ * @param newCenter 中心点经纬度
+ * @param verticalMargin 上下边界与中心点距离,海里
+ * @param horizontalMargin 左右边界与中心点距离,海里
+ */
+void DynamicLCC::reset (const Point2D &newCenter, const int verticalMargin, const int horizontalMargin) {
+    configure(newCenter, std::max(1.0, static_cast<double>(verticalMargin)),
+              std::max(1.0, static_cast<double>(horizontalMargin)));
+}
+
+void DynamicLCC::configure (const Point2D &newCenter, const double verticalMargin,
+                            const double horizontalMargin) {
+    constexpr double wgs84SemiMajorAxis{6378137.0};
+    constexpr double wgs84Flattening{1.0 / 298.257223563};
+    constexpr double degreeToRadian{std::numbers::pi / 180.0};
+    constexpr double radianToDegree{180.0 / std::numbers::pi};
+
+    configured = false;
+    projection.reset();
+    if (!std::isfinite(newCenter.first) || !std::isfinite(newCenter.second)
+        || !std::isfinite(verticalMargin) || !std::isfinite(horizontalMargin)
+        || std::abs(newCenter.first) > maxLat || verticalMargin <= 0.0 || horizontalMargin <= 0.0)
+        return;
+    center = {
+        std::clamp(newCenter.first, -maxLat, maxLat),
+        normalizeLongitude(newCenter.second * degreeToRadian)
+    };
+    centralMeridian = center.second;
+    falseEasting = horizontalMargin * nm2m;
+    falseNorthing = verticalMargin * nm2m;
+    const Point2D centerDegrees{center.first, center.second * radianToDegree};
+    const Point2D northEdge = pointBearingDistance(centerDegrees, 0.0, verticalMargin);
+    const Point2D southEdge = pointBearingDistance(centerDegrees, 180.0, verticalMargin);
+    double standardSouth = clampLatitude(southEdge.first * degreeToRadian);
+    double standardNorth = clampLatitude(northEdge.first * degreeToRadian);
+    if (standardSouth > standardNorth)
+        std::swap(standardSouth, standardNorth);
+    if (std::abs(standardSouth + standardNorth) < 1e-12) {
+        const double availableSpan = std::max(standardNorth - standardSouth, 1e-5);
+        const double side = std::max(availableSpan / 3.0, 1e-5);
+        if (center.first >= 0.0) {
+            standardSouth = clampLatitude(center.first * degreeToRadian + side);
+            standardNorth = clampLatitude(center.first * degreeToRadian + 2.0 * side);
+        } else {
+            standardSouth = clampLatitude(center.first * degreeToRadian - 2.0 * side);
+            standardNorth = clampLatitude(center.first * degreeToRadian - side);
+        }
+    }
+    try {
+        projection = std::make_unique<GeographicLib::LambertConformalConic>(
+            wgs84SemiMajorAxis, wgs84Flattening,
+            standardSouth * radianToDegree, standardNorth * radianToDegree, 1.0);
+    } catch (const std::exception &) {
+        projection.reset();
+        return;
+    }
+    double centerEasting{};
+    projection->Forward(center.second * radianToDegree, center.first, center.second * radianToDegree, centerEasting,
+                        centerNorthing);
+    configured = true;
+}
+
+/**
+ * @brief 重新设置投影参数
+ * @param left 左边界经度
+ * @param right 右边界经度
+ * @param bottom 下边界纬度
+ * @param top 上边界纬度
+ * @note 经纬度单位为度, left 到 right 按向东方向解释
+ */
+void DynamicLCC::reset (const double left, const double right, double bottom, double top) {
+    constexpr double degreeToRadian{std::numbers::pi / 180.0};
+    constexpr double radianToDegree{180.0 / std::numbers::pi};
+    configured = false;
+    projection.reset();
+    if (!std::isfinite(left) || !std::isfinite(right) || !std::isfinite(bottom) || !std::isfinite(top) ||
+        std::abs(bottom) > maxLat || std::abs(top) > maxLat)
+        return;
+    if (bottom > top)
+        std::swap(bottom, top);
+    const double normalizedLeft = normalizeLongitude(left * degreeToRadian) * radianToDegree;
+    const double normalizedRight = normalizeLongitude(right * degreeToRadian) * radianToDegree;
+    double longitudeSpan = normalizedRight - normalizedLeft;
+    if (longitudeSpan < 0.0)
+        longitudeSpan += 360.0;
+    const double centerLongitude = normalizeLongitude(
+        (normalizedLeft + longitudeSpan / 2.0) * degreeToRadian) * radianToDegree;
+    const Point2D newCenter{(bottom + top) / 2.0, centerLongitude};
+    const GeographicLib::Geodesic &geodesic = GeographicLib::Geodesic::WGS84();
+    const auto distanceTo = [&geodesic](const Point2D &from, const Point2D &to) {
+        double distance{};
+        geodesic.Inverse(from.first, from.second, to.first, to.second, distance);
+        return distance;
+    };
+    const Point2D westEdge{newCenter.first, normalizedLeft};
+    const Point2D eastEdge{newCenter.first, normalizedRight};
+    const Point2D southEdge{bottom, newCenter.second};
+    const Point2D northEdge{top, newCenter.second};
+    const double horizontalMargin = std::max(distanceTo(newCenter, westEdge), distanceTo(newCenter, eastEdge)) / nm2m;
+    const double verticalMargin = std::max(distanceTo(newCenter, southEdge), distanceTo(newCenter, northEdge)) / nm2m;
+    if (!std::isfinite(horizontalMargin) || !std::isfinite(verticalMargin))
+        return;
+    configure(newCenter, std::max(1.0, verticalMargin), std::max(1.0, horizontalMargin));
+    if (!configured)
+        return;
+    double minimumEasting = Inf;
+    double maximumNorthing = -Inf;
+    for (const double latitude : {bottom, top}) {
+        for (const double longitude : {normalizedLeft, normalizedRight}) {
+            double projectedX{}, projectedY{};
+            projection->Forward(centerLongitude, latitude, longitude, projectedX, projectedY);
+            minimumEasting = std::min(minimumEasting, projectedX);
+            maximumNorthing = std::max(maximumNorthing, projectedY);
+        }
+    }
+    if (!std::isfinite(minimumEasting) || !std::isfinite(maximumNorthing)) {
+        configured = false;
+        projection.reset();
+        return;
+    }
+    falseEasting = -minimumEasting;
+    falseNorthing = maximumNorthing - centerNorthing;
+}
+
+/**
+ * @brief 批量转换坐标
+ * @param positions 经纬度
+ * @return <x,y>, 单位米, 左上角为原点、向东为 x 正方向、向北为 y 负方向
+ */
+std::vector<Point2D> DynamicLCC::trans (std::vector<Point2D> positions) const {
+    constexpr double degreeToRadian{std::numbers::pi / 180.0};
+    constexpr double radianToDegree{180.0 / std::numbers::pi};
+    if (!configured)
+        return positions;
+    for (auto &position : positions) {
+        if (!std::isfinite(position.first) || !std::isfinite(position.second) || std::abs(position.first) > maxLat) {
+            position = {NaN, NaN};
+            continue;
+        }
+        const double longitude = normalizeLongitude(position.second * degreeToRadian);
+        double projectedX{}, projectedY{};
+        projection->Forward(centralMeridian * radianToDegree, position.first, longitude * radianToDegree, projectedX,
+                            projectedY);
+        position = {falseEasting + projectedX, falseNorthing - (projectedY - centerNorthing)};
+        if (!std::isfinite(position.first) || !std::isfinite(position.second))
+            position = {NaN, NaN};
+    }
+    return positions;
 }
 
 /**
@@ -147,7 +315,7 @@ double bearingSimple (const Point2D &loc1, const Point2D &loc2) {
  * @param distance 海里
  * @return B坐标<纬,经>
  */
-Point2D pointBearingDistance (Point2D fix, double bear, double distance) {
+Point2D pointBearingDistance (const Point2D &fix, const double bear, const double distance) {
     using namespace GeographicLib;
     const Geodesic &geo = Geodesic::WGS84();
     Point2D point;
