@@ -14,6 +14,12 @@
 enum class MapItemType { airport, awy, fir, fix, mora, navaid };
 enum class NavaidType { vor, dme, vordme, ndb };
 
+constexpr int moraGridId (const int latitudeCell, const int longitudeCell) noexcept {
+    return (latitudeCell + 90) * 360 + (longitudeCell + 180) + 1;
+}
+
+std::vector<int> moraGridIds (const Rect2D &requestedBound);
+
 struct MapApData {
     QString icao;
     Point2D realPos;
@@ -34,7 +40,8 @@ struct MapFirData {
 };
 struct MapMoraData {
     Rect2D bounds;
-    int id; // id = (floor(lat) + 90) * 360 + (floor(lon) + 180) + 1
+    int id;
+    int alt; // 单位：英尺；数据库为 NULL 时使用 1000
     MapItemType type;
 };
 struct MapNavData {
@@ -49,8 +56,8 @@ using MapItemData = std::variant<MapApData, MapAwyData, MapFirData, MapMoraData,
 
 class MapDataQuery {
     public:
-        explicit MapDataQuery (QString databaseFilePath);
-        std::vector<MapItemData> queryMapItemData (Rect2D bound);
+        explicit MapDataQuery (const QString& databaseFilePath);
+        std::vector<MapItemData> queryMapItemData (const Rect2D &requestedBound);
     private:
         std::unique_ptr<Database> db;
         std::vector<MapItemData> cache;

@@ -11,6 +11,8 @@ math(EXPR APP_VERSION_CODE "${APP_VERSION_MAJOR}*10000 + ${APP_VERSION_MINOR}*10
 
 project(ChartNavigation)
 
+include(CTest)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
@@ -126,8 +128,10 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/note_widget.ui
         src/ui/enhancedMap.cpp
         src/ui/enhancedMap.hpp
-        src/services/MapDataQuery.cpp
-        src/services/MapDataQuery.hpp
+        src/services/mapDataQuery.cpp
+        src/services/mapDataQuery.hpp
+        src/services/mapItemManage.cpp
+        src/services/mapItemManage.hpp
 )
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES
@@ -246,4 +250,6 @@ if (ANDROID)
     )
 endif ()
 
-add_subdirectory(test)
+if (BUILD_TESTING)
+    add_subdirectory(test)
+endif ()

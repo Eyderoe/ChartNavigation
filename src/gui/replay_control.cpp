@@ -9,8 +9,6 @@
 #include <QSlider>
 #include <QStringList>
 
-namespace
-{
 /**
  * @brief 把毫秒格式化为 HH:MM:SS.mmm
  */
@@ -75,9 +73,6 @@ qint64 parseTime (const QString &text) {
     }
     return ms;
 }
-} // namespace
-
-
 replay_control::replay_control (QWidget *parent) :
     QWidget(parent), ui(new Ui::replay_control) {
     ui->setupUi(this);

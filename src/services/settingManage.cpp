@@ -129,6 +129,7 @@ void SettingsManager::broadcast () {
             case chartFolder:
             case dataFolder:
             case globeFolder:
+            case airacPath:
             case debugReplayFile:
             case unitConvert:
             case spliterSta:

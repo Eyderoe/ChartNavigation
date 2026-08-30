@@ -1,10 +1,20 @@
 #include <doctest.h>
 #include "utils/noaaGlobe.hpp"
 
-#include <vector>
+#include <cstdlib>
 #include <filesystem>
 
 namespace fs = std::filesystem;
+
+fs::path globeDataPath () {
+    if (const char *configuredPath = std::getenv("CHARTNAVI_GLOBE_PATH"); configuredPath && *configuredPath)
+        return configuredPath;
+    return "/Users/eyderoe/GLOBE";
+}
+
+bool hasGlobeData () {
+    return fs::is_directory(globeDataPath());
+}
 
 TEST_CASE("folder") {
     SUBCASE("unavailable 1") {
@@ -15,14 +25,22 @@ TEST_CASE("folder") {
         NoaaGlobeView view("./");
         CHECK(view.getAlt(29,106) == -500);;
     }
+    if (!hasGlobeData()) {
+        MESSAGE("GLOBE data is not available; skipping data-backed checks");
+        return;
+    }
     SUBCASE("available") {
-        NoaaGlobeView view("/Users/eyderoe/GLOBE");
+        NoaaGlobeView view(globeDataPath());
         CHECK(view.getAlt(29,106) != -500);;
     }
 }
 
 TEST_CASE("getAlt") {
-    NoaaGlobeView view("/Users/eyderoe/GLOBE");
+    if (!hasGlobeData()) {
+        MESSAGE("GLOBE data is not available; skipping data-backed checks");
+        return;
+    }
+    NoaaGlobeView view(globeDataPath());
     SUBCASE("normal") {
         CHECK(view.getAlt(29,106) != -500);;
     }

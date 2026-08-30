@@ -40,16 +40,20 @@ void options_widget::readSettings () const {
     ui->onlyPdf_comboBox->setCurrentIndex(ins.get(SettingsManager::onlyDisplayPdf, true).toBool() ? 0 : 1);
 }
 
-void options_widget::on_chartFolder_lineEdit_textEdited (const QString &arg1) {
-    SettingsManager::instance().set(SettingsManager::chartFolder, arg1, true);
+void options_widget::on_chartFolder_lineEdit_editingFinished () {
+    SettingsManager::instance().set(SettingsManager::chartFolder, ui->chartFolder_lineEdit->text(), true);
 }
 
-void options_widget::on_mappingFoler_lineEdit_textEdited (const QString &arg1) {
-    SettingsManager::instance().set(SettingsManager::dataFolder, arg1, true);
+void options_widget::on_mappingFoler_lineEdit_editingFinished () {
+    SettingsManager::instance().set(SettingsManager::dataFolder, ui->mappingFoler_lineEdit->text(), true);
 }
 
-void options_widget::on_globeFoler_lineEdit_textEdited (const QString &arg1) {
-    SettingsManager::instance().set(SettingsManager::globeFolder, arg1, true);
+void options_widget::on_globeFoler_lineEdit_editingFinished () {
+    SettingsManager::instance().set(SettingsManager::globeFolder, ui->globeFoler_lineEdit->text(), true);
+}
+
+void options_widget::on_airac_lineEdit_editingFinished () {
+    SettingsManager::instance().set(SettingsManager::airacPath, ui->airac_lineEdit->text(), true);
 }
 
 void options_widget::on_onlyPdf_comboBox_currentIndexChanged (int index) {

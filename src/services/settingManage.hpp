@@ -49,6 +49,7 @@ class SettingsManager : public QObject {
             chartFolder, // 航图文件夹 String
             dataFolder, // 数据文件夹 String
             globeFolder, // 高程文件夹 String
+            airacPath, // 导航数据路径 String
 
             debugStoreData, // [Debug]保存数据 bool
             debugReplayData, // [Debug]回放数据 bool

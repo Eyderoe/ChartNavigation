@@ -35,7 +35,6 @@ TEST_CASE("split") {
         CHECK((split(QStringView(u"one\ttwo\nthree")) == QList<QStringView>{u"one", u"two", u"three"}));
         CHECK((split(QStringView(u"   ")).empty()));
         CHECK((split(QStringView(u"single")) == QList<QStringView>{u"single"}));
-        CHECK((split(QStringView(u"a,b;c"), QStringView(u",;")) ==
-               QList<QStringView>{u"a", u"b", u"c"}));
+        CHECK((split(QStringView(u"a,b;c"), QStringView(u",;")) == QList<QStringView>{u"a", u"b", u"c"}));
     }
 }

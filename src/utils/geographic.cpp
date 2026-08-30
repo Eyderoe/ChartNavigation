@@ -9,6 +9,21 @@
 #include "constValue.hpp"
 #include <GeographicLib/Geodesic.hpp>
 
+constexpr doubleR degreeToRadian{std::numbers::pi / 180.0};
+constexpr doubleR radianToDegree{180.0 / std::numbers::pi};
+
+doubleR normalizeLongitudeR (const doubleR longitude) {
+    constexpr doubleR pi{std::numbers::pi};
+    doubleR normalized = std::fmod(longitude + pi, 2.0 * pi);
+    if (normalized < 0.0)
+        normalized += 2.0 * pi;
+    return normalized - pi;
+}
+
+double canonicalLongitude (const double longitude) {
+    const double normalized = normalizeLongitude(longitude);
+    return normalized == 180.0 ? -180.0 : normalized;
+}
 
 /**
  * @brief 构造飞机轨迹
@@ -54,12 +69,12 @@ int AircraftTrail::calculateGeoHeading () const {
         return -1;
     const int count = std::min(5, size);
     // 相邻点航向转单位向量 (惰性求值, 不拷贝轨迹数据), pair = (东分量, 北分量)
-    const auto segmentVectors = std::views::iota(0, count - 1)
-            | std::views::transform([this, size, count](const int i) {
-                const double bearing = bearingSimple(points[size - count + i], points[size - count + i + 1]);
-                const double rad = bearing * std::numbers::pi / 180.0;
-                return std::pair{std::cos(rad), std::sin(rad)};
-            });
+    const auto segmentVectors = std::views::iota(0, count - 1) | std::views::transform(
+        [this, size, count](const int i) {
+            const double bearing = bearingSimple(points[size - count + i], points[size - count + i + 1]);
+            const doubleR bearingR = bearing * degreeToRadian;
+            return std::pair{std::cos(bearingR), std::sin(bearingR)};
+        });
     const auto [east, north] = std::accumulate(
         segmentVectors.begin(), segmentVectors.end(), std::pair{0.0, 0.0},
         [](const std::pair<double, double> &acc, const std::pair<double, double> &vec) {
@@ -82,24 +97,70 @@ std::deque<Point2D>& AircraftTrail::getPoints () {
  * @param point 经纬度点 (纬度,经度)
  */
 void AircraftTrail::addPoint (Point2D point) {
-    if (point == Point2D(0, 0)) // 初始化时 点可能不可用
+    if (point == Point2D(0, 0)) { // 初始化时 点可能不可用
         if (!points.empty())
             point = points.back();
+        else
+            return;
+    }
     points.push_back(std::move(point));
     while (static_cast<int>(points.size()) > maxSize)
         points.pop_front();
 }
 
-double normalizeLongitude (double longitude) {
-    constexpr double pi{std::numbers::pi};
-    longitude = std::fmod(longitude + pi, 2.0 * pi);
-    if (longitude < 0.0)
-        longitude += 2.0 * pi;
-    return longitude - pi;
+/**
+ * @brief 将经度归一化到 [-180,180]
+ * @note 保留正 180 度的表示，便于区分日期变更线两侧的边界。
+ */
+double normalizeLongitude (const double longitude) {
+    if (!std::isfinite(longitude))
+        return longitude;
+    const double normalized = normalizeLongitudeR(longitude * degreeToRadian) * radianToDegree;
+    if (normalized == -180.0 && longitude > 0.0)
+        return 180.0;
+    return normalized;
 }
-double clampLatitude (const double latitude) {
-    constexpr double degreeToRadian{std::numbers::pi / 180.0};
-    constexpr double latitudeLimit{maxLat * degreeToRadian};
+
+/**
+ * @brief 计算从 left 向东到 right 的经度跨度
+ * @note 输入经度可超出 [-180,180]；left == right 表示零宽范围，除非原始跨度至少一整圈。
+ */
+double getLongiRange (const double left, const double right) {
+    if (std::isfinite(left) && std::isfinite(right) && right - left >= 360.0)
+        return 360.0;
+
+    const double normalizedLeft = normalizeLongitude(left);
+    const double normalizedRight = normalizeLongitude(right);
+    if (normalizedLeft <= normalizedRight)
+        return normalizedRight - normalizedLeft;
+    return 360.0 - normalizedLeft + normalizedRight;
+}
+
+/**
+ * @brief 计算经度范围的中心点
+ * @note 经度范围按从 left 向东到 right 解释。
+ */
+double getLongiRangeCenter (const double left, const double right) {
+    const double normalizedLeft = normalizeLongitude(left);
+    return normalizeLongitude(normalizedLeft + getLongiRange(left, right) / 2.0);
+}
+
+/**
+ * @brief 将经度范围拆成不跨日期变更线的闭区间
+ */
+std::vector<LongiRange> getLongiRanges (const double left, const double right) {
+    if (std::isfinite(left) && std::isfinite(right) && right - left >= 360.0)
+        return {{-180.0, 180.0}};
+
+    const double normalizedLeft = normalizeLongitude(left);
+    const double normalizedRight = normalizeLongitude(right);
+    if (normalizedLeft <= normalizedRight)
+        return {{normalizedLeft, normalizedRight}};
+    return {{normalizedLeft, 180.0}, {-180.0, normalizedRight}};
+}
+
+doubleR clampLatitudeRadians (const doubleR latitude) {
+    constexpr doubleR latitudeLimit{maxSupportLat * degreeToRadian};
     return std::clamp(latitude, -latitudeLimit, latitudeLimit);
 }
 /**
@@ -117,40 +178,29 @@ void DynamicLCC::configure (const Point2D &newCenter, const double verticalMargi
                             const double horizontalMargin) {
     constexpr double wgs84SemiMajorAxis{6378137.0};
     constexpr double wgs84Flattening{1.0 / 298.257223563};
-    constexpr double degreeToRadian{std::numbers::pi / 180.0};
-    constexpr double radianToDegree{180.0 / std::numbers::pi};
 
     configured = false;
     projection.reset();
     if (!std::isfinite(newCenter.first) || !std::isfinite(newCenter.second)
         || !std::isfinite(verticalMargin) || !std::isfinite(horizontalMargin)
-        || std::abs(newCenter.first) > maxLat || verticalMargin <= 0.0 || horizontalMargin <= 0.0)
+        || std::abs(newCenter.first) > maxSupportLat || verticalMargin <= 0.0 || horizontalMargin <= 0.0)
         return;
     center = {
-        std::clamp(newCenter.first, -maxLat, maxLat),
-        normalizeLongitude(newCenter.second * degreeToRadian)
+        std::clamp(newCenter.first, -maxSupportLat, maxSupportLat) * degreeToRadian,
+        normalizeLongitudeR(newCenter.second * degreeToRadian)
     };
     centralMeridian = center.second;
     falseEasting = horizontalMargin * nm2m;
     falseNorthing = verticalMargin * nm2m;
-    const Point2D centerDegrees{center.first, center.second * radianToDegree};
+    const Point2D centerDegrees{center.first * radianToDegree, center.second * radianToDegree};
     const Point2D northEdge = pointBearingDistance(centerDegrees, 0.0, verticalMargin);
     const Point2D southEdge = pointBearingDistance(centerDegrees, 180.0, verticalMargin);
-    double standardSouth = clampLatitude(southEdge.first * degreeToRadian);
-    double standardNorth = clampLatitude(northEdge.first * degreeToRadian);
+    doubleR standardSouth = clampLatitudeRadians(southEdge.first * degreeToRadian);
+    doubleR standardNorth = clampLatitudeRadians(northEdge.first * degreeToRadian);
     if (standardSouth > standardNorth)
         std::swap(standardSouth, standardNorth);
-    if (std::abs(standardSouth + standardNorth) < 1e-12) {
-        const double availableSpan = std::max(standardNorth - standardSouth, 1e-5);
-        const double side = std::max(availableSpan / 3.0, 1e-5);
-        if (center.first >= 0.0) {
-            standardSouth = clampLatitude(center.first * degreeToRadian + side);
-            standardNorth = clampLatitude(center.first * degreeToRadian + 2.0 * side);
-        } else {
-            standardSouth = clampLatitude(center.first * degreeToRadian - 2.0 * side);
-            standardNorth = clampLatitude(center.first * degreeToRadian - side);
-        }
-    }
+    // Keep symmetric standard parallels; GeographicLib correctly reduces this
+    // case to Mercator when the map is centered on the equator.
     try {
         projection = std::make_unique<GeographicLib::LambertConformalConic>(
             wgs84SemiMajorAxis, wgs84Flattening,
@@ -160,8 +210,8 @@ void DynamicLCC::configure (const Point2D &newCenter, const double verticalMargi
         return;
     }
     double centerEasting{};
-    projection->Forward(center.second * radianToDegree, center.first, center.second * radianToDegree, centerEasting,
-                        centerNorthing);
+    projection->Forward(center.second * radianToDegree, center.first * radianToDegree,
+                        center.second * radianToDegree, centerEasting, centerNorthing);
     configured = true;
 }
 
@@ -174,22 +224,19 @@ void DynamicLCC::configure (const Point2D &newCenter, const double verticalMargi
  * @note 经纬度单位为度, left 到 right 按向东方向解释
  */
 void DynamicLCC::reset (const double left, const double right, double bottom, double top) {
-    constexpr double degreeToRadian{std::numbers::pi / 180.0};
-    constexpr double radianToDegree{180.0 / std::numbers::pi};
     configured = false;
     projection.reset();
     if (!std::isfinite(left) || !std::isfinite(right) || !std::isfinite(bottom) || !std::isfinite(top) ||
-        std::abs(bottom) > maxLat || std::abs(top) > maxLat)
+        std::abs(bottom) > maxSupportLat || std::abs(top) > maxSupportLat)
         return;
     if (bottom > top)
         std::swap(bottom, top);
-    const double normalizedLeft = normalizeLongitude(left * degreeToRadian) * radianToDegree;
-    const double normalizedRight = normalizeLongitude(right * degreeToRadian) * radianToDegree;
-    double longitudeSpan = normalizedRight - normalizedLeft;
-    if (longitudeSpan < 0.0)
-        longitudeSpan += 360.0;
-    const double centerLongitude = normalizeLongitude(
-        (normalizedLeft + longitudeSpan / 2.0) * degreeToRadian) * radianToDegree;
+    // Keep both boundary representations.  In particular, -180 and +180
+    // are the two ends of an explicit full-world range, even though they
+    // denote the same meridian.
+    const double normalizedLeft = normalizeLongitude(left);
+    const double normalizedRight = normalizeLongitude(right);
+    const double centerLongitude = canonicalLongitude(getLongiRangeCenter(left, right));
     const Point2D newCenter{(bottom + top) / 2.0, centerLongitude};
     const GeographicLib::Geodesic &geodesic = GeographicLib::Geodesic::WGS84();
     const auto distanceTo = [&geodesic](const Point2D &from, const Point2D &to) {
@@ -233,18 +280,16 @@ void DynamicLCC::reset (const double left, const double right, double bottom, do
  * @return <x,y>, 单位米, 左上角为原点、向东为 x 正方向、向北为 y 负方向
  */
 std::vector<Point2D> DynamicLCC::trans (std::vector<Point2D> positions) const {
-    constexpr double degreeToRadian{std::numbers::pi / 180.0};
-    constexpr double radianToDegree{180.0 / std::numbers::pi};
     if (!configured)
         return positions;
     for (auto &position : positions) {
-        if (!std::isfinite(position.first) || !std::isfinite(position.second) || std::abs(position.first) > maxLat) {
+        if (!std::isfinite(position.first) || !std::isfinite(position.second) || std::abs(position.first) > maxSupportLat) {
             position = {NaN, NaN};
             continue;
         }
-        const double longitude = normalizeLongitude(position.second * degreeToRadian);
+        const doubleR longitudeR = normalizeLongitudeR(position.second * degreeToRadian);
         double projectedX{}, projectedY{};
-        projection->Forward(centralMeridian * radianToDegree, position.first, longitude * radianToDegree, projectedX,
+        projection->Forward(centralMeridian * radianToDegree, position.first, longitudeR * radianToDegree, projectedX,
                             projectedY);
         position = {falseEasting + projectedX, falseNorthing - (projectedY - centerNorthing)};
         if (!std::isfinite(position.first) || !std::isfinite(position.second))
@@ -262,13 +307,12 @@ std::vector<Point2D> DynamicLCC::trans (std::vector<Point2D> positions) const {
  * @return AB距离 (米)
  */
 double distanceSimple (const double lat1, const double lon1, const double lat2, const double lon2) {
-    const double lat1_rad = lat1 * std::numbers::pi / 180.0;
-    const double lon1_rad = lon1 * std::numbers::pi / 180.0;
-    const double lat2_rad = lat2 * std::numbers::pi / 180.0;
-    const double lon2_rad = lon2 * std::numbers::pi / 180.0;
-    const double x = (lon2_rad - lon1_rad) * cos((lat1_rad + lat2_rad) / 2.0);
-    const double y = lat2_rad - lat1_rad;
-    return std::sqrt(x * x + y * y) * avgEarthRadius;
+    const Point2DR loc1R{lat1 * degreeToRadian, lon1 * degreeToRadian};
+    const Point2DR loc2R{lat2 * degreeToRadian, lon2 * degreeToRadian};
+    const doubleR dLonR = normalizeLongitudeR(loc2R.second - loc1R.second);
+    const doubleR xR = dLonR * cos((loc1R.first + loc2R.first) / 2.0);
+    const doubleR yR = loc2R.first - loc1R.first;
+    return std::sqrt(xR * xR + yR * yR) * avgEarthRadius;
 }
 /**
  * @brief 简单计算AB两点距离
@@ -289,13 +333,12 @@ double distanceSimple (const Point2D &loc1, const Point2D &loc2) {
  * @return B相对A的真航向
  */
 double bearingSimple (const double lat1, const double lon1, const double lat2, const double lon2) {
-    const double lat1_rad = lat1 * std::numbers::pi / 180.0;
-    const double lon1_rad = lon1 * std::numbers::pi / 180.0;
-    const double lat2_rad = lat2 * std::numbers::pi / 180.0;
-    const double lon2_rad = lon2 * std::numbers::pi / 180.0;
-    const double dLon = lon2_rad - lon1_rad;
-    const double y = std::sin(dLon) * std::cos(lat2_rad);
-    const double x = std::cos(lat1_rad) * std::sin(lat2_rad) - std::sin(lat1_rad) * std::cos(lat2_rad) * std::cos(dLon);
+    const Point2DR loc1R{lat1 * degreeToRadian, lon1 * degreeToRadian};
+    const Point2DR loc2R{lat2 * degreeToRadian, lon2 * degreeToRadian};
+    const doubleR dLonR = normalizeLongitudeR(loc2R.second - loc1R.second);
+    const double y = std::sin(dLonR) * std::cos(loc2R.first);
+    const double x = std::cos(loc1R.first) * std::sin(loc2R.first)
+            - std::sin(loc1R.first) * std::cos(loc2R.first) * std::cos(dLonR);
     return std::fmod(std::atan2(y, x) * 180.0 / std::numbers::pi + 360.0, 360.0); // 真航向 0~360
 }
 /**

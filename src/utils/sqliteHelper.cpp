@@ -60,7 +60,7 @@ SQLite::Statement Database::get (const std::string &tableName, const SQLiteAim &
     // 查询 select xxx, xxx from xxx where x=? and x=?
     const SQLiteAim header{getHeader(tableName)};
     const string select{"select " + join(aim.empty() ? getHeader(tableName) : aim, ",")};
-    const string from{" from " + tableName};
+    const string from{" from " + tableName + ' '};
     const string where{whereSentence(condition)};
     // 绑定
     SQLite::Statement query(*db, select + from + where);
@@ -136,6 +136,8 @@ void Database::addRecords (const std::string &tableName, const SQLiteRows &rows,
         if (row.size() != header.size())
             throw std::invalid_argument("row size (" + std::to_string(row.size()) + ") != column count ("
                                         + std::to_string(header.size()) + ")");
+        query.reset();
+        query.clearBindings();
         for (int bindIndex = 1; bindIndex <= row.size(); ++bindIndex)
             bindValue(query, bindIndex, row[bindIndex - 1]);
         query.exec();

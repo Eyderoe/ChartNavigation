@@ -138,11 +138,15 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
             -DVCPKG_TARGET_TRIPLET=arm64-osx \
+            -DBUILD_TESTING=ON \
             -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR;${{ github.workspace }}/qcoro-install" \
             -DQt6_DIR="$QT_ROOT_DIR/lib/cmake/Qt6"
 
       - name: Build
         run: cmake --build "$BUILD_DIR" --config Release
+
+      - name: Run doctest
+        run: ctest --test-dir "$BUILD_DIR" --build-config Release --output-on-failure
 
       - name: Package
         env:

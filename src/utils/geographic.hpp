@@ -9,10 +9,17 @@
 #include <vector>
 
 
-constexpr double maxLat{80}; // 纬度最大绝对值, 单位度
+constexpr double maxSupportLat{80}; // 纬度最大绝对值
 
-using Point2D = std::pair<double, double>; // (纬度,经度)
+// 十进制
+using Point2D = std::pair<double, double>; // (纬度,经度) 或者 (x,y)
 using Rect2D = std::pair<Point2D, Point2D>; // (左上,右下)
+using LongiRange = std::pair<double, double>; // [左,右]
+// 弧度制
+using doubleR = double;
+using Point2DR = std::pair<doubleR, doubleR>;
+using Rect2DR = std::pair<Point2DR, Point2DR>;
+using LongiRangeR = std::pair<doubleR, doubleR>;
 
 class AircraftTrail {
     public:
@@ -34,8 +41,9 @@ class DynamicLCC { // WGS84,兰伯特等角圆锥投影
         [[nodiscard]] std::vector<Point2D> trans (std::vector<Point2D> positions) const;
     private:
         void configure (const Point2D &newCenter, double verticalMargin, double horizontalMargin);
-        Point2D center{};
-        double centralMeridian{}, centerNorthing{}, falseEasting{}, falseNorthing{};
+        Point2DR center{}; // 弧度制中心点
+        doubleR centralMeridian{}; // 弧度制中央经线
+        double centerNorthing{}, falseEasting{}, falseNorthing{}; // 单位米
         std::unique_ptr<GeographicLib::LambertConformalConic> projection;
         bool configured{false};
 };
@@ -46,5 +54,10 @@ double bearingSimple (double lat1, double lon1, double lat2, double lon2);
 double bearingSimple (const Point2D &loc1, const Point2D &loc2);
 Point2D pointBearingDistance (const Point2D &fix, double bear, double distance);
 double distanceGeometry (const Point2D &loc1, const Point2D &loc2);
+
+double normalizeLongitude (double longitude);
+double getLongiRange (double left, double right);
+double getLongiRangeCenter (double left, double right);
+std::vector<LongiRange> getLongiRanges (double left, double right);
 
 #endif //CHARTNAVIGATION_GEOGRAPHIC_HPP

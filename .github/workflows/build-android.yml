@@ -205,6 +205,7 @@ jobs:
             -DANDROID_SDK_ROOT="$ANDROID_SDK_ROOT" \
             -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR;${{ github.workspace }}/qcoro-install" \
             -DQt6_DIR="$QT_ROOT_DIR/lib/cmake/Qt6" \
+            -DBUILD_TESTING=OFF \
             -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH \
             -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH \
             -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH
