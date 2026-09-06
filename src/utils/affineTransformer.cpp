@@ -155,6 +155,27 @@ std::pair<double, double> AffineTransformer::transform (const std::pair<double, 
 }
 
 /**
+ * @brief 反向转换平面坐标至经纬度
+ * @param x 平面横坐标
+ * @param y 平面纵坐标
+ * @return [latitude,longitude]
+ */
+std::pair<double, double> AffineTransformer::rtransform (const double x, const double y) {
+    const Eigen::Vector2d translated{x - paramsX(2), y - paramsY(2)};
+    const Eigen::Vector2d lonLat = inverseLinearMatrix * translated;
+    return {lonLat(1), lonLat(0)};
+}
+
+/**
+ * @brief 反向转换平面坐标至经纬度
+ * @param loc [x,y]
+ * @return [latitude,longitude]
+ */
+std::pair<double, double> AffineTransformer::rtransform (const std::pair<double, double> &loc) {
+    return rtransform(loc.first, loc.second);
+}
+
+/**
  * @brief 评估仿射变换效果
  * @param print 是否输出至控制台
  * @return 均方根误差,误差列表
@@ -256,5 +277,8 @@ bool AffineTransformer::fitAffine () {
     auto [x,y] = doAffine(data);
     paramsX = x;
     paramsY = y;
+    Eigen::Matrix2d linearMatrix;
+    linearMatrix << paramsX(0), paramsX(1), paramsY(0), paramsY(1);
+    inverseLinearMatrix = linearMatrix.inverse();
     return true;
 }

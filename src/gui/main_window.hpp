@@ -32,6 +32,7 @@ class main_window : public QMainWindow {
         note_widget *note;
         StackedWidget *stackedWidget;
         QActionGroup *sourceGroup{nullptr}, *tcasGroup{nullptr}, *infoGroup{nullptr};
+        bool attachmentAvailable{false};
         QString forAndroidDebug; // Debug文本
 
         void setDataSourceGroup (int val) const;
@@ -40,6 +41,7 @@ class main_window : public QMainWindow {
         void initConnect ();
         void initActionGroup ();
         void menu2toolBar ();
+        void updateAttachmentAction ();
     private Q_SLOTS:
         static void on_action_dark_triggered (bool checked);
         void openFile ();

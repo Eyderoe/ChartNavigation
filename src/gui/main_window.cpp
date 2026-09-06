@@ -36,6 +36,7 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
     enroute->setDataProvider(stackedWidget->dataProvider());
     // 初始化动作组
     initActionGroup();
+    updateAttachmentAction();
     // 安卓特化 因为显示不了菜单栏
     if constexpr (platform == MultiPlatform::androidOS) {
         // 先禁用一些东西
@@ -224,6 +225,20 @@ void main_window::initConnect () {
     connect(ui->action_show_trail, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::showTrail, checked);
     });
+    connect(pdfBrowser, &main_widget::attachmentAvailabilityChanged, this, [this](const bool available) {
+        attachmentAvailable = available;
+        updateAttachmentAction();
+    });
+    connect(ui->action_add, &QAction::triggered, this, [this](const bool checked) {
+        if (!checked) {
+            enroute->clearAttachedChart();
+        } else if (auto chart = pdfBrowser->currentPageAttachment()) {
+            enroute->setAttachedChart(std::move(*chart));
+        } else {
+            ui->action_add->setChecked(false);
+        }
+        updateAttachmentAction();
+    });
 
     connect(ui->action_thank, &QAction::triggered, this, [&] () {
         const auto dialog = new about_dialog(this);
@@ -272,6 +287,13 @@ void main_window::initConnect () {
         else
             assert(false && "need to update if else. [main_window::initConnect]");
     });
+}
+
+void main_window::updateAttachmentAction () {
+    const bool attached = enroute && enroute->hasAttachedChart();
+    ui->action_add->setChecked(attached);
+    ui->action_add->setEnabled(attached || attachmentAvailable);
+    ui->action_add->setToolTip(attached ? tr("取消附加航图") : tr("添加航图至航路"));
 }
 
 /**

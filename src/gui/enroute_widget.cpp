@@ -10,6 +10,19 @@ enroute_widget::enroute_widget(QWidget *parent) :
 
 void enroute_widget::setDataProvider (DataProvider *provider) {
     dataProvider = provider;
+    ui->graphicsView->setDataProvider(provider);
+}
+
+void enroute_widget::setAttachedChart (AttachedChart chart) {
+    ui->graphicsView->setAttachedChart(std::move(chart));
+}
+
+void enroute_widget::clearAttachedChart () {
+    ui->graphicsView->clearAttachedChart();
+}
+
+bool enroute_widget::hasAttachedChart () const noexcept {
+    return ui->graphicsView->hasAttachedChart();
 }
 
 enroute_widget::~enroute_widget() {

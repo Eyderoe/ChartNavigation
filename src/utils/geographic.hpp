@@ -34,18 +34,19 @@ class AircraftTrail {
         std::deque<Point2D> points; // 轨迹点, 尾部为最新
 };
 
-class DynamicLCC { // WGS84,兰伯特等角圆锥投影
+class DynamicLCC { // WGS84,兰伯特等角圆锥投影.投影一般分类标准[等角,等积,等距]
     public:
         void reset (const Point2D &newCenter, int verticalMargin, int horizontalMargin);
         void reset (double left, double right, double bottom, double top);
         [[nodiscard]] std::vector<Point2D> trans (std::vector<Point2D> positions) const;
+        [[nodiscard]] std::vector<Point2D> revertTrans (std::vector<Point2D> positions) const;
     private:
         void configure (const Point2D &newCenter, double verticalMargin, double horizontalMargin);
+
         Point2DR center{}; // 弧度制中心点
         doubleR centralMeridian{}; // 弧度制中央经线
         double centerNorthing{}, falseEasting{}, falseNorthing{}; // 单位米
         std::unique_ptr<GeographicLib::LambertConformalConic> projection;
-        bool configured{false};
 };
 
 double distanceSimple (double lat1, double lon1, double lat2, double lon2);
@@ -55,8 +56,8 @@ double bearingSimple (const Point2D &loc1, const Point2D &loc2);
 Point2D pointBearingDistance (const Point2D &fix, double bear, double distance);
 double distanceGeometry (const Point2D &loc1, const Point2D &loc2);
 
-double normalizeLongitude (double longitude);
-double getLongiRange (double left, double right);
+double normalizeLongitude (double longitude, bool halfOpen = false);
+double getLongiSpan (double left, double right);
 double getLongiRangeCenter (double left, double right);
 std::vector<LongiRange> getLongiRanges (double left, double right);
 

@@ -71,11 +71,11 @@ class MapDataTestDatabase {
             });
             database.addRecords("awy_idx", {
                 {int64_t{1}, int64_t{42}, int64_t{1}, int64_t{1}, int64_t{0}, int64_t{1}, int64_t{0},
-                 std::string{"TEST"}},
+                 std::string{"TEST"}, std::string{"forw"}},
                 {int64_t{2}, int64_t{42}, int64_t{2}, int64_t{1}, int64_t{0}, int64_t{1}, int64_t{0},
-                 std::string{"TEST"}},
+                 std::string{"TEST"}, std::string{"forw"}},
                 {int64_t{3}, int64_t{43}, int64_t{0}, int64_t{1}, int64_t{0}, int64_t{1}, int64_t{0},
-                 std::string{"SINGLE"}}
+                 std::string{"SINGLE"}, std::string{"back"}}
             });
             database.addRecords("fir", {
                 {int64_t{1}, int64_t{0}, std::string{"TESTFIR"}, 0.0, 179.0, 0.0, -179.0,
@@ -157,6 +157,9 @@ TEST_CASE("map data query") {
                 CHECK(airway.ident == QStringLiteral("SINGLE"));
                 CHECK(airway.p1 == Point2D(30.0, 10.0));
                 CHECK(airway.p2 == Point2D(31.0, 11.0));
+                CHECK(airway.id1 == 0);
+                CHECK(airway.id2 == 0);
+                CHECK(airway.direct == 'R');
                 found = true;
             }
         }

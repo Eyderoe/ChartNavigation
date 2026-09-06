@@ -2,6 +2,10 @@
 #define CHARTNAVIGATION_PDFVIEW_HPP
 
 #include <QtPdfWidgets/QPdfView>
+#include <QPointer>
+#include <optional>
+
+#include "services/attachedChart.hpp"
 #include "utils/affineTransformer.hpp"
 #include "services/dataProvider.hpp"
 
@@ -17,6 +21,8 @@ class PdfView final : public QPdfView {
         void setDataProvider (DataProvider *provider);
         void fetchScale ();
         void zoomTo (double factor);
+        [[nodiscard]] bool canAttachCurrentPage () const;
+        [[nodiscard]] std::optional<AttachedChart> currentPageAttachment ();
     protected:
         void wheelEvent (QWheelEvent *event) override;
         void mousePressEvent (QMouseEvent *event) override;
@@ -43,8 +49,9 @@ class PdfView final : public QPdfView {
         // 仿射变换
         AffineTransformer transformer{};
         bool transActive{false};
+        AffineQuality affineQuality{AffineQuality::inop};
         // 模拟器
-        DataProvider *dataProvider{nullptr};
+        QPointer<DataProvider> dataProvider;
         QPixmap plane, otherPlane;
     Q_SIGNALS:
         void zoomFactor_changed (double factor);

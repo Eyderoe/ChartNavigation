@@ -1,6 +1,7 @@
 #include "mapItemManage.hpp"
 
 #include <QColor>
+#include <QFont>
 #include <QGraphicsSimpleTextItem>
 #include <QLineF>
 #include <QPainter>
@@ -12,56 +13,149 @@
 #include <cmath>
 #include <deque>
 #include <iterator>
+#include <numbers>
 #include <optional>
 #include <stdexcept>
 #include <type_traits>
+#include <unordered_set>
 #include <utility>
 
 
-QPainterPath airportSymbol () {
+namespace {
+
+qreal validSymbolSize (const qreal size) {
+    if (!std::isfinite(size) || size <= 0.0)
+        throw std::invalid_argument("map symbol size must be positive and finite");
+    return size;
+}
+
+qreal vorCenterPointWidth (const qreal size) {
+    return size > 14.0 ? size / 4.0 : size / 3.0;
+}
+
+qreal ndbCenterPointWidth (const qreal size) {
+    return size > 12.0 ? size / 4.0 : size / 3.0;
+}
+
+bool isNdb (const MapItemData &data) {
+    const auto *navaid = std::get_if<MapNavData>(&data);
+    return navaid && navaid->navType == NavaidType::ndb;
+}
+
+void configureNdbPen (QPen &pen) {
+    // LNM's NDB mark is two broken rings.  Keep the pattern in pen space so
+    // it stays the same size for screen-fixed symbols at every map zoom.
+    pen.setStyle(Qt::CustomDashLine);
+    pen.setDashPattern({2.0, 2.0});
+}
+
+void addVorHexagon (QPainterPath &path, const qreal size) {
+    const qreal radius = size / 2.0;
+    path.addPolygon(QPolygonF{
+        QPointF{-radius / 2.0, -radius}, QPointF{radius / 2.0, -radius},
+        QPointF{radius, 0.0}, QPointF{radius / 2.0, radius},
+        QPointF{-radius / 2.0, radius}, QPointF{-radius, 0.0},
+        QPointF{-radius / 2.0, -radius}
+    });
+}
+
+void addDmeSquare (QPainterPath &path, const qreal size) {
+    path.addRect(-size / 2.0, -size / 2.0, size, size);
+}
+
+constexpr qreal airwayLineWidth{1.0};
+constexpr int moraLastZoomLevel{2};
+// Path items use projected metres as their local coordinates, while the LNM
+// arrow size is specified in screen pixels.  Keep a small local margin for the
+// device-space arrow without making every route's scene-index region enormous.
+constexpr qreal airwayBoundingMargin{2000.0};
+
+bool isOneWayAirway (const char direct) {
+    return direct == 'F' || direct == 'R';
+}
+
+QPolygonF airwayArrow (const QLineF &segment, const char direct, const qreal lineWidth) {
+    if (!isOneWayAirway(direct) || segment.length() <= 1.0e-9)
+        return {};
+
+    QPointF direction = segment.p2() - segment.p1();
+    if (direct == 'R')
+        direction = -direction;
+    direction /= segment.length();
+    const QPointF right{-direction.y(), direction.x()};
+    const QPointF center = segment.pointAt(0.5);
+    const qreal size = 2.5 * lineWidth;
+
+    // LNM 的箭头以线段中点为中心，先在屏幕局部坐标中画出这个凹口形：
+    //       (0, -s)
+    //      /       \
+    //   (s, s)   (-s, s)
+    //        \   /
+    //       (0, s/2)
+    // 局部 +y 指向线段的反方向；因此用 -direction 映射局部 y 轴。
+    const QPolygonF localArrow{
+        QPointF{0.0, -size}, QPointF{size, size},
+        QPointF{0.0, size / 2.0}, QPointF{-size, size}
+    };
+    QPolygonF arrow;
+    arrow.reserve(localArrow.size());
+    for (const QPointF &point : localArrow)
+        arrow.emplace_back(center + right * point.x() - direction * point.y());
+    return arrow;
+}
+
+} // namespace
+
+
+QPainterPath airportSymbol (const qreal requestedSize) {
+    const qreal size = validSymbolSize(requestedSize);
     QPainterPath path;
-    path.addEllipse(QPointF{}, 6.0, 6.0);
-    path.moveTo(0.0, -4.0);
-    path.lineTo(0.0, 4.0);
+    path.addEllipse(QPointF{}, size / 2.0, size / 2.0);
+    path.moveTo(0.0, -size / 2.0 + 2.0);
+    path.lineTo(0.0, size / 2.0 - 2.0);
     return path;
 }
 
-QPainterPath fixSymbol () {
+QPainterPath fixSymbol (const qreal requestedSize) {
+    const qreal size = validSymbolSize(requestedSize);
+    const qreal radius = size / 2.0;
     QPainterPath path;
     path.addPolygon(QPolygonF{
-        QPointF{0.0, -5.0}, QPointF{5.0, 4.0}, QPointF{-5.0, 4.0}, QPointF{0.0, -5.0}
+        QPointF{0.0, -radius}, QPointF{radius, radius},
+        QPointF{-radius, radius}, QPointF{0.0, -radius}
     });
     return path;
 }
 
-QPainterPath vorSymbol () {
+QPainterPath vorSymbol (const qreal requestedSize) {
+    const qreal size = validSymbolSize(requestedSize);
     QPainterPath path;
-    path.addPolygon(QPolygonF{
-        QPointF{-3.0, -6.0}, QPointF{3.0, -6.0}, QPointF{6.0, 0.0},
-        QPointF{3.0, 6.0}, QPointF{-3.0, 6.0}, QPointF{-6.0, 0.0}, QPointF{-3.0, -6.0}
-    });
-    path.addEllipse(QPointF{}, 1.0, 1.0);
+    addVorHexagon(path, size);
     return path;
 }
 
-QPainterPath dmeSymbol () {
+QPainterPath dmeSymbol (const qreal requestedSize) {
+    const qreal size = validSymbolSize(requestedSize);
     QPainterPath path;
-    path.addRect(-5.0, -5.0, 10.0, 10.0);
-    path.addEllipse(QPointF{}, 1.0, 1.0);
+    addDmeSquare(path, size);
     return path;
 }
 
-QPainterPath vordmeSymbol () {
-    QPainterPath path = dmeSymbol();
-    path.addPath(vorSymbol());
+QPainterPath vordmeSymbol (const qreal requestedSize) {
+    const qreal size = validSymbolSize(requestedSize);
+    QPainterPath path;
+    // 文档规定的叠放顺序：DME 方框、VOR 六边形；中心点由图元单独绘制。
+    addDmeSquare(path, size);
+    addVorHexagon(path, size);
     return path;
 }
 
-QPainterPath ndbSymbol () {
+QPainterPath ndbSymbol (const qreal requestedSize) {
+    const qreal size = validSymbolSize(requestedSize);
+    const qreal radius = size / 2.0;
     QPainterPath path;
-    path.addEllipse(QPointF{}, 6.0, 6.0);
-    path.addEllipse(QPointF{}, 4.0, 4.0);
-    path.addEllipse(QPointF{}, 1.0, 1.0);
+    path.addEllipse(QPointF{}, radius, radius);
+    path.addEllipse(QPointF{}, size / 3.0, size / 3.0);
     return path;
 }
 
@@ -108,7 +202,7 @@ NormalizedBound normalizeBound (const Rect2D &rect) {
 
     double left = normalizeLongitude(topLeft.second);
     double right = normalizeLongitude(bottomRight.second);
-    if (getLongiRange(topLeft.second, bottomRight.second) >= 360.0) {
+    if (getLongiSpan(topLeft.second, bottomRight.second) >= 360.0) {
         left = -180.0;
         right = 180.0;
     }
@@ -152,7 +246,7 @@ Rect2D expandForItems (const NormalizedBound &viewport) {
         bottom = -maxSupportLat;
     }
 
-    const double longitudeSpan = std::min(360.0, getLongiRange(viewport.left, viewport.right) * 2.0);
+    const double longitudeSpan = std::min(360.0, getLongiSpan(viewport.left, viewport.right) * 2.0);
     if (longitudeSpan >= 360.0)
         return {{top, -180.0}, {bottom, 180.0}};
 
@@ -179,7 +273,7 @@ QString dataLabel (const MapItemData &data) {
                            || std::is_same_v<T, MapNavData>)
             return item.ident;
         else
-            return QString::number(item.alt);
+            return QString::number(item.alt / 100);
     }, data);
 }
 
@@ -218,7 +312,22 @@ bool finitePoint (const Point2D &point) {
 QPen defaultPen (const MapItemType type) {
     QPen pen;
     pen.setCosmetic(true);
-    pen.setWidthF(type == MapItemType::fir ? 1.5 : 1.0);
+    switch (type) {
+        case MapItemType::airport:
+            pen.setWidthF(12.0 / 5.0);
+            break;
+        case MapItemType::fix:
+            pen.setWidthF(std::max(10.0 / 6.0, 1.5));
+            break;
+        case MapItemType::fir:
+            pen.setWidthF(5.0);
+            pen.setCapStyle(Qt::FlatCap);
+            pen.setDashPattern({2.0, 2.0});
+            break;
+        default:
+            pen.setWidthF(1.0);
+            break;
+    }
     switch (type) {
         case MapItemType::airport:
             pen.setColor(QColor(80, 200, 255));
@@ -250,9 +359,9 @@ QBrush defaultBrush (const MapItemType type) {
 
 qreal defaultZValue (const MapItemType type) {
     switch (type) {
-        case MapItemType::mora:
-            return -30.0;
         case MapItemType::fir:
+            return -30.0;
+        case MapItemType::mora:
             return -20.0;
         case MapItemType::awy:
             return -10.0;
@@ -266,6 +375,74 @@ void configureLabel (QGraphicsSimpleTextItem &labelItem, const QPointF &anchor) 
     labelItem.setBrush(QColor(225, 225, 225));
     const QRectF labelRect = labelItem.boundingRect();
     labelItem.setPos(anchor + QPointF(5.0, -labelRect.height() / 2.0));
+}
+
+void configureCenteredLabel (QGraphicsSimpleTextItem &labelItem, const QPointF &anchor) {
+    labelItem.setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
+    labelItem.setBrush(QColor(225, 225, 225));
+    labelItem.setPos(anchor - labelItem.boundingRect().center());
+}
+
+void configureMoraLabel (QGraphicsSimpleTextItem &labelItem, const QPointF &anchor,
+                         const QRectF &frame) {
+    labelItem.setFlag(QGraphicsItem::ItemIgnoresTransformations, false);
+    labelItem.setBrush(QColor(225, 225, 225));
+
+    // QGraphicsSimpleTextItem uses the font pixel size as its local-coordinate
+    // height when the item follows the map transform.  Scale a reference font
+    // so the rendered label occupies 20% of the projected MORA frame.
+    constexpr int referencePixelSize{100};
+    QFont moraFont = labelItem.font();
+    moraFont.setPixelSize(referencePixelSize);
+    moraFont.setWeight(QFont::DemiBold);
+    labelItem.setFont(moraFont);
+
+    const qreal referenceHeight = labelItem.boundingRect().height();
+    const qreal targetHeight = frame.height() * 0.20;
+    if (referenceHeight > 0.0 && targetHeight > 0.0) {
+        const qreal requestedSize = referencePixelSize * targetHeight / referenceHeight;
+        moraFont.setPixelSize(std::max(1, static_cast<int>(std::lround(requestedSize))));
+        labelItem.setFont(moraFont);
+    }
+    labelItem.setPos(anchor - labelItem.boundingRect().center());
+}
+
+void configureAirwayLabel (QGraphicsSimpleTextItem &labelItem, const QLineF &segment) {
+    labelItem.setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
+    labelItem.setBrush(QColor(225, 225, 225));
+    qreal angle = std::atan2(segment.dy(), segment.dx()) * 180.0 / std::numbers::pi;
+    if (angle > 90.0)
+        angle -= 180.0;
+    else if (angle <= -90.0)
+        angle += 180.0;
+
+    const QRectF labelRect = labelItem.boundingRect();
+    // ItemIgnoresTransformations 下 pos 仍是地图坐标，不能在这里减去像素尺寸。
+    // 把地图锚点放在线段中点，再用 item 自身变换按屏幕像素居中文字。
+    labelItem.setPos(segment.pointAt(0.5));
+    labelItem.setTransformOriginPoint(QPointF{});
+    labelItem.setTransform(QTransform::fromTranslate(-labelRect.center().x(), -labelRect.center().y()));
+    labelItem.setRotation(angle);
+}
+
+std::vector<QLineF> lineSegments (const QPainterPath &path) {
+    std::vector<QLineF> result;
+    QPointF previous;
+    bool hasPrevious{};
+    for (int index = 0; index < path.elementCount(); ++index) {
+        const auto element = path.elementAt(index);
+        const QPointF point{element.x, element.y};
+        if (element.type == QPainterPath::LineToElement && hasPrevious) {
+            const QLineF line(previous, point);
+            if (line.length() > 1.0e-9)
+                result.emplace_back(line);
+        }
+        previous = point;
+        hasPrevious = true;
+        if (element.type == QPainterPath::MoveToElement)
+            previous = point;
+    }
+    return result;
 }
 
 struct ProjectedPathSegment {
@@ -294,6 +471,25 @@ struct ProjectedPointKeyHash {
     }
 };
 
+bool pointKeyLess (const ProjectedPointKey &first, const ProjectedPointKey &second) {
+    return first.x < second.x || (first.x == second.x && first.y < second.y);
+}
+
+struct ProjectedSegmentKey {
+    ProjectedPointKey first;
+    ProjectedPointKey second;
+
+    bool operator== (const ProjectedSegmentKey&) const = default;
+};
+
+struct ProjectedSegmentKeyHash {
+    size_t operator() (const ProjectedSegmentKey &key) const noexcept {
+        const size_t first = ProjectedPointKeyHash{}(key.first);
+        const size_t second = ProjectedPointKeyHash{}(key.second);
+        return first ^ (second + 0x9e3779b9U + (first << 6U) + (first >> 2U));
+    }
+};
+
 ProjectedPointKey pointKey (const QPointF &point) {
     constexpr qreal joinTolerance{0.01};
     return {
@@ -302,8 +498,34 @@ ProjectedPointKey pointKey (const QPointF &point) {
     };
 }
 
+ProjectedPointKey firPointKey (const QPointF &point) {
+    // 相邻 FIR 的同一条边可能来自两条独立记录，允许亚米级坐标舍入误差。
+    constexpr qreal duplicateTolerance{1.0};
+    return {
+        std::llround(point.x() / duplicateTolerance),
+        std::llround(point.y() / duplicateTolerance)
+    };
+}
+
+std::vector<ProjectedPathSegment> uniqueFirSegments (const std::vector<ProjectedPathSegment> &segments) {
+    std::vector<ProjectedPathSegment> unique;
+    unique.reserve(segments.size());
+    std::unordered_set<ProjectedSegmentKey, ProjectedSegmentKeyHash> seen;
+    seen.reserve(segments.size());
+    for (const auto &segment : segments) {
+        ProjectedPointKey first = firPointKey(segment.first);
+        ProjectedPointKey second = firPointKey(segment.second);
+        if (pointKeyLess(second, first))
+            std::swap(first, second);
+        if (seen.emplace(ProjectedSegmentKey{first, second}).second)
+            unique.emplace_back(segment);
+    }
+    return unique;
+}
+
 QPainterPath combineSegments (const std::vector<ProjectedPathSegment> &segments) {
     QPainterPath path;
+    path.setFillRule(Qt::OddEvenFill);
     std::vector<bool> consumed(segments.size());
     std::unordered_map<ProjectedPointKey, std::vector<size_t>, ProjectedPointKeyHash> endpoints;
     endpoints.reserve(segments.size() * 2);
@@ -376,6 +598,27 @@ QRectF projectedRect (const DynamicLCC &projection, const Rect2D &bound) {
     return result.normalized();
 }
 
+// MORA records are one-degree geographic cells.  Keep the projected cell
+// corners instead of rectifying each cell independently: adjacent cells then
+// share the exact same projected edge and can never overlap at high latitude.
+std::optional<QPainterPath> moraFrame (const DynamicLCC &projection, const Rect2D &bound) {
+    const auto &[topLeft, bottomRight] = bound;
+    const auto corners = projection.trans({
+        topLeft,
+        {topLeft.first, bottomRight.second},
+        bottomRight,
+        {bottomRight.first, topLeft.second}
+    });
+    if (corners.size() != 4 || !std::ranges::all_of(corners, finitePoint))
+        return std::nullopt;
+
+    QPainterPath path(toQPoint(corners.front()));
+    for (size_t index = 1; index < corners.size(); ++index)
+        path.lineTo(toQPoint(corners[index]));
+    path.closeSubpath();
+    return path;
+}
+
 } // namespace
 
 
@@ -394,8 +637,11 @@ MapPathItem::MapPathItem (std::vector<MapItemData> data, const QPainterPath &pat
 
     setFlag(ItemIsSelectable, true);
     setPen(defaultPen(itemType()));
-    setBrush(Qt::NoBrush);
+    setBrush(defaultBrush(itemType()));
     setZValue(defaultZValue(itemType()));
+
+    if (itemType() == MapItemType::awy)
+        airwaySegments = lineSegments(path);
 
     if (itemType() == MapItemType::awy) {
         labelItems.reserve(dataItems.size());
@@ -409,6 +655,9 @@ MapPathItem::MapPathItem (std::vector<MapItemData> data, const QPainterPath &pat
             configureLabel(*labelItem, anchor);
             labelItems.emplace_back(labelItem);
         }
+        const auto segments = lineSegments(path);
+        if (labelItems.size() == 1 && !segments.empty())
+            configureAirwayLabel(*labelItems.front(), segments.front());
     }
 }
 
@@ -428,7 +677,11 @@ const MapItemData* MapPathItem::findData (const MapItemType type, const int id) 
 }
 
 QRectF MapPathItem::boundingRect () const {
-    return QGraphicsPathItem::boundingRect().united(shape().boundingRect());
+    QRectF result = QGraphicsPathItem::boundingRect().united(shape().boundingRect());
+    if (itemType() == MapItemType::awy && !airwaySegments.empty())
+        result.adjust(-airwayBoundingMargin, -airwayBoundingMargin,
+                      airwayBoundingMargin, airwayBoundingMargin);
+    return result;
 }
 
 QPainterPath MapPathItem::shape () const {
@@ -436,7 +689,36 @@ QPainterPath MapPathItem::shape () const {
         return {};
     QPainterPathStroker stroker;
     stroker.setWidth(std::max(pen().widthF(), 6.0));
-    return path().united(stroker.createStroke(path()));
+    QPainterPath result = path().united(stroker.createStroke(path()));
+    return result;
+}
+
+void MapPathItem::paint (QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QGraphicsPathItem::paint(painter, option, widget);
+    if (itemType() != MapItemType::awy)
+        return;
+
+    const qreal lineWidth = std::max(pen().widthF(), airwayLineWidth);
+    const QTransform itemToDevice = painter->worldTransform();
+    painter->save();
+    // The route geometry is in projected metres.  Convert each segment to
+    // device coordinates first so the arrow keeps its LNM pixel size at every
+    // zoom level, then draw it without the map transform.
+    painter->setWorldTransform(QTransform{});
+    painter->setPen(pen());
+    painter->setBrush(Qt::NoBrush);
+    const size_t count = std::min(dataItems.size(), airwaySegments.size());
+    for (size_t index = 0; index < count; ++index) {
+        const auto *airway = std::get_if<MapAwyData>(&dataItems[index]);
+        if (!airway)
+            continue;
+        const QLineF deviceSegment(itemToDevice.map(airwaySegments[index].p1()),
+                                   itemToDevice.map(airwaySegments[index].p2()));
+        const QPolygonF arrow = airwayArrow(deviceSegment, airway->direct, lineWidth);
+        if (!arrow.isEmpty())
+            painter->drawPolygon(arrow);
+    }
+    painter->restore();
 }
 
 MapItemType MapPathItem::itemType () const noexcept {
@@ -453,12 +735,16 @@ QString MapPathItem::label () const {
 
 void MapPathItem::setDetail (const MapItemDetail detail) {
     currentDetail = detail;
-    for (auto *labelItem : labelItems)
-        labelItem->setVisible(detail == MapItemDetail::full);
+    setLabelsVisible(detail == MapItemDetail::full);
 }
 
 MapItemDetail MapPathItem::detail () const noexcept {
     return currentDetail;
+}
+
+void MapPathItem::setLabelsVisible (const bool visible) {
+    for (auto *labelItem : labelItems)
+        labelItem->setVisible(visible && currentDetail == MapItemDetail::full);
 }
 
 void MapPathItem::setLabelColor (const QColor &color) {
@@ -468,8 +754,25 @@ void MapPathItem::setLabelColor (const QColor &color) {
 
 void MapPathItem::setPath (const QPainterPath &path) {
     QGraphicsPathItem::setPath(path);
-    if (labelItems.size() == 1)
+    if (labelItems.size() != 1)
+        return;
+    const auto segments = lineSegments(path);
+    if (itemType() == MapItemType::awy && !segments.empty())
+        configureAirwayLabel(*labelItems.front(), segments.front());
+    else
         configureLabel(*labelItems.front(), path.isEmpty() ? QPointF{} : path.pointAtPercent(0.5));
+}
+
+void MapPathItem::setAirwayLabelSegments (const std::vector<QLineF> &segments) {
+    if (itemType() != MapItemType::awy)
+        throw std::logic_error("label segments are only valid for airway items");
+    prepareGeometryChange();
+    airwaySegments = segments;
+    const size_t count = std::min(labelItems.size(), segments.size());
+    for (size_t index = 0; index < count; ++index) {
+        if (segments[index].length() > 1.0e-9)
+            configureAirwayLabel(*labelItems[index], segments[index]);
+    }
 }
 
 
@@ -479,11 +782,21 @@ MapPointItem::MapPointItem (MapItemData data, QPainterPath symbol, const bool sc
     if (!isPointData(this->data) || !dataTypeMatchesVariant(this->data))
         throw std::invalid_argument("MapPointItem requires airport, fix, navaid or MORA data");
 
+    if (isNdb(this->data)) {
+        itemPen.setColor(QColor(QStringLiteral("#800000")));
+        configureNdbPen(itemPen);
+    }
+
     setFlag(ItemIsSelectable, true);
     setFlag(ItemIgnoresTransformations, screenFixed);
     setZValue(defaultZValue(itemType()));
     labelItem = new QGraphicsSimpleTextItem(label(), this);
-    configureLabel(*labelItem, symbolPath.boundingRect().center());
+    if (itemType() == MapItemType::mora) {
+        configureMoraLabel(*labelItem, symbolPath.boundingRect().center(), symbolPath.boundingRect());
+        labelItem->setOpacity(0.35);
+    } else {
+        configureLabel(*labelItem, symbolPath.boundingRect().center());
+    }
 }
 
 QRectF MapPointItem::boundingRect () const {
@@ -502,6 +815,18 @@ void MapPointItem::paint (QPainter *painter, const QStyleOptionGraphicsItem*, QW
     painter->setPen(itemPen);
     painter->setBrush(itemBrush);
     painter->drawPath(symbolPath);
+
+    const auto *navaid = std::get_if<MapNavData>(&data);
+    if (!navaid)
+        return;
+    const QRectF bounds = symbolPath.boundingRect();
+    const qreal size = std::max(bounds.width(), bounds.height());
+    const qreal centerWidth = navaid->navType == NavaidType::ndb
+                                ? ndbCenterPointWidth(size) : vorCenterPointWidth(size);
+    QPen centerPen(itemPen.color(), centerWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    centerPen.setCosmetic(true);
+    painter->setPen(centerPen);
+    painter->drawPoint(QPointF{});
 }
 
 const MapItemData& MapPointItem::mapData () const noexcept {
@@ -523,7 +848,10 @@ QString MapPointItem::label () const {
 void MapPointItem::setSymbol (const QPainterPath &symbol) {
     prepareGeometryChange();
     symbolPath = symbol;
-    configureLabel(*labelItem, symbolPath.boundingRect().center());
+    if (itemType() == MapItemType::mora)
+        configureMoraLabel(*labelItem, symbolPath.boundingRect().center(), symbolPath.boundingRect());
+    else
+        configureLabel(*labelItem, symbolPath.boundingRect().center());
     update();
 }
 
@@ -534,6 +862,8 @@ const QPainterPath& MapPointItem::symbol () const noexcept {
 void MapPointItem::setPen (const QPen &pen) {
     prepareGeometryChange();
     itemPen = pen;
+    if (isNdb(data))
+        configureNdbPen(itemPen);
     update();
 }
 
@@ -552,15 +882,28 @@ QBrush MapPointItem::brush () const {
 
 void MapPointItem::setDetail (const MapItemDetail detail) {
     currentDetail = detail;
-    labelItem->setVisible(detail == MapItemDetail::full);
+    setLabelsVisible(detail == MapItemDetail::full);
 }
 
 MapItemDetail MapPointItem::detail () const noexcept {
     return currentDetail;
 }
 
+void MapPointItem::setLabelsVisible (const bool visible) {
+    labelItem->setVisible(visible && currentDetail == MapItemDetail::full);
+}
+
 void MapPointItem::setLabelColor (const QColor &color) {
     labelItem->setBrush(color);
+}
+
+void MapPointItem::setLabelAnchor (const QPointF &anchor, const bool centered) {
+    if (centered && itemType() == MapItemType::mora)
+        configureMoraLabel(*labelItem, anchor, symbolPath.boundingRect());
+    else if (centered)
+        configureCenteredLabel(*labelItem, anchor);
+    else
+        configureLabel(*labelItem, anchor);
 }
 
 
@@ -586,13 +929,15 @@ bool MapItemManage::updateViewport (const Rect2D &viewportBound) {
     DynamicLCC newProjection;
     newProjection.reset(newItemBound.first.second, newItemBound.second.second,
                         newItemBound.second.first, newItemBound.first.first);
-    const auto mapData = query.queryMapItemData(newItemBound);
+    const auto mapData = query.queryMapItemData(newItemBound).first;
 
     std::vector<std::unique_ptr<QGraphicsItem>> newItems;
     newItems.reserve(mapData.size());
     std::vector<ProjectedPathSegment> airwaySegments;
     std::vector<ProjectedPathSegment> firSegments;
     for (const auto &data : mapData) {
+        if (currentZoomLevel > moraLastZoomLevel && std::holds_alternative<MapMoraData>(data))
+            continue;
         if (const auto *airway = std::get_if<MapAwyData>(&data)) {
             const auto points = newProjection.trans({airway->p1, airway->p2});
             if (points.size() != 2 || !finitePoint(points[0]) || !finitePoint(points[1]))
@@ -604,20 +949,11 @@ bool MapItemManage::updateViewport (const Rect2D &viewportBound) {
                 continue;
             firSegments.push_back({data, toQPoint(points[0]), toQPoint(points[1])});
         } else if (const auto *mora = std::get_if<MapMoraData>(&data)) {
-            const auto &[topLeft, bottomRight] = mora->bounds;
-            const auto points = newProjection.trans({
-                topLeft,
-                {topLeft.first, bottomRight.second},
-                bottomRight,
-                {bottomRight.first, topLeft.second}
-            });
-            if (points.size() != 4 || !std::ranges::all_of(points, finitePoint))
+            const auto path = moraFrame(newProjection, mora->bounds);
+            if (!path)
                 continue;
-            QPainterPath path(toQPoint(points[0]));
-            for (size_t index = 1; index < points.size(); ++index)
-                path.lineTo(toQPoint(points[index]));
-            path.closeSubpath();
-            auto item = std::make_unique<MapPointItem>(data, path, false);
+            auto item = std::make_unique<MapPointItem>(data, *path, false);
+            item->setLabelAnchor(path->boundingRect().center(), true);
             item->setDetail(currentDetail);
             newItems.emplace_back(std::move(item));
         } else {
@@ -642,17 +978,26 @@ bool MapItemManage::updateViewport (const Rect2D &viewportBound) {
     const auto appendPathItem = [this, &newItems](std::vector<ProjectedPathSegment> segments) {
         if (segments.empty())
             return;
+        const bool isFir = dataType(segments.front().data) == MapItemType::fir;
+        const std::vector<ProjectedPathSegment> geometrySegments = isFir
+                                                                    ? uniqueFirSegments(segments)
+                                                                    : segments;
         std::vector<MapItemData> sourceData;
         std::vector<QPointF> labelAnchors;
+        std::vector<QLineF> labelSegments;
         sourceData.reserve(segments.size());
         labelAnchors.reserve(segments.size());
+        labelSegments.reserve(segments.size());
         for (const auto &segment : segments) {
             sourceData.emplace_back(segment.data);
             labelAnchors.emplace_back((segment.first.x() + segment.second.x()) / 2.0,
                                       (segment.first.y() + segment.second.y()) / 2.0);
+            labelSegments.emplace_back(segment.first, segment.second);
         }
         auto item = std::make_unique<MapPathItem>(
-            std::move(sourceData), combineSegments(segments), std::move(labelAnchors));
+            std::move(sourceData), combineSegments(geometrySegments), std::move(labelAnchors));
+        if (item->itemType() == MapItemType::awy)
+            item->setAirwayLabelSegments(labelSegments);
         item->setDetail(currentDetail);
         newItems.emplace_back(std::move(item));
     };
@@ -665,6 +1010,7 @@ bool MapItemManage::updateViewport (const Rect2D &viewportBound) {
     cachedItems = std::move(newItems);
     cacheValid = true;
     rebuildIndex();
+    applyZoomPolicy();
     return true;
 }
 
@@ -739,8 +1085,43 @@ const MapItemData* MapItemManage::dataForItem (const QGraphicsItem *item) const 
     return nullptr;
 }
 
+std::optional<MapItemDetails> MapItemManage::itemDetails (const MapItemType type, const int id) {
+    return query.queryItemDetails(type, id);
+}
+
 std::vector<Point2D> MapItemManage::project (std::vector<Point2D> positions) const {
     return projection.trans(std::move(positions));
+}
+
+std::vector<Point2D> MapItemManage::unproject (std::vector<Point2D> positions) const {
+    return projection.revertTrans(std::move(positions));
+}
+
+void MapItemManage::setZoomLevel (const int level) {
+    const int boundedLevel = std::clamp(level, 0, 3);
+    if (currentZoomLevel == boundedLevel)
+        return;
+    currentZoomLevel = boundedLevel;
+
+    applyZoomPolicy();
+}
+
+void MapItemManage::applyZoomPolicy () {
+    for (const auto &item : cachedItems) {
+        if (auto *pathItem = dynamic_cast<MapPathItem*>(item.get())) {
+            pathItem->setLabelsVisible(currentZoomLevel < 2);
+        } else if (auto *pointItem = dynamic_cast<MapPointItem*>(item.get())) {
+            const MapItemType type = pointItem->itemType();
+            if (type == MapItemType::mora) {
+                const bool visible = currentZoomLevel <= moraLastZoomLevel;
+                pointItem->setVisible(visible);
+                pointItem->setLabelsVisible(visible);
+            } else {
+                pointItem->setVisible(true);
+                pointItem->setLabelsVisible(currentZoomLevel < 2 || type == MapItemType::airport);
+            }
+        }
+    }
 }
 
 void MapItemManage::setDetail (const MapItemDetail detail) {
@@ -751,6 +1132,7 @@ void MapItemManage::setDetail (const MapItemDetail detail) {
         else if (auto *pointItem = dynamic_cast<MapPointItem*>(item.get()))
             pointItem->setDetail(detail);
     }
+    applyZoomPolicy();
 }
 
 MapItemDetail MapItemManage::detail () const noexcept {
@@ -813,8 +1195,9 @@ void MapItemManage::rebuildIndex () {
         if (const auto *pathItem = dynamic_cast<MapPathItem*>(item.get())) {
             for (const auto &data : pathItem->mapDataItems())
                 itemIndex.insert_or_assign(indexKey(dataType(data), dataId(data)), item.get());
-        } else if (const auto *pointItem = dynamic_cast<MapPointItem*>(item.get()))
+        } else if (const auto *pointItem = dynamic_cast<MapPointItem*>(item.get())) {
             itemIndex.insert_or_assign(indexKey(pointItem->itemType(), pointItem->itemId()), item.get());
+        }
     }
 }
 
@@ -826,6 +1209,15 @@ void MapItemManage::applyCurrentSymbol (MapPointItem &item) const {
         return;
     }
     const size_t symbolIndex = static_cast<size_t>(item.itemType());
-    if (item.itemType() != MapItemType::mora && symbolIndex < itemSymbols.size())
-        item.setSymbol(itemSymbols[symbolIndex]);
+    if (item.itemType() == MapItemType::mora || symbolIndex >= itemSymbols.size())
+        return;
+
+    QPainterPath symbol = itemSymbols[symbolIndex];
+    if (const auto *airport = std::get_if<MapApData>(&item.mapData());
+        item.itemType() == MapItemType::airport && airport && std::isfinite(airport->geo)) {
+        QTransform rotation;
+        rotation.rotate(airport->geo);
+        symbol = rotation.map(symbol);
+    }
+    item.setSymbol(symbol);
 }

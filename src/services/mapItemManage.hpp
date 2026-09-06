@@ -4,6 +4,7 @@
 #include <QBrush>
 #include <QGraphicsItem>
 #include <QGraphicsPathItem>
+#include <QLineF>
 #include <QPainterPath>
 #include <QPen>
 #include <QRectF>
@@ -21,12 +22,12 @@
 class DataProvider;
 class QGraphicsSimpleTextItem;
 
-QPainterPath airportSymbol();
-QPainterPath fixSymbol();
-QPainterPath vorSymbol();
-QPainterPath dmeSymbol();
-QPainterPath vordmeSymbol();
-QPainterPath ndbSymbol();
+QPainterPath airportSymbol(qreal size = 12.0);
+QPainterPath fixSymbol(qreal size = 10.0);
+QPainterPath vorSymbol(qreal size = 12.0);
+QPainterPath dmeSymbol(qreal size = 12.0);
+QPainterPath vordmeSymbol(qreal size = 12.0);
+QPainterPath ndbSymbol(qreal size = 12.0);
 QPainterPath moraSymbol();
 QPainterPath firSymbol();
 QPainterPath awySymbol();
@@ -46,6 +47,7 @@ class MapPathItem final : public QGraphicsPathItem {
 
         [[nodiscard]] QRectF boundingRect () const override;
         [[nodiscard]] QPainterPath shape () const override;
+        void paint (QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
         [[nodiscard]] const MapItemData& mapData () const noexcept;
         [[nodiscard]] const std::vector<MapItemData>& mapDataItems () const noexcept;
         [[nodiscard]] const MapItemData* findData (MapItemType type, int id) const noexcept;
@@ -55,10 +57,13 @@ class MapPathItem final : public QGraphicsPathItem {
 
         void setDetail (MapItemDetail detail);
         [[nodiscard]] MapItemDetail detail () const noexcept;
+        void setLabelsVisible (bool visible);
         void setLabelColor (const QColor &color);
         void setPath (const QPainterPath &path);
+        void setAirwayLabelSegments (const std::vector<QLineF> &segments);
     private:
         std::vector<MapItemData> dataItems;
+        std::vector<QLineF> airwaySegments;
         std::vector<QGraphicsSimpleTextItem*> labelItems;
         MapItemDetail currentDetail{MapItemDetail::full};
 };
@@ -88,7 +93,9 @@ class MapPointItem final : public QGraphicsItem {
         [[nodiscard]] QBrush brush () const;
         void setDetail (MapItemDetail detail);
         [[nodiscard]] MapItemDetail detail () const noexcept;
+        void setLabelsVisible (bool visible);
         void setLabelColor (const QColor &color);
+        void setLabelAnchor (const QPointF &anchor, bool centered = false);
 
     private:
         MapItemData data;
@@ -104,6 +111,8 @@ class MapPointItem final : public QGraphicsItem {
  *
  * viewport 为 1 倍范围，管理器缓存 2 倍范围的 QGraphicsItem；MapDataQuery
  * 再把该范围扩张到 1.5 倍，因此数据库缓存最终覆盖约 3 倍 viewport。
+ * 缩放等级 0/1 显示完整标签，等级 2 只显示机场和 MORA 高度，等级 3
+ * 只显示机场标签且不创建 MORA 图元。
  */
 class MapItemManage {
     public:
@@ -122,6 +131,7 @@ class MapItemManage {
         bool updateViewport (const Rect2D &viewportBound);
         bool refresh (const Rect2D &viewportBound);
         void clear () noexcept;
+        void setZoomLevel (int level);
 
         [[nodiscard]] bool hasCache () const noexcept;
         [[nodiscard]] const Rect2D& itemBound () const noexcept;
@@ -133,8 +143,10 @@ class MapItemManage {
         [[nodiscard]] QGraphicsItem* findItem (MapItemType type, int id) const noexcept;
         [[nodiscard]] const MapItemData* findData (MapItemType type, int id) const noexcept;
         [[nodiscard]] const MapItemData* dataForItem (const QGraphicsItem *item) const noexcept;
+        std::optional<MapItemDetails> itemDetails (MapItemType type, int id);
 
         [[nodiscard]] std::vector<Point2D> project (std::vector<Point2D> positions) const;
+        [[nodiscard]] std::vector<Point2D> unproject (std::vector<Point2D> positions) const;
 
         void setDetail (MapItemDetail detail);
         [[nodiscard]] MapItemDetail detail () const noexcept;
@@ -150,6 +162,7 @@ class MapItemManage {
         [[nodiscard]] static ItemIndexKey indexKey (MapItemType type, int id) noexcept;
         void rebuildIndex ();
         void applyCurrentSymbol (MapPointItem &item) const;
+        void applyZoomPolicy ();
 
         DataProvider *dataProvider{}; // 获取飞行器信息，不拥有该对象
         MapDataQuery query; // 获取静态地图元素
@@ -158,6 +171,7 @@ class MapItemManage {
         QRectF cachedProjectedBound{};
         bool cacheValid{false};
         MapItemDetail currentDetail{MapItemDetail::full};
+        int currentZoomLevel{1};
         std::vector<std::unique_ptr<QGraphicsItem>> cachedItems;
         std::unordered_map<ItemIndexKey, QGraphicsItem*> itemIndex;
         std::array<QPainterPath, 6> itemSymbols;

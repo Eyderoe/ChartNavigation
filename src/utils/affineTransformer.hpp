@@ -18,6 +18,8 @@ class AffineTransformer {
         bool loadData (const std::vector<std::vector<double>> &dataList, double threshold);
         std::pair<double, double> transform (double latitude, double longitude);
         std::pair<double, double> transform (const std::pair<double, double> &loc);
+        std::pair<double, double> rtransform (double x, double y);
+        std::pair<double, double> rtransform (const std::pair<double, double> &loc);
         std::pair<double, std::vector<double>> accEvaluate (bool print = false);
         std::vector<double> singularEvaluate ();
         AffineQuality squareEvaluate();
@@ -26,6 +28,7 @@ class AffineTransformer {
 
         std::vector<std::vector<double>> data{};
         Eigen::Vector3d paramsX{}, paramsY{};
+        Eigen::Matrix2d inverseLinearMatrix{};
         bool affine{false}; // 仿射可用性
 };
 

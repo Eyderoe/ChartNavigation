@@ -2,6 +2,8 @@ cmake-build*/
 build/
 .qtcreator/
 .idea/
+.agents/
+archify/
 temp/
 
 .DS_Store

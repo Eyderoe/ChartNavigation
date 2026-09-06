@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include "services/attachedChart.hpp"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class enroute_widget; }
@@ -17,6 +19,9 @@ public:
     explicit enroute_widget(QWidget *parent = nullptr);
     ~enroute_widget() override;
     void setDataProvider (DataProvider *provider);
+    void setAttachedChart (AttachedChart chart);
+    void clearAttachedChart ();
+    [[nodiscard]] bool hasAttachedChart () const noexcept;
 private:
     Ui::enroute_widget *ui;
     DataProvider *dataProvider{nullptr};

@@ -54,17 +54,63 @@ void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, con
 
     rotate = rotateDegree;
     transActive = transformer.loadData(data, threshold);
+    affineQuality = AffineQuality::inop;
     if (!transActive) {
         ins.set(SettingsManager::affineError, NaN);
+        ins.set(SettingsManager::affineQuality, static_cast<int>(affineQuality));
         return;
     }
     auto [error,errors] = transformer.accEvaluate();
-    auto quality = transformer.squareEvaluate();
+    affineQuality = transformer.squareEvaluate();
     ins.set(SettingsManager::affineError, error);
-    ins.set(SettingsManager::affineQuality, static_cast<int>(quality));
+    ins.set(SettingsManager::affineQuality, static_cast<int>(affineQuality));
     // Debug输出
     auto view = errors | std::views::transform([](double num) { return std::format("{:.2f}", num); });
     qDebug() << std::format("RMS: {:.2f}, errors: [{}]", error, join(view, ", "));
+}
+
+bool PdfView::canAttachCurrentPage () const {
+    if (!document() || document()->status() != QPdfDocument::Status::Ready || !transActive
+        || affineQuality < AffineQuality::fine)
+        return false;
+    const int page = pageNavigator()->currentPage();
+    const QSizeF pageSize = document()->pagePointSize(page);
+    return page >= 0 && page < document()->pageCount() && pageSize.isValid() && !pageSize.isEmpty();
+}
+
+std::optional<AttachedChart> PdfView::currentPageAttachment () {
+    if (!canAttachCurrentPage())
+        return std::nullopt;
+
+    const int page = pageNavigator()->currentPage();
+    const QSizeF pageSize = document()->pagePointSize(page);
+    constexpr qreal renderScale{2.0}; // PDF 点按 144 DPI 渲染。
+    constexpr int maximumEdge{4096};
+    QSize imageSize = (pageSize * renderScale).toSize();
+    if (const int longestEdge = std::max(imageSize.width(), imageSize.height()); longestEdge > maximumEdge)
+        imageSize = (QSizeF(imageSize) * (static_cast<qreal>(maximumEdge) / longestEdge)).toSize();
+    if (!imageSize.isValid() || imageSize.isEmpty())
+        return std::nullopt;
+
+    const QImage renderedImage = document()->render(page, imageSize);
+    if (renderedImage.isNull())
+        return std::nullopt;
+    QImage image(imageSize, QImage::Format_RGB32);
+    image.fill(Qt::white);
+    {
+        QPainter painter(&image);
+        painter.drawImage(QPoint{}, renderedImage);
+    }
+
+    const std::array<Point2D, 4> corners{
+        transformer.rtransform(0.0, 0.0),
+        transformer.rtransform(pageSize.width(), 0.0),
+        transformer.rtransform(pageSize.width(), pageSize.height()),
+        transformer.rtransform(0.0, pageSize.height())
+    };
+    if (!std::ranges::all_of(corners, [](const Point2D &corner) { return allFinite(corner); }))
+        return std::nullopt;
+    return AttachedChart{std::move(image), corners};
 }
 
 void PdfView::closeSimulation () const {
@@ -151,13 +197,23 @@ std::pair<double, double> PdfView::trans (const Point2D &position) {
 }
 
 void PdfView::wheelEvent (QWheelEvent *event) {
+    constexpr int angleThreshold{120};
+    static int wheelAngleY{0};
+    wheelAngleY += event->angleDelta().y();
+    if (std::abs(wheelAngleY) < angleThreshold) {
+        event->accept();
+        return;
+    }
+
     // 缩放计算
     double newZoom = zoomFactor();
-    if (event->angleDelta().y() > 0)
+    if (wheelAngleY > 0)
         newZoom *= 1.2;
     else
         newZoom *= 0.8;
+    wheelAngleY = 0;
     zoomTo(newZoom);
+    event->accept();
 }
 
 void PdfView::mousePressEvent (QMouseEvent *event) {

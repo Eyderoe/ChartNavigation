@@ -74,6 +74,9 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     // PDF文档
     document = new QPdfDocument(this);
     ui->pdf_widget->setDocument(document);
+    connect(document, &QPdfDocument::statusChanged, this, [this] {
+        emit attachmentAvailabilityChanged(ui->pdf_widget->canAttachCurrentPage());
+    });
     ui->pageNum_spinBox->setSpecialValueText("--");
     ui->pageNum_spinBox->setEnabled(false);
     // 设置
@@ -95,6 +98,7 @@ void main_widget::loadPdfFile (const QString &filePath) {
     document->close();
     pdfFilePath = "";
     ui->pdf_widget->loadMappingData({}, 0, 0);
+    emit attachmentAvailabilityChanged(false);
     ui->pageNum_spinBox->setValue(0);
     ui->pageNum_spinBox->setEnabled(false);
     // 再尝试加载
@@ -106,12 +110,11 @@ void main_widget::loadPdfFile (const QString &filePath) {
     if (const QFile file(pdfPath); !file.exists())
         return;
     pdfFilePath = pdfPath;
+    ui->pageNum_spinBox->setEnabled(true);
+    document->load(pdfPath);
+    loadPdfFileMapping();
+    ui->pdf_widget->fetchScale();
     on_pageNum_spinBox_valueChanged(0);
-    if (document->load(pdfPath) == QPdfDocument::Error::None) {
-        ui->pageNum_spinBox->setEnabled(true);
-        loadPdfFileMapping();
-        ui->pdf_widget->fetchScale();
-    }
 }
 
 /**
@@ -129,8 +132,12 @@ void main_widget::saveSplitter () const {
     SettingsManager::instance().set(SettingsManager::spliterSta, ui->splitter->saveState(), true);
 }
 
-void main_widget::setDataProvider (DataProvider *provider) {
+void main_widget::setDataProvider (DataProvider *provider) const {
     ui->pdf_widget->setDataProvider(provider);
+}
+
+std::optional<AttachedChart> main_widget::currentPageAttachment () {
+    return ui->pdf_widget->currentPageAttachment();
 }
 
 /**
@@ -222,6 +229,7 @@ void main_widget::on_pageNum_spinBox_valueChanged (const int pageNum) {
     // 映射数据加载
     const auto [data, rotate,threshold] = loadPdfPageMapping(pageNumCorrect);
     ui->pdf_widget->loadMappingData(data, rotate, threshold);
+    emit attachmentAvailabilityChanged(ui->pdf_widget->canAttachCurrentPage());
 }
 
 /**
@@ -240,6 +248,6 @@ void main_widget::on_treeWidget_itemDoubleClicked (QTreeWidgetItem *item, int co
  * @brief 切换文件树文件夹
  * @param index 文件夹索引
  */
-void main_widget::on_folder_comboBox_currentIndexChanged (const int index) {
+void main_widget::on_folder_comboBox_currentIndexChanged (const int index) const {
     loadFolder(ui->folder_comboBox->itemData(index).toString());
 }
