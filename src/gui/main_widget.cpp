@@ -74,7 +74,10 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     // PDF文档
     document = new QPdfDocument(this);
     ui->pdf_widget->setDocument(document);
-    connect(document, &QPdfDocument::statusChanged, this, [this] {
+    // document 是 main_widget 的直接子对象，析构顺序晚于 ui 内的 PdfView。
+    // 将连接上下文绑定到 PdfView，可保证 PdfView 一销毁连接就先断开；否则
+    // QPdfDocument::~QPdfDocument() 发出的 statusChanged 会访问悬空的 ui 指针。
+    documentStatusConnection = connect(document, &QPdfDocument::statusChanged, ui->pdf_widget, [this] {
         emit attachmentAvailabilityChanged(ui->pdf_widget->canAttachCurrentPage());
     });
     ui->pageNum_spinBox->setSpecialValueText("--");
@@ -85,6 +88,20 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
     ui->treeWidget->setIconSize(QSize(48, 64));
     ui->treeWidget->setHeaderHidden(true);
     initFileTree();
+}
+
+main_widget::~main_widget () {
+    // QWidget 会在派生类析构完成后才删除 Designer 创建的子控件，而 document
+    // 是更早登记的直接子对象；QObject 默认析构顺序会因此先删 PdfView、后删
+    // document。显式解除二者关系并先销毁 document，保证它在 close()/析构时
+    // 发出的状态信号不会碰到已经析构的 QPdfView。
+    if (document) {
+        disconnect(documentStatusConnection);
+        ui->pdf_widget->setDocument(nullptr);
+        delete document;
+        document = nullptr;
+    }
+    delete ui;
 }
 
 /**

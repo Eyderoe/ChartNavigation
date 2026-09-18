@@ -31,6 +31,8 @@ class PdfView final : public QPdfView {
         void paintEvent (QPaintEvent *event) override;
     private:
         void initConnect ();
+        void freezeViewport (double targetZoom);
+        void clearFrozenViewport ();
         // 模拟器部分
         std::pair<double, double> trans (const Point2D &position);
         std::pair<double, double> trans (double latitude, double longitude);
@@ -42,6 +44,11 @@ class PdfView final : public QPdfView {
         // 地图拖动逻辑
         bool dragging{};
         QPoint lastPos{};
+        // PDF 缩放时保留旧帧，直到目标分辨率的页面完成渲染
+        QPixmap frozenViewport{};
+        int frozenPage{-1};
+        QSize targetRenderSize{};
+        bool renderCompletionTracked{};
         // 地图显示逻辑
         bool centerOn{};
         bool isDark{};

@@ -307,8 +307,6 @@ void MapView::setDataProvider (DataProvider *provider) {
     selectedAircraft.reset();
     if (!dataProvider && detailsPanel)
         detailsPanel->hide();
-    if (itemManager)
-        itemManager->setDataProvider(provider);
     if (dataProvider)
         connect(dataProvider, &DataProvider::dataUpdated, this, &MapView::onDataUpdated);
     viewport()->update();
@@ -480,7 +478,7 @@ void MapView::reloadDatabase (const QString &databasePath) {
     }
 
     try {
-        itemManager = std::make_unique<MapItemManage>(path, dataProvider);
+        itemManager = std::make_unique<MapItemManage>(path);
         loadedDatabasePath = path;
         updateViewport(geographicCenter, true);
     } catch (const std::exception &error) {
@@ -727,8 +725,8 @@ void MapView::showDetailsAt (const QPoint &viewportPosition) {
             if (const MapItemData *data = itemManager->dataForItem(graphicsItem)) {
                 const MapItemType type = std::visit([](const auto &item) { return item.type; }, *data);
                 const int id = std::visit([](const auto &item) { return item.id; }, *data);
-                if (const auto details = itemManager->itemDetails(type, id)) {
-                    showDetails(detailsText(*details));
+                if (type == MapItemType::airport || type == MapItemType::fix || type == MapItemType::navaid) {
+                    showDetails(detailsText(itemManager->itemDetails(type, id)));
                     return;
                 }
             }

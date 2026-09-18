@@ -45,13 +45,9 @@ NormalizedBound normalizeBound (const Rect2D &rect) {
         left = -180.0;
         right = 180.0;
     }
-    const NormalizedBound result{
-        .top = std::clamp(std::max(topLeft.first, bottomRight.first), -maxSupportLat, maxSupportLat),
-        .bottom = std::clamp(std::min(topLeft.first, bottomRight.first), -maxSupportLat, maxSupportLat),
-        .left = left,
-        .right = right,
-        .valid = true
-    };
+    const NormalizedBound result(std::clamp(std::max(topLeft.first, bottomRight.first), -maxSupportLat, maxSupportLat),
+                                 std::clamp(std::min(topLeft.first, bottomRight.first), -maxSupportLat, maxSupportLat),
+                                 left, right, true);
     return result;
 }
 
@@ -61,10 +57,10 @@ NormalizedBound normalizeBound (const Rect2D &rect) {
  * @return 扩大后的边界。
  */
 Rect2D enlargedBound (const NormalizedBound &requested) {
-    const double latitudeMargin = (requested.top - requested.bottom) * 0.25;
+    const double latitudeMargin = (requested.top - requested.bottom) * 0.5;
     const double top = std::clamp(requested.top + latitudeMargin, -maxSupportLat, maxSupportLat);
     const double bottom = std::clamp(requested.bottom - latitudeMargin, -maxSupportLat, maxSupportLat);
-    const double longitudeSpan = getLongiSpan(requested.left, requested.right) * 1.5;
+    const double longitudeSpan = getLongiSpan(requested.left, requested.right) * 2;
     if (longitudeSpan >= 360.0)
         return {{top, -180.0}, {bottom, 180.0}};
     const double centerLongitude = getLongiRangeCenter(requested.left, requested.right);
@@ -200,7 +196,7 @@ SQLiteRows queryAwyRows (const Database &database, const NormalizedBound &queryB
             "v.p1_id,v.p2_id,v.direct,v.p1_type,v.p2_type "
             "from awy_view as v inner join matched_routes as m on m.awy_uni=v.awy_uni "
             "order by v.awy_uni,v.sub_id";
-    auto routeRows = database.getRecords(sql, parameters);
+    const auto routeRows = database.getRecords(sql, parameters);
 
     SQLiteRows rows;
     for (size_t firstIndex = 0; firstIndex < routeRows.size();) {
@@ -241,33 +237,18 @@ ItemBound itemBound (const MapItemData &item) {
         using T = std::decay_t<T0>;
         if constexpr (std::is_same_v<T, MapApData> || std::is_same_v<T, MapNavData>) {
             const double longitude = normalizeLongitude(data.realPos.second);
-            return {
-                .top = data.realPos.first,
-                .bottom = data.realPos.first,
-                .left = longitude,
-                .right = longitude,
-                .valid = true
-            };
+            return ItemBound(data.realPos.first, data.realPos.first, longitude, longitude, true);
         } else if constexpr (std::is_same_v<T, MapAwyData> || std::is_same_v<T, MapFirData>) {
             const double longitude1 = normalizeLongitude(data.p1.second);
             const double longitude2 = normalizeLongitude(data.p2.second);
             const bool wrapsLongitude = std::abs(longitude1 - longitude2) > 180.0;
-            return {
-                .top = std::max(data.p1.first, data.p2.first),
-                .bottom = std::min(data.p1.first, data.p2.first),
-                .left = wrapsLongitude ? std::max(longitude1, longitude2) : std::min(longitude1, longitude2),
-                .right = wrapsLongitude ? std::min(longitude1, longitude2) : std::max(longitude1, longitude2),
-                .valid = true
-            };
+            return ItemBound(std::max(data.p1.first, data.p2.first), std::min(data.p1.first, data.p2.first),
+                             wrapsLongitude ? std::max(longitude1, longitude2) : std::min(longitude1, longitude2),
+                             wrapsLongitude ? std::min(longitude1, longitude2) : std::max(longitude1, longitude2),
+                             true);
         } else {
             const auto bounds = normalizeBound(data.bounds);
-            return {
-                .top = bounds.top,
-                .bottom = bounds.bottom,
-                .left = bounds.left,
-                .right = bounds.right,
-                .valid = bounds.valid
-            };
+            return ItemBound(bounds.top, bounds.bottom, bounds.left, bounds.right, bounds.valid);
         }
     }, item);
 }
@@ -309,6 +290,10 @@ std::pair<int, int> cellRange (const double lower, const double upper, const int
     const int first = std::clamp(static_cast<int>(std::floor(lower)), minimum, maximumExclusive - 1);
     const int end = std::clamp(static_cast<int>(std::ceil(upper)), first + 1, maximumExclusive);
     return {first, end};
+}
+
+int moraGridId (const int latitudeCell, const int longitudeCell) {
+    return (latitudeCell + 90) * 360 + (longitudeCell + 180) + 1;
 }
 
 std::vector<int> moraGridIds (const Rect2D &requestedBound) {
@@ -374,7 +359,7 @@ std::unordered_map<int, int> queryMoraAltitudes (const Database &database, const
  * @param database 地图数据库。
  * @param queryBound 查询边界。
  */
-void appendMora (std::vector<MapItemData> &items, Database &database, const NormalizedBound &queryBound) {
+void appendMora (std::vector<MapItemData> &items, const Database &database, const NormalizedBound &queryBound) {
     const Rect2D bound{{queryBound.top, queryBound.left}, {queryBound.bottom, queryBound.right}};
     const auto ids = moraGridIds(bound);
     const auto altitudes = queryMoraAltitudes(database, ids);
@@ -383,15 +368,10 @@ void appendMora (std::vector<MapItemData> &items, Database &database, const Norm
         const int latitude = zeroBasedId / 360 - 90;
         const int longitude = zeroBasedId % 360 - 180;
         const auto altitude = altitudes.find(id);
-        items.emplace_back(MapMoraData{
-            .bounds = {
-                {latitude + 1.0, static_cast<double>(longitude)},
-                {static_cast<double>(latitude), longitude + 1.0}
-            },
-            .id = id,
-            .alt = altitude == altitudes.end() ? defaultMoraAltitude : altitude->second,
-            .type = MapItemType::mora
-        });
+        items.emplace_back(MapMoraData(
+            Rect2D(Point2D(latitude + 1.0, static_cast<double>(longitude)),
+                   Point2D(static_cast<double>(latitude), longitude + 1.0)), id,
+            altitude == altitudes.end() ? defaultMoraAltitude : altitude->second, MapItemType::mora));
     }
 }
 
@@ -401,18 +381,15 @@ void appendMora (std::vector<MapItemData> &items, Database &database, const Norm
  * @param queryBound 查询边界。
  * @return 查询到的地图元素列表。
  */
-std::vector<MapItemData> queryAllItems (Database &database, const NormalizedBound &queryBound) {
+std::vector<MapItemData> queryAllItems (const Database &database, const NormalizedBound &queryBound) {
     std::vector<MapItemData> items;
     // 机场
     for (const auto &row : querySpatialRows(database, "airport_rtree", "airport",
                                             "t.icao,t.latitude,t.longitude,t.id,t.longest_geo", queryBound)) {
-        items.emplace_back(MapApData{
-            .icao = QString::fromStdString(std::get<std::string>(row[0])),
-            .realPos = {std::get<double>(row[1]), std::get<double>(row[2])},
-            .id = static_cast<int>(std::get<int64_t>(row[3])),
-            .geo = realValue(row[4]),
-            .type = MapItemType::airport
-        });
+        items.emplace_back(MapApData(QString::fromStdString(std::get<std::string>(row[0])),
+                                     Point2D(std::get<double>(row[1]), std::get<double>(row[2])),
+                                     static_cast<int>(std::get<int64_t>(row[3])), realValue(row[4]),
+                                     MapItemType::airport));
     }
     // 航路, 还需负责筛选处于航路上的点
     const auto airwayRows = queryAwyRows(database, queryBound);
@@ -426,28 +403,22 @@ std::vector<MapItemData> queryAllItems (Database &database, const NormalizedBoun
             airwayFixIds.emplace(static_cast<int>(std::get<int64_t>(row[8])));
     }
     for (const auto &row : airwayRows) {
-        items.emplace_back(MapAwyData{
-            .ident = QString::fromStdString(std::get<std::string>(row[1])),
-            .p1 = {std::get<double>(row[2]), std::get<double>(row[3])},
-            .p2 = {std::get<double>(row[4]), std::get<double>(row[5])},
-            .id = static_cast<int>(std::get<int64_t>(row[6])),
-            .id1 = static_cast<int>(std::get<int64_t>(row[7])),
-            .id2 = static_cast<int>(std::get<int64_t>(row[8])),
-            .direct = airwayDirection(row[9]),
-            .type = MapItemType::awy
-        });
+        items.emplace_back(MapAwyData(QString::fromStdString(std::get<std::string>(row[1])),
+                                      Point2D(std::get<double>(row[2]), std::get<double>(row[3])),
+                                      Point2D(std::get<double>(row[4]), std::get<double>(row[5])),
+                                      static_cast<int>(std::get<int64_t>(row[6])),
+                                      static_cast<int>(std::get<int64_t>(row[7])),
+                                      static_cast<int>(std::get<int64_t>(row[8])), airwayDirection(row[9]),
+                                      MapItemType::awy));
     }
     // FIR
     for (const auto &row : querySpatialRows(database, "fir_rtree", "fir",
                                             "substr(cast(t.ident as text),1,4),t.p1_lat,t.p1_lon,t.p2_lat,t.p2_lon,t.id",
                                             queryBound)) {
-        items.emplace_back(MapFirData{
-            .ident = QString::fromStdString(std::get<std::string>(row[0])),
-            .p1 = {std::get<double>(row[1]), std::get<double>(row[2])},
-            .p2 = {std::get<double>(row[3]), std::get<double>(row[4])},
-            .id = static_cast<int>(std::get<int64_t>(row[5])),
-            .type = MapItemType::fir
-        });
+        items.emplace_back(MapFirData(QString::fromStdString(std::get<std::string>(row[0])),
+                                      Point2D(std::get<double>(row[1]), std::get<double>(row[2])),
+                                      Point2D(std::get<double>(row[3]), std::get<double>(row[4])),
+                                      static_cast<int>(std::get<int64_t>(row[5])), MapItemType::fir));
     }
     // 航点
     for (const auto &row : querySpatialRows(database, "fix_rtree", "fix",
@@ -455,25 +426,19 @@ std::vector<MapItemData> queryAllItems (Database &database, const NormalizedBoun
         const auto id = static_cast<int>(std::get<int64_t>(row[3]));
         if (!airwayFixIds.contains(id))
             continue;
-        items.emplace_back(MapApData{
-            .icao = QString::fromStdString(std::get<std::string>(row[0])),
-            .realPos = {std::get<double>(row[1]), std::get<double>(row[2])},
-            .id = static_cast<int>(std::get<int64_t>(row[3])),
-            .type = MapItemType::fix
-        });
+        items.emplace_back(MapApData(QString::fromStdString(std::get<std::string>(row[0])),
+                                     Point2D(std::get<double>(row[1]), std::get<double>(row[2])),
+                                     static_cast<int>(std::get<int64_t>(row[3])), 0, MapItemType::fix));
     }
     // MORA
     appendMora(items, database, queryBound);
     // 导航台
     for (const auto &row : querySpatialRows(database, "navaid_rtree", "navaid",
                                             "t.ident,t.latitude,t.longitude,t.type,t.id", queryBound)) {
-        items.emplace_back(MapNavData{
-            .ident = QString::fromStdString(std::get<std::string>(row[0])),
-            .realPos = {std::get<double>(row[1]), std::get<double>(row[2])},
-            .id = static_cast<int>(std::get<int64_t>(row[4])),
-            .type = MapItemType::navaid,
-            .navType = static_cast<NavaidType>(std::get<int64_t>(row[3]) - 1)
-        });
+        items.emplace_back(MapNavData(QString::fromStdString(std::get<std::string>(row[0])),
+                                      Point2D(std::get<double>(row[1]), std::get<double>(row[2])),
+                                      static_cast<int>(std::get<int64_t>(row[4])), MapItemType::navaid,
+                                      static_cast<NavaidType>(std::get<int64_t>(row[3]) - 1)));
     }
     return items;
 }
@@ -485,7 +450,7 @@ MapDataQuery::MapDataQuery (const QString &databaseFilePath) :
  * @brief 查询区域内的地图元素
  * @param requestedBound 区域(经纬度表示)
  * @return 区域内元素，以及本次查询是否重新访问了数据库
- * @note 返回区域内元素, 假如传入范围m*n大于缓存范围, 则重新查询数据库1.5m*1.5n并更新缓存
+ * @note 返回区域内元素, 假如传入范围m*n大于缓存范围, 则重新查询数据库2m*2n并更新缓存
  */
 std::pair<std::vector<MapItemData>, bool> MapDataQuery::queryMapItemData (const Rect2D &requestedBound) {
     const NormalizedBound requested = normalizeBound(requestedBound);
@@ -510,62 +475,44 @@ std::pair<std::vector<MapItemData>, bool> MapDataQuery::queryMapItemData (const 
     return {std::move(result), needRequire};
 }
 
-std::optional<MapItemDetails> MapDataQuery::queryItemDetails (const MapItemType type, const int id) {
-    const DetailCacheKey key = (static_cast<DetailCacheKey>(static_cast<unsigned int>(type)) << 32U)
-                               | static_cast<std::uint32_t>(id);
+/**
+ * @brief 从数据库中请求一个元素的具体信息
+ * @param type 元素类型
+ * @param id 元素id
+ * @return 具体信息
+ */
+MapItemDetails MapDataQuery::queryItemDetails (const MapItemType type, const int id) {
+    const cacheKey key{type, id};
     if (const auto found = detailCache.find(key); found != detailCache.end())
         return found->second;
 
-    std::optional<MapItemDetails> details;
     SQLiteRows rows;
-    switch (type) {
-        case MapItemType::fix:
-            rows = db->getRecords("select ident,latitude,longitude from fix where id=?", {static_cast<int64_t>(id)});
-            if (!rows.empty() && rows.front().size() == 3) {
-                const auto &row = rows.front();
-                details = MapFixDetails{
-                    .ident = textValue(row[0]),
-                    .position = {realValue(row[1]), realValue(row[2])}
-                };
-            }
-            break;
-        case MapItemType::airport:
-            rows = db->getRecords(
-                "select icao,name,alt_ft,longest_m,latitude,longitude from airport where id=?",
-                {static_cast<int64_t>(id)});
-            if (!rows.empty() && rows.front().size() == 6) {
-                const auto &row = rows.front();
-                details = MapAirportDetails{
-                    .icao = textValue(row[0]),
-                    .name = textValue(row[1]),
-                    .altitudeFeet = integerValue(row[2]),
-                    .longestRunwayMetres = integerValue(row[3]),
-                    .position = {realValue(row[4]), realValue(row[5])}
-                };
-            }
-            break;
-        case MapItemType::navaid:
-            rows = db->getRecords(
-                "select ident,name,type,frequency,alt,latitude,longitude from navaid where id=?",
-                {static_cast<int64_t>(id)});
-            if (!rows.empty() && rows.front().size() == 7) {
-                const auto &row = rows.front();
-                const int storedType = integerValue(row[2]);
-                if (storedType >= 1 && storedType <= 4) {
-                    details = MapNavaidDetails{
-                        .ident = textValue(row[0]),
-                        .name = textValue(row[1]),
-                        .type = static_cast<NavaidType>(storedType - 1),
-                        .frequency = realValue(row[3]),
-                        .altitudeFeet = integerValue(row[4]),
-                        .position = {realValue(row[5]), realValue(row[6])}
-                    };
+    MapItemDetails details = [&] () -> MapItemDetails {
+        switch (type) {
+            case MapItemType::fix:
+                rows = db->getRecords("select ident,latitude,longitude from fix where id=?",
+                                      {static_cast<int64_t>(id)});
+                return MapFixDetails(textValue(rows.front()[0]),
+                                     Point2D(realValue(rows.front()[1]), realValue(rows.front()[2])));
+            case MapItemType::airport:
+                rows = db->getRecords("select icao,name,alt_ft,longest_m,latitude,longitude from airport where id=?",
+                                      {static_cast<int64_t>(id)});
+                return MapAirportDetails(textValue(rows.front()[0]), textValue(rows.front()[1]),
+                                         integerValue(rows.front()[2]), integerValue(rows.front()[3]),
+                                         Point2D(realValue(rows.front()[4]), realValue(rows.front()[5])));
+            case MapItemType::navaid:
+                rows = db->getRecords("select ident,name,type,frequency,alt,latitude,longitude from navaid where id=?",
+                                      {static_cast<int64_t>(id)});
+                if (const int storedType = integerValue(rows.front()[2]); storedType >= 1 && storedType <= 4) {
+                    return MapNavaidDetails(textValue(rows.front()[0]), textValue(rows.front()[1]),
+                                            static_cast<NavaidType>(storedType - 1), realValue(rows.front()[3]),
+                                            integerValue(rows.front()[4]),
+                                            Point2D(realValue(rows.front()[5]), realValue(rows.front()[6])));
                 }
-            }
-            break;
-        default:
-            break;
-    }
+            default:
+                assert(false && "map item type has no detail record");
+        }
+    }();
 
     detailCache.emplace(key, details);
     return details;

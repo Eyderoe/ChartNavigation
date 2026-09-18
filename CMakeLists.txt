@@ -110,8 +110,6 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/services/dataProvider.hpp
         src/reserveCode/observe.hpp
         src/reserveCode/typeErasure.hpp
-        src/reserveCode/mapCanvasManage.cpp
-        src/reserveCode/mapCanvasManage.hpp
         src/utils/eventManage.hpp
         src/utils/eventManage.cpp
         src/gui/replay_control.cpp
@@ -135,6 +133,8 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/services/mapItemManage.cpp
         src/services/mapItemManage.hpp
         src/services/attachedChart.hpp
+        src/services/mapItemTemplate.cpp
+        src/services/mapItemTemplate.hpp
 )
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES

@@ -212,6 +212,7 @@ void DynamicLCC::configure (const Point2D &newCenter, const double verticalMargi
  * @note 经纬度单位为度, left 到 right 按向东方向解释
  */
 void DynamicLCC::reset (const double left, const double right, double bottom, double top) {
+    // 先清除旧投影
     projection.reset();
     if (!allFinite(left, right, bottom, top) || std::abs(bottom) > maxSupportLat || std::abs(top) > maxSupportLat)
         return;
@@ -219,6 +220,7 @@ void DynamicLCC::reset (const double left, const double right, double bottom, do
         std::swap(bottom, top);
     const double normalizedLeft = normalizeLongitude(left);
     const double normalizedRight = normalizeLongitude(right);
+    // 正确处理跨越日期变更线
     const double centerLongitude = normalizeLongitude(getLongiRangeCenter(left, right), true);
     const Point2D newCenter{(bottom + top) / 2.0, centerLongitude};
     const GeographicLib::Geodesic &geodesic = GeographicLib::Geodesic::WGS84();
@@ -231,6 +233,7 @@ void DynamicLCC::reset (const double left, const double right, double bottom, do
     const Point2D eastEdge{newCenter.first, normalizedRight};
     const Point2D southEdge{bottom, newCenter.second};
     const Point2D northEdge{top, newCenter.second};
+    // 确定投影边距
     const double horizontalMargin = std::max(distanceTo(newCenter, westEdge), distanceTo(newCenter, eastEdge)) / nm2m;
     const double verticalMargin = std::max(distanceTo(newCenter, southEdge), distanceTo(newCenter, northEdge)) / nm2m;
     if (!allFinite(horizontalMargin, verticalMargin))
@@ -238,6 +241,7 @@ void DynamicLCC::reset (const double left, const double right, double bottom, do
     configure(newCenter, std::max(1.0, verticalMargin), std::max(1.0, horizontalMargin));
     if (!projection)
         return;
+    // 投影四个边界角点
     double minimumEasting = Inf;
     double maximumNorthing = -Inf;
     for (const double latitude : {bottom, top}) {

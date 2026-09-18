@@ -1,12 +1,16 @@
+/**
+ * @file mapDataQuery.hpp
+ * @brief 从数据库获取地图元素, 元素包含最基本绘制信息. 缓存 2m*2n
+ */
+
+
 #ifndef CHARTNAVIGATION_MAPDATAQUERY_HPP
 #define CHARTNAVIGATION_MAPDATAQUERY_HPP
 
 
 #include <QString>
-#include <cstdint>
+#include <map>
 #include <memory>
-#include <optional>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -18,12 +22,11 @@
 enum class MapItemType { airport, awy, fir, fix, mora, navaid };
 enum class NavaidType { vor, dme, vordme, ndb };
 
-constexpr int moraGridId (const int latitudeCell, const int longitudeCell) noexcept {
-    return (latitudeCell + 90) * 360 + (longitudeCell + 180) + 1;
-}
-
+int moraGridId (int latitudeCell, int longitudeCell);
 std::vector<int> moraGridIds (const Rect2D &requestedBound);
 
+
+// 基础信息, 能用于绘制地图元素
 struct MapApData {
     QString icao;
     Point2D realPos;
@@ -58,14 +61,14 @@ struct MapNavData {
     MapItemType type;
     NavaidType navType;
 };
-
 using MapItemData = std::variant<MapApData, MapAwyData, MapFirData, MapMoraData, MapNavData>;
 
+
+// 精确信息, 用于在左侧显示
 struct MapFixDetails {
     QString ident;
     Point2D position;
 };
-
 struct MapAirportDetails {
     QString icao;
     QString name;
@@ -73,7 +76,6 @@ struct MapAirportDetails {
     int longestRunwayMetres{};
     Point2D position;
 };
-
 struct MapNavaidDetails {
     QString ident;
     QString name;
@@ -82,20 +84,19 @@ struct MapNavaidDetails {
     int altitudeFeet{};
     Point2D position;
 };
-
 using MapItemDetails = std::variant<MapFixDetails, MapAirportDetails, MapNavaidDetails>;
 
+
 class MapDataQuery {
+    using cacheKey = std::pair<MapItemType, int>;
     public:
         explicit MapDataQuery (const QString &databaseFilePath);
         std::pair<std::vector<MapItemData>, bool> queryMapItemData (const Rect2D &requestedBound);
-        std::optional<MapItemDetails> queryItemDetails (MapItemType type, int id);
+        MapItemDetails queryItemDetails (MapItemType type, int id);
     private:
-        using DetailCacheKey = std::uint64_t;
-
         std::unique_ptr<Database> db;
         std::vector<MapItemData> cache;
-        std::unordered_map<DetailCacheKey, std::optional<MapItemDetails>> detailCache;
+        std::map<cacheKey, MapItemDetails> detailCache;
         Rect2D bound; // 实际缓存区域
         bool cacheValid{false};
 };

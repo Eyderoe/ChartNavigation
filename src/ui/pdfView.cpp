@@ -9,6 +9,7 @@
 #include <ranges>
 #include <span>
 #include <QCursor>
+#include <QPdfPageRenderer>
 
 #include "utils/android.hpp"
 
@@ -145,6 +146,8 @@ void PdfView::fetchScale () {
 void PdfView::zoomTo (const double factor) {
     const double oldZoom = zoomFactor();
     const double newZoom = qBound(zoomMin, factor, zoomMax);
+    if (qFuzzyCompare(oldZoom, newZoom))
+        return;
     const QRectF viewportRect = viewport()->rect();
     const QPointF mousePos = viewport()->mapFromGlobal(QCursor::pos());
     const bool mouseInViewport = viewport()->underMouse() && viewportRect.contains(mousePos);
@@ -152,6 +155,7 @@ void PdfView::zoomTo (const double factor) {
     const double logicX = (horizontalScrollBar()->value() + zoomCenter.x()) / oldZoom;
     const double logicY = (verticalScrollBar()->value() + zoomCenter.y()) / oldZoom;
 
+    freezeViewport(newZoom);
     setZoomFactor(newZoom);
     horizontalScrollBar()->setValue(static_cast<int>(logicX * newZoom - zoomCenter.x()));
     verticalScrollBar()->setValue(static_cast<int>(logicY * newZoom - zoomCenter.y()));
@@ -185,6 +189,54 @@ void PdfView::initConnect () {
                         break;
                 }
             });
+
+    // QPdfView 没有公开 renderer 访问器，但内部 renderer 是它的 QObject 子对象。
+    // 内部槽会先把图像写入页面缓存，随后这里再撤掉旧帧。
+    if (const auto renderer = findChild<QPdfPageRenderer *>(QString(), Qt::FindDirectChildrenOnly)) {
+        renderCompletionTracked = true;
+        connect(renderer, &QPdfPageRenderer::pageRendered, this,
+                [this](const int page, const QSize imageSize, const QImage &,
+                       const QPdfDocumentRenderOptions &, const quint64) {
+                    if (!frozenViewport.isNull() && page == frozenPage && imageSize == targetRenderSize)
+                        clearFrozenViewport();
+                });
+    }
+    connect(pageNavigator(), &QPdfPageNavigator::currentPageChanged, this,
+            [this] { clearFrozenViewport(); });
+    connect(this, &QPdfView::documentChanged, this, [this](QPdfDocument *pdfDocument) {
+        clearFrozenViewport();
+        if (pdfDocument) {
+            connect(pdfDocument, &QPdfDocument::statusChanged, this,
+                    [this](const QPdfDocument::Status status) {
+                        if (status != QPdfDocument::Status::Ready)
+                            clearFrozenViewport();
+                    });
+        }
+    });
+}
+
+/**
+ * @brief 缩放前冻结当前 viewport，并记录新缩放比例对应的渲染尺寸
+ */
+void PdfView::freezeViewport (const double targetZoom) {
+    if (!renderCompletionTracked || !document() || document()->status() != QPdfDocument::Status::Ready)
+        return;
+
+    frozenViewport = viewport()->grab();
+    frozenPage = pageNavigator()->currentPage();
+    const QSize pageSize = QSizeF(document()->pagePointSize(frozenPage)
+                                  * QGuiApplication::primaryScreen()->logicalDotsPerInch() / 72.0
+                                  * targetZoom).toSize();
+    targetRenderSize = pageSize * devicePixelRatioF();
+}
+
+void PdfView::clearFrozenViewport () {
+    if (frozenViewport.isNull())
+        return;
+    frozenViewport = {};
+    frozenPage = -1;
+    targetRenderSize = {};
+    viewport()->update();
 }
 
 /**
@@ -268,6 +320,10 @@ void PdfView::paintEvent (QPaintEvent *event) {
         for (int i = 0; i < dataProvider->getAvailableNum(); ++i)
             drawPlane(painter, i);
     }
+
+    // 覆盖 QPdfView 在新页面图像到达前画出的空白页。不缩放快照，避免二次插值发糊。
+    if (!frozenViewport.isNull())
+        painter.drawPixmap(QPoint(0, 0), frozenViewport);
 }
 
 /**

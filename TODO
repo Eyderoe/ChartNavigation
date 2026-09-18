@@ -6,18 +6,15 @@
 
 # 日本🔞AI未经审核代码
 - 虽然未审核代码呈膨胀趋势, 但通过分文件, 勉强可控 [函数✅,测试❌]
-- 回放数据、MapDataQuery[函数✅,测试❌]、geographic[函数✅,测试✅]、itemManage、
-    EnhancedMap、pdfView、main_widget、main_window
 - 先停一下, 不能加功能了, 再加代码不受控了要
-
-
-# 航路页面 (部分参考LNM,很头痛 因为底层完全不同)
-## 数据库设计
-- 机场 航点 导航台 FIR边界 航线
-## 绘制部分
-- 获取元素并建立缓存[注意点和线不同的获取策略]
-- 计算缓存元素实际绘制位置, 并建立索引表以相应点击事件
-nope, 考虑只建立3-4个缩放级别[25,50,100,200]
+回放数据
+MapDataQuery[函数✅,测试❌]
+geographic[函数✅,测试✅]
+itemManage[函数❌,测试❌]
+EnhancedMap
+pdfView
+main_widget
+main_window
 
 
 # 现有问题
@@ -34,6 +31,7 @@ mac:
 加入飞行器居中功能
 
 
+
 # 远期改进
 补函数注释
 进一步增强debug能力(虽然现在现在回放配合调试已经很好了)
@@ -41,4 +39,5 @@ mac:
 可能的支持tabwidget以显示多张航图？
 更合理的暗色逻辑,且必须在QPdfView下实现
 可能的QSetting分组
+
 

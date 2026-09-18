@@ -31,6 +31,7 @@ class main_widget final : public QWidget {
         };
     public:
         explicit main_widget (QWidget *parent = nullptr);
+        ~main_widget () override;
 
         void loadPdfFile (const QString &filePath);
         void loadFolder (const QString &folder) const;
@@ -40,6 +41,7 @@ class main_widget final : public QWidget {
     private:
         Ui::main_widget *ui;
         QPdfDocument *document;
+        QMetaObject::Connection documentStatusConnection;
         QString pdfFilePath{};
         nlohmann::json fileData{};
 

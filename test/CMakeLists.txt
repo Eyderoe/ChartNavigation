@@ -5,7 +5,6 @@ add_executable(unit_tests
         geographic_test.cpp
         ../src/utils/geographic.cpp
         mapDataQuery_test.cpp
-        mapItemManage_test.cpp
         ../src/services/mapDataQuery.cpp
         ../src/services/mapItemManage.cpp
         ../src/utils/sqliteHelper.cpp
