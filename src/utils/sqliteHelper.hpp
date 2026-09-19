@@ -39,6 +39,15 @@ class Database {
         [[nodiscard]] SQLiteDictRows getDictRecords (const std::string &tableName, const SQLiteAim &aim = {},
                                                      const SQLiteDict &condition = {});
         [[nodiscard]] SQLiteRows getRecords (const std::string &sql, const SQLiteRow &parameters = {}) const;
+        [[nodiscard]] SQLiteRow getRecord (const std::string &sql, const SQLiteRow &parameters = {}) const;
+        template <typename Visitor>
+        void visitRecords (const std::string &sql, const SQLiteRow &parameters, const Visitor &visitor) const {
+            SQLite::Statement query(*db, sql);
+            for (int index = 0; index < static_cast<int>(parameters.size()); ++index)
+                bindValue(query, index + 1, parameters[index]);
+            while (query.executeStep())
+                visitor(readResult(query));
+        }
         void addRecords (const std::string &tableName, const SQLiteRows &rows, const SQLiteAim &rowsName = {});
         void changeRecords (const std::string &tableName, const SQLiteDict &values,
                             const SQLiteDict &condition = {}) const;

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <limits>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -115,31 +116,34 @@ bool contains (const NormalizedBound &outer, const NormalizedBound &inner) {
  * @param columns 要返回的列表达式。
  * @param queryBound 查询边界。
  * @param idColumn 数据表中与 RTree 关联的 ID 列名。
- * @return 与查询边界相交的数据行。
+ * @param visitor 逐行处理查询结果的回调。
  */
-SQLiteRows querySpatialRows (const Database &database, const std::string &rtree, const std::string &table,
-                             const std::string &columns, const NormalizedBound &queryBound,
-                             const std::string &idColumn = "id") {
+template <typename Visitor>
+void visitSpatialRows (const Database &database, const std::string &rtree, const std::string &table,
+                       const std::string &columns, const NormalizedBound &queryBound,
+                       const Visitor &visitor, const std::string &idColumn = "id") {
     const auto rangeSql = [&rtree, &table, &columns, &idColumn] {
         return "select " + columns + " from " + rtree
                 + " as r inner join " + table + " as t on t." + idColumn + "=r.id"
                 + " where r.max_lon>=? and r.min_lon<=? and r.max_lat>=? and r.min_lat<=?";
     };
     const auto ranges = getLongiRanges(queryBound.left, queryBound.right);
-    if (ranges.size() == 1)
-        return database.getRecords(rangeSql(),
-                                   {
-                                       ranges.front().first, ranges.front().second,
-                                       queryBound.bottom, queryBound.top
-                                   });
+    if (ranges.size() == 1) {
+        database.visitRecords(rangeSql(),
+                              {
+                                  ranges.front().first, ranges.front().second,
+                                  queryBound.bottom, queryBound.top
+                              }, visitor);
+        return;
+    }
 
     const auto &first = ranges.front();
     const auto &second = ranges.back();
     const std::string sql = rangeSql() + " union " + rangeSql();
-    return database.getRecords(sql, {
-                                   first.first, first.second, queryBound.bottom, queryBound.top,
-                                   second.first, second.second, queryBound.bottom, queryBound.top
-                               });
+    database.visitRecords(sql, {
+                              first.first, first.second, queryBound.bottom, queryBound.top,
+                              second.first, second.second, queryBound.bottom, queryBound.top
+                          }, visitor);
 }
 
 double realValue (const SQLiteVal &value) {
@@ -185,13 +189,34 @@ char airwayDirection (const SQLiteVal &value) {
     return 'B';
 }
 
+struct AirwayQueryResult {
+    std::vector<MapAwyData> airways;
+    std::unordered_set<int> fixIds;
+};
+
+void appendAirway (AirwayQueryResult &result, const SQLiteRow &first, const SQLiteRow &last) {
+    constexpr int64_t fixPointType{1};
+    const int firstId = static_cast<int>(std::get<int64_t>(first[8]));
+    const int lastId = static_cast<int>(std::get<int64_t>(last[9]));
+    result.airways.emplace_back(
+        QString::fromStdString(std::get<std::string>(first[2])),
+        Point2D(std::get<double>(first[3]), std::get<double>(first[4])),
+        Point2D(std::get<double>(last[5]), std::get<double>(last[6])),
+        static_cast<int>(std::get<int64_t>(first[7])), firstId, lastId,
+        airwayDirection(first[10]), MapItemType::awy);
+    if (std::get<int64_t>(first[11]) == fixPointType)
+        result.fixIds.emplace(firstId);
+    if (std::get<int64_t>(last[12]) == fixPointType)
+        result.fixIds.emplace(lastId);
+}
+
 /**
  * @brief 查询并整理航路数据。
  * @param database 地图数据库。
  * @param queryBound 查询边界。
- * @return 按 awy_uni 整理后的航路记录；跨日期变更线的两条记录合并为一条。
+ * @return 强类型航路及其关联航点；跨日期变更线的两条记录合并为一条。
  */
-SQLiteRows queryAwyRows (const Database &database, const NormalizedBound &queryBound) {
+AirwayQueryResult queryAirways (const Database &database, const NormalizedBound &queryBound) {
     const auto ranges = getLongiRanges(queryBound.left, queryBound.right);
     std::string matchedRoutesSql;
     SQLiteRow parameters;
@@ -212,35 +237,25 @@ SQLiteRows queryAwyRows (const Database &database, const NormalizedBound &queryB
             "v.p1_id,v.p2_id,v.direct,v.p1_type,v.p2_type "
             "from awy_view as v inner join matched_routes as m on m.awy_uni=v.awy_uni "
             "order by v.awy_uni,v.sub_id";
-    const auto routeRows = database.getRecords(sql, parameters);
-
-    SQLiteRows rows;
-    for (size_t firstIndex = 0; firstIndex < routeRows.size();) {
-        size_t endIndex = firstIndex + 1;
-        const auto routeId = std::get<int64_t>(routeRows[firstIndex][0]);
-        while (endIndex < routeRows.size() && std::get<int64_t>(routeRows[endIndex][0]) == routeId)
-            ++endIndex;
-
-        if (endIndex - firstIndex == 2) {
-            const auto &first = routeRows[firstIndex];
-            const auto &last = routeRows[firstIndex + 1];
-            rows.push_back({
-                first[0], first[2], first[3], first[4], last[5], last[6], first[7],
-                first[8], last[9], first[10], first[11], last[12]
-            });
+    AirwayQueryResult result;
+    std::vector<SQLiteRow> routeGroup;
+    const auto flushRouteGroup = [&] {
+        if (routeGroup.size() == 2) {
+            appendAirway(result, routeGroup.front(), routeGroup.back());
         } else {
-            for (size_t index = firstIndex; index < endIndex; ++index) {
-                const auto &segment = routeRows[index];
-                rows.push_back({
-                    segment[0], segment[2], segment[3], segment[4],
-                    segment[5], segment[6], segment[7], segment[8], segment[9], segment[10],
-                    segment[11], segment[12]
-                });
-            }
+            for (const auto &segment : routeGroup)
+                appendAirway(result, segment, segment);
         }
-        firstIndex = endIndex;
-    }
-    return rows;
+        routeGroup.clear();
+    };
+    database.visitRecords(sql, parameters, [&](SQLiteRow &&row) {
+        if (!routeGroup.empty()
+            && std::get<int64_t>(routeGroup.front()[0]) != std::get<int64_t>(row[0]))
+            flushRouteGroup();
+        routeGroup.emplace_back(std::move(row));
+    });
+    flushRouteGroup();
+    return result;
 }
 
 /**
@@ -360,11 +375,11 @@ std::unordered_map<int, int> queryMoraAltitudes (const Database &database, const
         }
         sql += ')';
 
-        for (const auto &row : database.getRecords(sql, parameters)) {
+        database.visitRecords(sql, parameters, [&altitudes](SQLiteRow &&row) {
             const auto id = std::get<int64_t>(row[0]);
             if (id >= std::numeric_limits<int>::min() && id <= std::numeric_limits<int>::max())
                 altitudes.emplace(static_cast<int>(id), moraAltitude(row[1]));
-        }
+        });
     }
     return altitudes;
 }
@@ -400,62 +415,49 @@ void appendMora (std::vector<MapItemData> &items, const Database &database, cons
 std::vector<MapItemData> queryAllItems (const Database &database, const NormalizedBound &queryBound) {
     std::vector<MapItemData> items;
     // 机场
-    for (const auto &row : querySpatialRows(database, "airport_rtree", "airport",
-                                            "t.icao,t.latitude,t.longitude,t.id,t.longest_geo", queryBound)) {
+    visitSpatialRows(database, "airport_rtree", "airport",
+                     "t.icao,t.latitude,t.longitude,t.id,t.longest_geo", queryBound,
+                     [&items](SQLiteRow &&row) {
         items.emplace_back(MapApData(QString::fromStdString(std::get<std::string>(row[0])),
                                      Point2D(std::get<double>(row[1]), std::get<double>(row[2])),
                                      static_cast<int>(std::get<int64_t>(row[3])), realValue(row[4]),
                                      MapItemType::airport));
-    }
+    });
     // 航路, 还需负责筛选处于航路上的点
-    const auto airwayRows = queryAwyRows(database, queryBound);
-    constexpr int64_t fixPointType{1};
-    std::unordered_set<int> airwayFixIds;
-    airwayFixIds.reserve(airwayRows.size() * 2);
-    for (const auto &row : airwayRows) {
-        if (std::get<int64_t>(row[10]) == fixPointType)
-            airwayFixIds.emplace(static_cast<int>(std::get<int64_t>(row[7])));
-        if (std::get<int64_t>(row[11]) == fixPointType)
-            airwayFixIds.emplace(static_cast<int>(std::get<int64_t>(row[8])));
-    }
-    for (const auto &row : airwayRows) {
-        items.emplace_back(MapAwyData(QString::fromStdString(std::get<std::string>(row[1])),
-                                      Point2D(std::get<double>(row[2]), std::get<double>(row[3])),
-                                      Point2D(std::get<double>(row[4]), std::get<double>(row[5])),
-                                      static_cast<int>(std::get<int64_t>(row[6])),
-                                      static_cast<int>(std::get<int64_t>(row[7])),
-                                      static_cast<int>(std::get<int64_t>(row[8])), airwayDirection(row[9]),
-                                      MapItemType::awy));
-    }
+    auto [airways, airwayFixIds] = queryAirways(database, queryBound);
+    items.reserve(items.size() + airways.size());
+    for (auto &airway : airways)
+        items.emplace_back(std::move(airway));
     // FIR
-    for (const auto &row : querySpatialRows(database, "fir_rtree", "fir",
-                                            "substr(cast(t.ident as text),1,4),t.p1_lat,t.p1_lon,t.p2_lat,t.p2_lon,t.id",
-                                            queryBound)) {
+    visitSpatialRows(database, "fir_rtree", "fir",
+                     "substr(cast(t.ident as text),1,4),t.p1_lat,t.p1_lon,t.p2_lat,t.p2_lon,t.id",
+                     queryBound, [&items](SQLiteRow &&row) {
         items.emplace_back(MapFirData(QString::fromStdString(std::get<std::string>(row[0])),
                                       Point2D(std::get<double>(row[1]), std::get<double>(row[2])),
                                       Point2D(std::get<double>(row[3]), std::get<double>(row[4])),
                                       static_cast<int>(std::get<int64_t>(row[5])), MapItemType::fir));
-    }
+    });
     // 航点
-    for (const auto &row : querySpatialRows(database, "fix_rtree", "fix",
-                                            "t.ident,t.latitude,t.longitude,t.id", queryBound)) {
+    visitSpatialRows(database, "fix_rtree", "fix", "t.ident,t.latitude,t.longitude,t.id", queryBound,
+                     [&items, &airwayFixIds](SQLiteRow &&row) {
         const auto id = static_cast<int>(std::get<int64_t>(row[3]));
         if (!airwayFixIds.contains(id))
-            continue;
+            return;
         items.emplace_back(MapApData(QString::fromStdString(std::get<std::string>(row[0])),
                                      Point2D(std::get<double>(row[1]), std::get<double>(row[2])),
-                                     static_cast<int>(std::get<int64_t>(row[3])), 0, MapItemType::fix));
-    }
+                                     id, 0, MapItemType::fix));
+    });
     // MORA
     appendMora(items, database, queryBound);
     // 导航台
-    for (const auto &row : querySpatialRows(database, "navaid_rtree", "navaid",
-                                            "t.ident,t.latitude,t.longitude,t.type,t.id", queryBound)) {
+    visitSpatialRows(database, "navaid_rtree", "navaid",
+                     "t.ident,t.latitude,t.longitude,t.type,t.id", queryBound,
+                     [&items](SQLiteRow &&row) {
         items.emplace_back(MapNavData(QString::fromStdString(std::get<std::string>(row[0])),
                                       Point2D(std::get<double>(row[1]), std::get<double>(row[2])),
                                       static_cast<int>(std::get<int64_t>(row[4])), MapItemType::navaid,
                                       static_cast<NavaidType>(std::get<int64_t>(row[3]) - 1)));
-    }
+    });
     return items;
 }
 
@@ -502,34 +504,38 @@ MapItemDetails MapDataQuery::queryItemDetails (const MapItemType type, const int
     if (const auto found = detailCache.find(key); found != detailCache.end())
         return found->second;
 
-    SQLiteRows rows;
     MapItemDetails details = [&] () -> MapItemDetails {
         switch (type) {
-            case MapItemType::fix:
-                rows = db->getRecords("select ident,latitude,longitude from fix where id=?",
-                                      {static_cast<int64_t>(id)});
-                return MapFixDetails(textValue(rows.front()[0]),
-                                     Point2D(realValue(rows.front()[1]), realValue(rows.front()[2])));
-            case MapItemType::airport:
-                rows = db->getRecords("select icao,name,alt_ft,longest_m,latitude,longitude from airport where id=?",
-                                      {static_cast<int64_t>(id)});
-                return MapAirportDetails(textValue(rows.front()[0]), textValue(rows.front()[1]),
-                                         integerValue(rows.front()[2]), integerValue(rows.front()[3]),
-                                         Point2D(realValue(rows.front()[4]), realValue(rows.front()[5])));
-            case MapItemType::navaid:
-                rows = db->getRecords("select ident,name,type,frequency,alt,latitude,longitude from navaid where id=?",
-                                      {static_cast<int64_t>(id)});
-                if (const int storedType = integerValue(rows.front()[2]); storedType >= 1 && storedType <= 4) {
-                    return MapNavaidDetails(textValue(rows.front()[0]), textValue(rows.front()[1]),
-                                            static_cast<NavaidType>(storedType - 1), realValue(rows.front()[3]),
-                                            integerValue(rows.front()[4]),
-                                            Point2D(realValue(rows.front()[5]), realValue(rows.front()[6])));
+            case MapItemType::fix: {
+                const auto row = db->getRecord("select ident,latitude,longitude from fix where id=?",
+                                               SQLiteRow{static_cast<int64_t>(id)});
+                return MapFixDetails(textValue(row[0]),
+                                     Point2D(realValue(row[1]), realValue(row[2])));
+            }
+            case MapItemType::airport: {
+                const auto row = db->getRecord(
+                    "select icao,name,alt_ft,longest_m,latitude,longitude from airport where id=?",
+                    SQLiteRow{static_cast<int64_t>(id)});
+                return MapAirportDetails(textValue(row[0]), textValue(row[1]),
+                                         integerValue(row[2]), integerValue(row[3]),
+                                         Point2D(realValue(row[4]), realValue(row[5])));
+            }
+            case MapItemType::navaid: {
+                const auto row = db->getRecord(
+                    "select ident,name,type,frequency,alt,latitude,longitude from navaid where id=?",
+                    SQLiteRow{static_cast<int64_t>(id)});
+                if (const int storedType = integerValue(row[2]); storedType >= 1 && storedType <= 4) {
+                    return MapNavaidDetails(textValue(row[0]), textValue(row[1]),
+                                            static_cast<NavaidType>(storedType - 1), realValue(row[3]),
+                                            integerValue(row[4]),
+                                            Point2D(realValue(row[5]), realValue(row[6])));
                 }
+                throw std::logic_error("navaid detail record has invalid type");
+            }
             default:
-                assert(false && "map item type has no detail record");
+                throw std::invalid_argument("map item type has no detail record");
         }
     }();
 
-    detailCache.emplace(key, details);
-    return details;
+    return detailCache.emplace(key, std::move(details)).first->second;
 }

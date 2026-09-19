@@ -37,6 +37,7 @@ void options_widget::readSettings () const {
     ui->chartFolder_lineEdit->setText(ins.get(SettingsManager::chartFolder, "").toString());
     ui->mappingFoler_lineEdit->setText(ins.get(SettingsManager::dataFolder, "").toString());
     ui->globeFoler_lineEdit->setText(ins.get(SettingsManager::globeFolder, "").toString());
+    ui->airac_lineEdit->setText(ins.get(SettingsManager::airacPath, "").toString());
     ui->onlyPdf_comboBox->setCurrentIndex(ins.get(SettingsManager::onlyDisplayPdf, true).toBool() ? 0 : 1);
 }
 

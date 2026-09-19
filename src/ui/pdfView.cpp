@@ -513,8 +513,20 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
     painter.save();
     // 飞机数据
     StdPlaneInfo info(dataProvider, idx);
-    if (!isSelf && dataProvider->getUseCalVerticalSpeed())
-        info.vs = static_cast<float>(dataProvider->getVerticalSpeed(info.flightId));
+    const AircraftTrail *aircraftTrail{};
+    bool trailLoaded{};
+    const auto trailForPlane = [&] {
+        if (!trailLoaded) {
+            trailLoaded = true;
+            if (!isSelf)
+                aircraftTrail = dataProvider->findTrail(info.flightId);
+        }
+        return aircraftTrail;
+    };
+    if (!isSelf && dataProvider->getUseCalVerticalSpeed()) {
+        const AircraftTrail *trail = trailForPlane();
+        info.vs = static_cast<float>(trail ? trail->calculateVerticalSpeed() : 0);
+    }
     // 移动坐标系
     auto [x,y] = trans(info.lat, info.lon);
     painter.translate(x, y);
@@ -549,7 +561,8 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         if (!tooSmall) {
             switch (dataProvider->getInfoMode()) {
                 case InfoMode::full: { // 完整符号(相对高度趋势, 航班号, 地速尾流)
-                    auto gs = dataProvider->getGroundSpeed(info.flightId);
+                    const AircraftTrail *trail = trailForPlane();
+                    const int gs = trail ? trail->calculateGroundSpeed() : 0;
                     drawStrokedText(12, 20, std::format("{} {}", gs, catStr), painter, font, outlineBrush, textBrush);
                 }
                 case InfoMode::extend: // 扩展符号(相对高度趋势, 航班号)
@@ -560,14 +573,17 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
         }
         // 计算航向
         if (dataProvider->getUseCalGeo()) {
-            const auto temp = static_cast<float>(dataProvider->getGeoHeading(info.flightId));
+            const AircraftTrail *trail = trailForPlane();
+            const auto temp = static_cast<float>(trail ? trail->calculateGeoHeading() : -1);
             info.trk = (temp != -1) ? temp : info.trk;
         }
         // 绘制航迹
         if (dataProvider->getShowTrail()) {
-            const auto &points = dataProvider->getPoints(info.flightId);
-            drawTrailLine(painter, points, [this](const double lat, const double lon) { return trans(lat, lon); },
-                          x, y, tooSmall, QColor(239, 142, 92));
+            const AircraftTrail *trail = trailForPlane();
+            if (trail)
+                drawTrailLine(painter, trail->getPoints(),
+                              [this](const double lat, const double lon) { return trans(lat, lon); },
+                              x, y, tooSmall, QColor(239, 142, 92));
         }
     }
     // 安卓&现实GPS特化:

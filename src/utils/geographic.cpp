@@ -94,7 +94,7 @@ int AircraftTrail::calculateVerticalSpeed () const {
  * @brief 获取轨迹点
  * @return 轨迹点引用 (首部最早, 尾部最新)
  */
-std::deque<Point2D>& AircraftTrail::getPoints () {
+const std::deque<Point2D>& AircraftTrail::getPoints () const noexcept {
     return points;
 }
 
@@ -282,14 +282,24 @@ void DynamicLCC::reset (const double left, const double right, double bottom, do
 }
 
 /**
- * @brief 批量转换坐标[修改列表]
- * @param positions 经纬度
+ * @brief 转换单个坐标
+ * @param position 经纬度
  * @return <x,y>, 单位米, 左上角为原点、向东为 x 正方向、向北为 y 负方向
  * @note 非法参数会被转换至 {NaN, NaN}
  */
-std::vector<Point2D> DynamicLCC::trans (std::vector<Point2D> positions) const {
+Point2D DynamicLCC::trans (Point2D position) const {
+    transInPlace(std::span{&position, 1});
+    return position;
+}
+
+/**
+ * @brief 原地批量转换坐标
+ * @param positions 经纬度
+ * @note 非法参数会被转换至 {NaN, NaN}
+ */
+void DynamicLCC::transInPlace (const std::span<Point2D> positions) const {
     if (!projection)
-        return positions;
+        return;
     for (auto &position : positions) {
         if (!finite(position) || std::abs(position.first) > maxSupportLat) {
             position = {NaN, NaN};
@@ -303,17 +313,38 @@ std::vector<Point2D> DynamicLCC::trans (std::vector<Point2D> positions) const {
         if (!finite(position))
             position = {NaN, NaN};
     }
+}
+
+/**
+ * @brief 批量转换坐标[修改列表]
+ * @param positions 经纬度
+ * @return <x,y>, 单位米, 左上角为原点、向东为 x 正方向、向北为 y 负方向
+ * @note 非法参数会被转换至 {NaN, NaN}
+ */
+std::vector<Point2D> DynamicLCC::trans (std::vector<Point2D> positions) const {
+    transInPlace(positions);
     return positions;
 }
 
 /**
- * @brief 批量转换坐标
- * @param positions <x,y>
-* @note 非法参数会被转换至 {NaN, NaN}
+ * @brief 反向转换单个坐标
+ * @param position <x,y>
+ * @return 经纬度
+ * @note 非法参数会被转换至 {NaN, NaN}
  */
-std::vector<Point2D> DynamicLCC::revertTrans (std::vector<Point2D> positions) const {
+Point2D DynamicLCC::revertTrans (Point2D position) const {
+    revertTransInPlace(std::span{&position, 1});
+    return position;
+}
+
+/**
+ * @brief 原地批量反向转换坐标
+ * @param positions <x,y>
+ * @note 非法参数会被转换至 {NaN, NaN}
+ */
+void DynamicLCC::revertTransInPlace (const std::span<Point2D> positions) const {
     if (!projection)
-        return positions;
+        return;
     for (auto &position : positions) {
         if (!finite(position)) {
             position = {NaN, NaN};
@@ -328,6 +359,16 @@ std::vector<Point2D> DynamicLCC::revertTrans (std::vector<Point2D> positions) co
         else
             position = {latitude, normalizeLongitude(longitude)};
     }
+}
+
+/**
+ * @brief 批量反向转换坐标
+ * @param positions <x,y>
+ * @return 经纬度
+ * @note 非法参数会被转换至 {NaN, NaN}
+ */
+std::vector<Point2D> DynamicLCC::revertTrans (std::vector<Point2D> positions) const {
+    revertTransInPlace(positions);
     return positions;
 }
 

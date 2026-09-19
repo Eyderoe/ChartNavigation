@@ -58,7 +58,6 @@ string Database::whereSentence (const SQLiteDict &condition) {
  */
 SQLite::Statement Database::get (const std::string &tableName, const SQLiteAim &aim, const SQLiteDict &condition) {
     // 查询 select xxx, xxx from xxx where x=? and x=?
-    const SQLiteAim header{getHeader(tableName)};
     const string select{"select " + join(aim.empty() ? getHeader(tableName) : aim, ",")};
     const string from{" from " + tableName + ' '};
     const string where{whereSentence(condition)};
@@ -112,13 +111,20 @@ SQLiteDictRows Database::getDictRecords (const std::string &tableName, const SQL
  * @return 查询结果
  */
 SQLiteRows Database::getRecords (const std::string &sql, const SQLiteRow &parameters) const {
+    SQLiteRows rows;
+    visitRecords(sql, parameters, [&rows](SQLiteRow &&row) {
+        rows.emplace_back(std::move(row));
+    });
+    return rows;
+}
+
+SQLiteRow Database::getRecord (const std::string &sql, const SQLiteRow &parameters) const {
     SQLite::Statement query(*db, sql);
     for (int index = 0; index < static_cast<int>(parameters.size()); ++index)
         bindValue(query, index + 1, parameters[index]);
-    SQLiteRows rows;
-    while (query.executeStep())
-        rows.emplace_back(readResult(query));
-    return rows;
+    if (!query.executeStep())
+        throw std::runtime_error("query returned no records");
+    return readResult(query);
 }
 
 /**

@@ -52,6 +52,22 @@ jobs:
           wget -q "https://dl.google.com/android/repository/$NDK_ZIP"
           unzip -q "$NDK_ZIP" -d "${{ github.workspace }}"
 
+      - name: Check Android Clang version
+        run: |
+          set -euo pipefail
+          CXX="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++"
+          if [ ! -x "$CXX" ]; then
+            echo "Android clang++ not found: $CXX"
+            exit 1
+          fi
+          clang_line=$("$CXX" --version | head -n 1)
+          clang_major=$(echo "$clang_line" | sed -nE 's/.*clang version ([0-9]+).*/\1/p')
+          if [ "$clang_major" != "18" ]; then
+            echo "Android NDK r27c must provide Clang 18, got: $clang_line"
+            exit 1
+          fi
+          echo "Detected Android compiler: $clang_line"
+
       - name: Cache Qt
         uses: actions/cache@v5
         with:

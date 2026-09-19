@@ -19,12 +19,14 @@
 
 #include <array>
 #include <memory>
+#include <span>
 #include <vector>
 
 #include "mapDataQuery.hpp"
 
 
 class QGraphicsSimpleTextItem;
+class QRegion;
 class QTransform;
 
 /**
@@ -42,16 +44,21 @@ class MapPathItem final : public QGraphicsPathItem {
         [[nodiscard]] const MapItemData* findData (MapItemType type, int id) const noexcept;
         [[nodiscard]] MapItemType itemType () const noexcept;
         [[nodiscard]] const std::vector<QGraphicsSimpleTextItem*>& labels () const noexcept;
-        [[nodiscard]] std::vector<QRectF> airwayArrowBounds (const QTransform &sceneToDevice) const;
+        void addAirwayArrowRegions (QRegion &region, const QTransform &sceneToDevice, qreal margin) const;
 
+        void setPen (const QPen &pen);
         void setLabelsVisible (bool visible);
         void setLabelColor (const QColor &color);
         void setAirwayLabelSegments (const std::vector<QLineF> &segments);
         void setAirwayLabelPosition (size_t index, qreal position);
     private:
+        void updateGeometryCache ();
+
         std::vector<MapItemData> dataItems;
         std::vector<QLineF> airwaySegments;
         std::vector<QGraphicsSimpleTextItem*> labelItems;
+        QPainterPath itemShape;
+        QRectF itemBounds;
 };
 
 /**
@@ -76,11 +83,15 @@ class MapPointItem final : public QGraphicsItem {
         void setLabelColor (const QColor &color);
         void setLabelAnchor (const QPointF &anchor, bool centered = false) const;
     private:
+        void updateGeometryCache ();
+
         MapItemData data;
         QPainterPath symbolPath;
         QPen itemPen;
         QBrush itemBrush;
         QGraphicsSimpleTextItem *labelItem{};
+        QPainterPath itemShape;
+        QRectF itemBounds;
 };
 
 
@@ -103,7 +114,10 @@ class MapItemManage {
         [[nodiscard]] const MapItemData* dataForItem (const QGraphicsItem *item) const noexcept;
         MapItemDetails itemDetails (MapItemType type, int id);
 
+        [[nodiscard]] Point2D project (Point2D position) const;
+        void projectInPlace (std::span<Point2D> positions) const;
         [[nodiscard]] std::vector<Point2D> project (std::vector<Point2D> positions) const;
+        [[nodiscard]] Point2D unproject (Point2D position) const;
         [[nodiscard]] std::vector<Point2D> unproject (std::vector<Point2D> positions) const;
 
     private:

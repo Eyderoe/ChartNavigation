@@ -5,10 +5,13 @@
 #include <QDir>
 #include <QDataStream>
 #include <QFile>
+#include <algorithm>
 #include <cassert>
 #include <json.hpp>
-#include <set>
 #include <stdexcept>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include "settingManage.hpp"
 #include "services/settingManage.hpp"
@@ -329,19 +332,20 @@ void DataProvider::simulateDataUpdate () {
 void DataProvider::processDataFrame () {
     // 更新各航班轨迹 (航班号非空时可用)
     const int intervalMs = static_cast<int>(1000.0 / infoFreq);
-    std::set<std::string> seen;
     const size_t available = getAvailableNum();
+    std::vector<std::string_view> seen;
+    seen.reserve(available > 0 ? available - 1 : 0);
     for (size_t idx = 1; idx < available; ++idx) {
-        const auto flightId = slice<std::string>(multiFlightIdVal, static_cast<int>(idx));
+        auto flightId = slice<std::string>(multiFlightIdVal, static_cast<int>(idx));
         if (flightId.empty())
             continue;
-        seen.insert(flightId);
-        trails.try_emplace(flightId, intervalMs).first->second.addPoint(
-            {multiLatVal[idx], multiLonVal[idx]}, multiAltVal[idx]);
+        const auto trail = trails.try_emplace(std::move(flightId), intervalMs).first;
+        trail->second.addPoint({multiLatVal[idx], multiLonVal[idx]}, multiAltVal[idx]);
+        seen.emplace_back(trail->first);
     }
     if (trails.size() >= 128) { // map 大小达到 128 后, 一次性清空已消失航班的轨迹
         std::erase_if(trails, [&](const auto &item) {
-            return !seen.contains(item.first);
+            return std::ranges::find(seen, std::string_view{item.first}) == seen.end();
         });
     }
     // 状态栏更新
@@ -402,39 +406,9 @@ char DataProvider::getWakeCategory (const std::string &icao) const {
     return (it == turbuCate.end()) ? ' ' : it->second;
 }
 
-/**
- * @brief 获取航班地速
- * @param flightId 航班号
- * @return 地速 (节), 无该航班轨迹时为 0
- */
-int DataProvider::getGroundSpeed (const std::string &flightId) const {
+const AircraftTrail* DataProvider::findTrail (const std::string &flightId) const noexcept {
     const auto it = trails.find(flightId);
-    return (it == trails.end()) ? 0 : it->second.calculateGroundSpeed();
-}
-
-/**
- * @brief 获取航班计算航向
- * @param flightId 航班号
- * @return 计算航向 (度, 0~359), 无该航班轨迹时为 -1
- */
-int DataProvider::getGeoHeading (const std::string &flightId) const {
-    const auto it = trails.find(flightId);
-    return (it == trails.end()) ? -1 : it->second.calculateGeoHeading();
-}
-
-/**
- * @brief 获取航班计算垂直速度
- * @param flightId 航班号
- * @return 垂直速度 (英尺/分钟), 无该航班轨迹时为 0
- */
-int DataProvider::getVerticalSpeed (const std::string &flightId) const {
-    const auto it = trails.find(flightId);
-    return (it == trails.end()) ? 0 : it->second.calculateVerticalSpeed();
-}
-
-const std::deque<Point2D>& DataProvider::getPoints (const std::string &flightId) {
-    const auto it = trails.find(flightId);
-    return (it == trails.end()) ? emptyDeque : it->second.getPoints();
+    return it == trails.end() ? nullptr : &it->second;
 }
 
 short DataProvider::getAlt (const float latitude, const float longitude) const {
@@ -485,8 +459,8 @@ void DataProvider::replayDataUpdate (const Event &event) {
 
 PlaneDebug::PlaneDebug (DataProvider *provide, const int index) : provider(provide), idx(index) {}
 Point2D PlaneDebug::getPos () const {
-    auto lat = provider->getLatValues();
-    auto lon = provider->getLonValues();
+    const auto &lat = provider->getLatValues();
+    const auto &lon = provider->getLonValues();
     return {lat[idx], lon[idx]};
 }
 std::string PlaneDebug::getPosStr () const {

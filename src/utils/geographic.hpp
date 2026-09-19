@@ -6,6 +6,7 @@
 #include <GeographicLib/LambertConformalConic.hpp>
 #include <limits>
 #include <memory>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -28,7 +29,7 @@ class AircraftTrail {
         [[nodiscard]] int calculateGroundSpeed () const;
         [[nodiscard]] int calculateGeoHeading () const;
         [[nodiscard]] int calculateVerticalSpeed () const;
-        std::deque<Point2D>& getPoints ();
+        [[nodiscard]] const std::deque<Point2D>& getPoints () const noexcept;
         void addPoint (Point2D point, double altitude = std::numeric_limits<double>::quiet_NaN());
     private:
         int interval; // 数据间隔 ms
@@ -41,7 +42,11 @@ class DynamicLCC { // WGS84,兰伯特等角圆锥投影.投影一般分类标准
     public:
         void reset (const Point2D &newCenter, int verticalMargin, int horizontalMargin);
         void reset (double left, double right, double bottom, double top);
+        [[nodiscard]] Point2D trans (Point2D position) const;
+        void transInPlace (std::span<Point2D> positions) const;
         [[nodiscard]] std::vector<Point2D> trans (std::vector<Point2D> positions) const;
+        [[nodiscard]] Point2D revertTrans (Point2D position) const;
+        void revertTransInPlace (std::span<Point2D> positions) const;
         [[nodiscard]] std::vector<Point2D> revertTrans (std::vector<Point2D> positions) const;
     private:
         void configure (const Point2D &newCenter, double verticalMargin, double horizontalMargin);

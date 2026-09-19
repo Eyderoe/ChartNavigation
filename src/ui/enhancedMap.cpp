@@ -21,6 +21,7 @@
 #include <array>
 #include <cmath>
 #include <numbers>
+#include <span>
 #include <variant>
 
 #include "services/mapItemManage.hpp"
@@ -90,7 +91,7 @@ MapItemColors itemColors (const MapItemType type, const bool dark) {
     return {};
 }
 
-QRectF boundingRect (const std::vector<Point2D> &points) {
+QRectF boundingRect (const std::span<const Point2D> points) {
     QRectF result;
     bool initialized{};
     for (const auto &[x, y] : points) {
@@ -203,7 +204,7 @@ QString relativeAltitudeText (const float altitude, const float ownAltitude, con
 }
 
 QRectF drawAircraftLabel (QPainter &painter, const QPointF &aircraftPosition,
-                          const std::vector<QString> &lines) {
+                          const std::span<const QString> lines) {
     if (lines.empty())
         return {};
     QFont font = painter.font();
@@ -457,6 +458,26 @@ void MapView::drawForeground (QPainter *painter, const QRectF &rect) {
     if (!allFinite(ownPosition) || std::abs(ownPosition.first) > maxSupportLat)
         return;
 
+    std::array<std::string, 64> aircraftFlightIds;
+    std::array<bool, 64> flightIdLoaded{};
+    std::array<const AircraftTrail*, 64> aircraftTrails{};
+    const auto loadFlight = [&](const size_t index) {
+        if (flightIdLoaded[index])
+            return;
+        flightIdLoaded[index] = true;
+        aircraftFlightIds[index] = slice<std::string>(flightIds, static_cast<int>(index));
+        if (!aircraftFlightIds[index].empty())
+            aircraftTrails[index] = dataProvider->findTrail(aircraftFlightIds[index]);
+    };
+    const auto flightIdFor = [&](const size_t index) -> const std::string& {
+        loadFlight(index);
+        return aircraftFlightIds[index];
+    };
+    const auto trailFor = [&](const size_t index) -> const AircraftTrail* {
+        loadFlight(index);
+        return aircraftTrails[index];
+    };
+
     std::vector<Point2D> geographicPositions;
     geographicPositions.reserve(available);
     for (size_t index = 0; index < available; ++index)
@@ -480,9 +501,8 @@ void MapView::drawForeground (QPainter *painter, const QRectF &rect) {
                 || !aircraftVisible(geographicPosition, ownPosition, altitudes[index], altitudes[0],
                                     dataProvider->getTcasMode()))
                 continue;
-            const auto flightId = slice<std::string>(flightIds, static_cast<int>(index));
-            if (!flightId.empty())
-                drawAircraftTrail(*painter, dataProvider->getPoints(flightId), *itemManager, sceneToDevice);
+            if (const AircraftTrail *trail = trailFor(index))
+                drawAircraftTrail(*painter, trail->getPoints(), *itemManager, sceneToDevice);
         }
     }
     for (size_t index = 0; index < available; ++index) {
@@ -510,8 +530,8 @@ void MapView::drawForeground (QPainter *painter, const QRectF &rect) {
                          ? std::fmod(static_cast<double>(tracks[index]) + 720.0, 360.0)
                          : 0.0;
         if (dataProvider->getUseCalGeo()) {
-            const int calculatedHeading = dataProvider->getGeoHeading(
-                slice<std::string>(flightIds, static_cast<int>(index)));
+            const AircraftTrail *trail = trailFor(index);
+            const int calculatedHeading = trail ? trail->calculateGeoHeading() : -1;
             if (calculatedHeading != -1)
                 track = calculatedHeading;
         }
@@ -523,23 +543,25 @@ void MapView::drawForeground (QPainter *painter, const QRectF &rect) {
         if (index != 0 && zoomLevel == MapZoomLevel::nm50) {
             float verticalSpeed = dataProvider->getVsValues()[index];
             if (dataProvider->getUseCalVerticalSpeed()) {
-                const std::string flightId = slice<std::string>(flightIds, static_cast<int>(index));
-                verticalSpeed = static_cast<float>(dataProvider->getVerticalSpeed(flightId));
+                const AircraftTrail *trail = trailFor(index);
+                verticalSpeed = static_cast<float>(trail ? trail->calculateVerticalSpeed() : 0);
             }
-            labelRect = drawAircraftLabel(
-                *painter, devicePosition,
-                {relativeAltitudeText(altitudes[index], altitudes[0], verticalSpeed)});
-        } else if (index != 0 && zoomLevel == MapZoomLevel::nm25) {
-            const std::string flightId = slice<std::string>(flightIds, static_cast<int>(index));
-            float verticalSpeed = dataProvider->getVsValues()[index];
-            if (dataProvider->getUseCalVerticalSpeed())
-                verticalSpeed = static_cast<float>(dataProvider->getVerticalSpeed(flightId));
-
-            std::vector<QString> labelLines{
+            const std::array labelLines{
                 relativeAltitudeText(altitudes[index], altitudes[0], verticalSpeed)
             };
+            labelRect = drawAircraftLabel(*painter, devicePosition, labelLines);
+        } else if (index != 0 && zoomLevel == MapZoomLevel::nm25) {
+            float verticalSpeed = dataProvider->getVsValues()[index];
+            if (dataProvider->getUseCalVerticalSpeed()) {
+                const AircraftTrail *trail = trailFor(index);
+                verticalSpeed = static_cast<float>(trail ? trail->calculateVerticalSpeed() : 0);
+            }
+
+            std::array<QString, 3> labelLines;
+            size_t labelCount{1};
+            labelLines[0] = relativeAltitudeText(altitudes[index], altitudes[0], verticalSpeed);
             if (dataProvider->getInfoMode() != InfoMode::base)
-                labelLines.push_back(QString::fromStdString(flightId));
+                labelLines[labelCount++] = QString::fromStdString(flightIdFor(index));
             if (dataProvider->getInfoMode() == InfoMode::full) {
                 const std::string aircraftType = slice<std::string>(dataProvider->getFlightIcao(),
                                                                     static_cast<int>(index));
@@ -547,11 +569,13 @@ void MapView::drawForeground (QPainter *painter, const QRectF &rect) {
                 const QString wakeText = wakeCategory == ' '
                                            ? QStringLiteral("(%1)").arg(QString::fromStdString(aircraftType))
                                            : QString{QChar::fromLatin1(wakeCategory)};
-                labelLines.push_back(QStringLiteral("%1 %2")
-                                         .arg(dataProvider->getGroundSpeed(flightId))
-                                         .arg(wakeText));
+                const AircraftTrail *trail = trailFor(index);
+                labelLines[labelCount++] = QStringLiteral("%1 %2")
+                                               .arg(trail ? trail->calculateGroundSpeed() : 0)
+                                               .arg(wakeText);
             }
-            labelRect = drawAircraftLabel(*painter, devicePosition, labelLines);
+            labelRect = drawAircraftLabel(
+                *painter, devicePosition, std::span{labelLines.data(), labelCount});
         }
         if (!labelRect.isEmpty())
             hitRect = hitRect.united(labelRect);
@@ -667,13 +691,12 @@ void MapView::updateViewport (const Point2D &center, const bool fitViewport, con
     }
 
     if (rebuilt || fitViewport) {
-        const auto centers = itemManager->project({center});
-        const bool centerValid = centers.size() == 1 && std::isfinite(centers.front().first)
-                                 && std::isfinite(centers.front().second);
+        const Point2D centerProjection = itemManager->project(center);
+        const bool centerValid = allFinite(centerProjection);
         if (centerValid) {
             // fitInView() 之前先提交锚点，避免 scrollbar 引发的同步 resize 使用旧锚点。
             geographicCenter = center;
-            projectedCenter = QPointF{centers.front().first, centers.front().second};
+            projectedCenter = QPointF{centerProjection.first, centerProjection.second};
         }
 
         const QRectF visibleRect = projectedViewport(viewportBound);
@@ -762,10 +785,9 @@ void MapView::updateAttachedChart () {
     }
 
     const auto &corners = attachedChart->geographicCorners;
-    const auto projectedCorners = itemManager->project(
-        std::vector<Point2D>(corners.begin(), corners.end()));
-    if (projectedCorners.size() != corners.size()
-        || !std::ranges::all_of(projectedCorners, [](const Point2D &point) { return allFinite(point); })) {
+    auto projectedCorners = corners;
+    itemManager->projectInPlace(projectedCorners);
+    if (!std::ranges::all_of(projectedCorners, [](const Point2D &point) { return allFinite(point); })) {
         if (attachedChartItem)
             attachedChartItem->hide();
         return;
@@ -945,9 +967,9 @@ void MapView::onDataUpdated () {
     if (followAircraft && itemManager && dataProvider->getAvailableNum() > 0) {
         const Point2D position{dataProvider->getLatValues()[0], dataProvider->getLonValues()[0]};
         if (allFinite(position) && std::abs(position.first) <= maxSupportLat) {
-            const auto projectedPositions = itemManager->project({position});
-            if (projectedPositions.size() == 1 && allFinite(projectedPositions.front())) {
-                const auto &[x, y] = projectedPositions.front();
+            const Point2D projectedPosition = itemManager->project(position);
+            if (allFinite(projectedPosition)) {
+                const auto &[x, y] = projectedPosition;
                 constexpr int edge{10};
                 const QRect trackingArea = viewport()->rect().adjusted(-edge, -edge, edge, edge);
                 // 跟踪只维持仍在视口内的飞机；用户把飞机移出视口后，不再主动拉回。
@@ -987,12 +1009,10 @@ Point2D MapView::geographicCenterFromView () const {
     if (!itemManager)
         return geographicCenter;
     const QPointF currentProjectedCenter = mapToScene(viewport()->rect().center());
-    const auto geographicCenters = itemManager->unproject({
-        {currentProjectedCenter.x(), currentProjectedCenter.y()}
-    });
-    if (geographicCenters.size() == 1 && std::isfinite(geographicCenters.front().first)
-        && std::isfinite(geographicCenters.front().second))
-        return geographicCenters.front();
+    const Point2D geographicPosition = itemManager->unproject(
+        {currentProjectedCenter.x(), currentProjectedCenter.y()});
+    if (allFinite(geographicPosition))
+        return geographicPosition;
 
     const double east = currentProjectedCenter.x() - projectedCenter.x();
     const double north = projectedCenter.y() - currentProjectedCenter.y();
@@ -1008,10 +1028,12 @@ Point2D MapView::geographicCenterFromView () const {
 
 QRectF MapView::projectedViewport (const Rect2D &bound) const {
     const auto &[topLeft, bottomRight] = bound;
-    return boundingRect(itemManager->project({
+    std::array<Point2D, 4> corners{{
         topLeft,
         {topLeft.first, bottomRight.second},
         bottomRight,
         {bottomRight.first, topLeft.second}
-    }));
+    }};
+    itemManager->projectInPlace(corners);
+    return boundingRect(corners);
 }

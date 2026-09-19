@@ -416,6 +416,11 @@ struct ProjectedPathSegment {
     QPointF second;
 };
 
+struct ProjectedGeometrySegment {
+    QPointF first;
+    QPointF second;
+};
+
 bool samePoint (const QPointF &first, const QPointF &second) {
     constexpr qreal joinTolerance{0.01};
     return QLineF(first, second).length() <= joinTolerance;
@@ -483,7 +488,6 @@ struct FirLineEvent {
 };
 
 struct FirLineGroup {
-    MapItemData representative;
     std::vector<FirLineEvent> events;
 };
 
@@ -588,7 +592,7 @@ qreal distanceToLine (const QPointF &point, const QLineF &line) {
     return std::abs(direction.x() * relative.y() - direction.y() * relative.x()) / length;
 }
 
-std::vector<ProjectedPathSegment> collapseApproximateFirDuplicates (
+std::vector<size_t> firDisplaySegmentIndices (
     const std::vector<ProjectedPathSegment> &segments) {
     // 相邻 FIR 可能用“一条直线”和“多段折线”分别描述同一条共边。
     // 只有两套描述共享首尾点时才比较，普通 FIR 曲线不会被主动拉直。
@@ -645,30 +649,31 @@ std::vector<ProjectedPathSegment> collapseApproximateFirDuplicates (
         }
     }
 
-    std::vector<ProjectedPathSegment> result;
+    std::vector<size_t> result;
     result.reserve(segments.size());
     for (size_t index = 0; index < segments.size(); ++index) {
         if (!removed[index])
-            result.emplace_back(segments[index]);
+            result.emplace_back(index);
     }
     return result;
 }
 
-std::vector<ProjectedPathSegment> uniqueFirSegments (const std::vector<ProjectedPathSegment> &segments,
-                                                     const DynamicLCC &projection) {
+std::vector<ProjectedGeometrySegment> uniqueFirSegments (const std::vector<ProjectedPathSegment> &segments,
+                                                         const DynamicLCC &projection) {
     constexpr double lineKeyTolerance{1.0e-6};
     constexpr double eventTolerance{1.0e-10};
     std::unordered_map<FirLineKey, FirLineGroup, FirLineKeyHash> groups;
-    std::vector<ProjectedPathSegment> ungrouped;
-    const std::vector<ProjectedPathSegment> displaySegments = collapseApproximateFirDuplicates(segments);
-    groups.reserve(displaySegments.size());
-    ungrouped.reserve(displaySegments.size());
+    std::vector<ProjectedGeometrySegment> ungrouped;
+    const std::vector<size_t> displayIndices = firDisplaySegmentIndices(segments);
+    groups.reserve(displayIndices.size());
+    ungrouped.reserve(displayIndices.size());
 
     // 公共边界在不同 FIR 中可能采用不同分段；先按经纬度直线归组，不能只比较整段端点。
-    for (const auto &segment : displaySegments) {
+    for (const size_t index : displayIndices) {
+        const auto &segment = segments[index];
         const auto *fir = std::get_if<MapFirData>(&segment.data);
         if (!fir || std::abs(fir->p2.second - fir->p1.second) > 180.0) {
-            ungrouped.emplace_back(segment);
+            ungrouped.push_back({segment.first, segment.second});
             continue;
         }
 
@@ -676,7 +681,7 @@ std::vector<ProjectedPathSegment> uniqueFirSegments (const std::vector<Projected
         double directionY = fir->p2.first - fir->p1.first;
         const double length = std::hypot(directionX, directionY);
         if (length <= eventTolerance) {
-            ungrouped.emplace_back(segment);
+            ungrouped.push_back({segment.first, segment.second});
             continue;
         }
         directionX /= length;
@@ -692,7 +697,7 @@ std::vector<ProjectedPathSegment> uniqueFirSegments (const std::vector<Projected
             std::llround(directionY / lineKeyTolerance),
             std::llround(offset / lineKeyTolerance)
         };
-        auto group = groups.try_emplace(key, FirLineGroup{segment.data, {}}).first;
+        auto group = groups.try_emplace(key).first;
         const double firstPosition = directionX * fir->p1.second + directionY * fir->p1.first;
         const double secondPosition = directionX * fir->p2.second + directionY * fir->p2.first;
         if (firstPosition <= secondPosition) {
@@ -704,7 +709,7 @@ std::vector<ProjectedPathSegment> uniqueFirSegments (const std::vector<Projected
         }
     }
 
-    std::vector<ProjectedPathSegment> splitSegments;
+    std::vector<ProjectedGeometrySegment> splitSegments;
     splitSegments.reserve(segments.size());
     for (auto &entry : groups) {
         auto &group = entry.second;
@@ -724,17 +729,18 @@ std::vector<ProjectedPathSegment> uniqueFirSegments (const std::vector<Projected
             }
             coverage += delta;
             if (coverage > 0 && nextIndex < group.events.size()) {
-                const auto projected = projection.trans({point, group.events[nextIndex].point});
-                if (projected.size() == 2 && finitePoint(projected[0]) && finitePoint(projected[1]))
-                    splitSegments.push_back({group.representative,
-                                             toQPoint(projected[0]), toQPoint(projected[1])});
+                std::array projected{point, group.events[nextIndex].point};
+                projection.transInPlace(projected);
+                if (finitePoint(projected[0]) && finitePoint(projected[1]))
+                    splitSegments.push_back({toQPoint(projected[0]), toQPoint(projected[1])});
             }
             eventIndex = nextIndex;
         }
     }
 
-    splitSegments.insert(splitSegments.end(), ungrouped.begin(), ungrouped.end());
-    std::vector<ProjectedPathSegment> unique;
+    splitSegments.insert(splitSegments.end(), std::make_move_iterator(ungrouped.begin()),
+                         std::make_move_iterator(ungrouped.end()));
+    std::vector<ProjectedGeometrySegment> unique;
     unique.reserve(splitSegments.size());
     std::unordered_set<ProjectedSegmentKey, ProjectedSegmentKeyHash> seen;
     seen.reserve(splitSegments.size());
@@ -749,7 +755,7 @@ std::vector<ProjectedPathSegment> uniqueFirSegments (const std::vector<Projected
     return unique;
 }
 
-QPainterPath combineSegments (const std::vector<ProjectedPathSegment> &segments) {
+QPainterPath combineSegments (const std::vector<ProjectedGeometrySegment> &segments) {
     QPainterPath path;
     path.setFillRule(Qt::OddEvenFill);
     std::vector<bool> consumed(segments.size());
@@ -806,9 +812,10 @@ QRectF projectedRect (const DynamicLCC &projection, const Rect2D &bound) {
     const double left = topLeft.second;
     const double bottom = bottomRight.first;
     const double right = bottomRight.second;
-    const auto corners = projection.trans({
+    std::array<Point2D, 4> corners{{
         {top, left}, {top, right}, {bottom, left}, {bottom, right}
-    });
+    }};
+    projection.transInPlace(corners);
     QRectF result;
     bool initialized{};
     for (const auto &corner : corners) {
@@ -829,13 +836,14 @@ QRectF projectedRect (const DynamicLCC &projection, const Rect2D &bound) {
 // share the exact same projected edge and can never overlap at high latitude.
 std::optional<QPainterPath> moraFrame (const DynamicLCC &projection, const Rect2D &bound) {
     const auto &[topLeft, bottomRight] = bound;
-    const auto corners = projection.trans({
+    std::array<Point2D, 4> corners{{
         topLeft,
         {topLeft.first, bottomRight.second},
         bottomRight,
         {bottomRight.first, topLeft.second}
-    });
-    if (corners.size() != 4 || !std::ranges::all_of(corners, finitePoint))
+    }};
+    projection.transInPlace(corners);
+    if (!std::ranges::all_of(corners, finitePoint))
         return std::nullopt;
 
     QPainterPath path(toQPoint(corners.front()));
@@ -857,12 +865,13 @@ MapPathItem::MapPathItem (std::vector<MapItemData> data, const QPainterPath &pat
         throw std::invalid_argument("MapPathItem requires airway or FIR data");
 
     setFlag(ItemIsSelectable, true);
-    setPen(defaultPen(itemType()));
+    QGraphicsPathItem::setPen(defaultPen(itemType()));
     setBrush(defaultBrush(itemType()));
     setZValue(defaultZValue(itemType()));
 
     if (itemType() == MapItemType::awy)
         airwaySegments = lineSegments(path);
+    updateGeometryCache();
 
     if (itemType() == MapItemType::awy) {
         labelItems.reserve(dataItems.size());
@@ -894,20 +903,11 @@ const MapItemData* MapPathItem::findData (const MapItemType type, const int id) 
 }
 
 QRectF MapPathItem::boundingRect () const {
-    QRectF result = QGraphicsPathItem::boundingRect().united(shape().boundingRect());
-    if (itemType() == MapItemType::awy && !airwaySegments.empty())
-        result.adjust(-airwayBoundingMargin, -airwayBoundingMargin,
-                      airwayBoundingMargin, airwayBoundingMargin);
-    return result;
+    return itemBounds;
 }
 
 QPainterPath MapPathItem::shape () const {
-    if (path().isEmpty())
-        return {};
-    QPainterPathStroker stroker;
-    stroker.setWidth(std::max(pen().widthF(), 6.0));
-    QPainterPath result = path().united(stroker.createStroke(path()));
-    return result;
+    return itemShape;
 }
 
 void MapPathItem::paint (QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -946,15 +946,14 @@ const std::vector<QGraphicsSimpleTextItem*>& MapPathItem::labels () const noexce
     return labelItems;
 }
 
-std::vector<QRectF> MapPathItem::airwayArrowBounds (const QTransform &sceneToDevice) const {
-    std::vector<QRectF> result;
+void MapPathItem::addAirwayArrowRegions (QRegion &region, const QTransform &sceneToDevice,
+                                         const qreal margin) const {
     if (itemType() != MapItemType::awy)
-        return result;
+        return;
 
     const qreal lineWidth = std::max(pen().widthF(), airwayLineWidth);
     const QTransform itemToDevice = deviceTransform(sceneToDevice);
     const size_t count = std::min(dataItems.size(), airwaySegments.size());
-    result.reserve(count);
     for (size_t index = 0; index < count; ++index) {
         const auto *airway = std::get_if<MapAwyData>(&dataItems[index]);
         if (!airway)
@@ -963,9 +962,14 @@ std::vector<QRectF> MapPathItem::airwayArrowBounds (const QTransform &sceneToDev
                                    itemToDevice.map(airwaySegments[index].p2()));
         const QPolygonF arrow = airwayArrow(deviceSegment, airway->direct, lineWidth);
         if (!arrow.isEmpty())
-            result.emplace_back(arrow.boundingRect());
+            region += QRegion(arrow.boundingRect().adjusted(
+                -margin, -margin, margin, margin).toAlignedRect());
     }
-    return result;
+}
+
+void MapPathItem::setPen (const QPen &pen) {
+    QGraphicsPathItem::setPen(pen);
+    updateGeometryCache();
 }
 
 void MapPathItem::setLabelsVisible (const bool visible) {
@@ -983,6 +987,7 @@ void MapPathItem::setAirwayLabelSegments (const std::vector<QLineF> &segments) {
         throw std::logic_error("label segments are only valid for airway items");
     prepareGeometryChange();
     airwaySegments = segments;
+    updateGeometryCache();
     const size_t count = std::min(labelItems.size(), segments.size());
     for (size_t index = 0; index < count; ++index) {
         if (segments[index].length() > 1.0e-9)
@@ -994,6 +999,21 @@ void MapPathItem::setAirwayLabelPosition (const size_t index, const qreal positi
     if (itemType() != MapItemType::awy || index >= labelItems.size() || index >= airwaySegments.size())
         throw std::out_of_range("invalid airway label index");
     configureAirwayLabel(*labelItems[index], airwaySegments[index], position);
+}
+
+void MapPathItem::updateGeometryCache () {
+    if (path().isEmpty()) {
+        itemShape = {};
+    } else {
+        QPainterPathStroker stroker;
+        stroker.setWidth(std::max(pen().widthF(), 6.0));
+        itemShape = path().united(stroker.createStroke(path()));
+    }
+
+    itemBounds = QGraphicsPathItem::boundingRect().united(itemShape.boundingRect());
+    if (itemType() == MapItemType::awy && !airwaySegments.empty())
+        itemBounds.adjust(-airwayBoundingMargin, -airwayBoundingMargin,
+                          airwayBoundingMargin, airwayBoundingMargin);
 }
 
 /**
@@ -1011,6 +1031,7 @@ MapPointItem::MapPointItem (MapItemData data, QPainterPath symbol, const bool sc
 
     if (isNdb(this->data))
         configureNdbPen(itemPen);
+    updateGeometryCache();
 
     setFlag(ItemIsSelectable, true);
     setFlag(ItemIgnoresTransformations, screenFixed);
@@ -1025,15 +1046,11 @@ MapPointItem::MapPointItem (MapItemData data, QPainterPath symbol, const bool sc
 }
 
 QRectF MapPointItem::boundingRect () const {
-    return shape().boundingRect();
+    return itemBounds;
 }
 
 QPainterPath MapPointItem::shape () const {
-    if (symbolPath.isEmpty())
-        return {};
-    QPainterPathStroker stroker;
-    stroker.setWidth(std::max(itemPen.widthF(), 6.0));
-    return symbolPath.united(stroker.createStroke(symbolPath));
+    return itemShape;
 }
 
 void MapPointItem::paint (QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) {
@@ -1094,6 +1111,7 @@ void MapPointItem::setPen (const QPen &pen) {
     itemPen = pen;
     if (isNdb(data))
         configureNdbPen(itemPen);
+    updateGeometryCache();
     update();
 }
 
@@ -1117,6 +1135,17 @@ void MapPointItem::setLabelAnchor (const QPointF &anchor, const bool centered) c
         configureCenteredLabel(*labelItem, anchor);
     else
         configureLabel(*labelItem, anchor);
+}
+
+void MapPointItem::updateGeometryCache () {
+    if (symbolPath.isEmpty()) {
+        itemShape = {};
+    } else {
+        QPainterPathStroker stroker;
+        stroker.setWidth(std::max(itemPen.widthF(), 6.0));
+        itemShape = symbolPath.united(stroker.createStroke(symbolPath));
+    }
+    itemBounds = itemShape.boundingRect();
 }
 
 MapItemManage::MapItemManage (const QString &databaseFilePath) : query(databaseFilePath) {
@@ -1157,25 +1186,26 @@ bool MapItemManage::updateViewport (const Rect2D &viewportBound) {
     newItems.reserve(mapData.size());
     std::vector<ProjectedPathSegment> airwaySegments;
     std::vector<ProjectedPathSegment> firSegments;
-    for (const auto &data : mapData) {
+    for (auto &data : mapData) {
         // 航路与 FIR 先保存投影线段，循环结束后分别合并为较少的路径图元。
         if (const auto *airway = std::get_if<MapAwyData>(&data)) {
-            const auto points = itemProjection->trans({airway->p1, airway->p2});
-            if (points.size() != 2 || !finitePoint(points[0]) || !finitePoint(points[1]))
+            std::array points{airway->p1, airway->p2};
+            itemProjection->transInPlace(points);
+            if (!finitePoint(points[0]) || !finitePoint(points[1]))
                 continue;
-            airwaySegments.push_back({data, toQPoint(points[0]), toQPoint(points[1])});
+            airwaySegments.push_back({std::move(data), toQPoint(points[0]), toQPoint(points[1])});
         } else if (const auto *fir = std::get_if<MapFirData>(&data)) {
-            const auto points = itemProjection->trans({fir->p1, fir->p2});
-            if (points.size() != 2 || !finitePoint(points[0]) || !finitePoint(points[1]))
+            std::array points{fir->p1, fir->p2};
+            itemProjection->transInPlace(points);
+            if (!finitePoint(points[0]) || !finitePoint(points[1]))
                 continue;
-            firSegments.push_back({data, toQPoint(points[0]), toQPoint(points[1])});
+            firSegments.push_back({std::move(data), toQPoint(points[0]), toQPoint(points[1])});
         } else if (const auto *mora = std::get_if<MapMoraData>(&data)) {
             // MORA 使用随地图缩放的投影边框；其余点元素只投影锚点，符号保持屏幕尺寸。
-            const auto path = moraFrame(*itemProjection, mora->bounds);
+            auto path = moraFrame(*itemProjection, mora->bounds);
             if (!path)
                 continue;
-            auto item = std::make_unique<MapPointItem>(data, *path, false);
-            item->setLabelAnchor(path->boundingRect().center(), true);
+            auto item = std::make_unique<MapPointItem>(std::move(data), std::move(*path), false);
             newItems.emplace_back(std::move(item));
         } else {
             const Point2D realPosition = std::visit([](const auto &item) -> Point2D {
@@ -1184,11 +1214,12 @@ bool MapItemManage::updateViewport (const Rect2D &viewportBound) {
                     return item.realPos;
                 return {};
             }, data);
-            const auto positions = itemProjection->trans({realPosition});
-            if (positions.size() != 1 || !finitePoint(positions.front()))
+            const Point2D position = itemProjection->trans(realPosition);
+            if (!finitePoint(position))
                 continue;
-            auto item = std::make_unique<MapPointItem>(data, symbolForData(data), true);
-            item->setPos(toQPoint(positions.front()));
+            QPainterPath symbol = symbolForData(data);
+            auto item = std::make_unique<MapPointItem>(std::move(data), std::move(symbol), true);
+            item->setPos(toQPoint(position));
             newItems.emplace_back(std::move(item));
         }
     }
@@ -1210,13 +1241,14 @@ bool MapItemManage::updateViewport (const Rect2D &viewportBound) {
         }
 
         // FIR 仅对绘制几何去重，原始线段仍用于保留数据关联和各段标签位置。
-        const std::vector<ProjectedPathSegment> geometrySegments = uniqueFirSegments(segments, *itemProjection);
+        const std::vector<ProjectedGeometrySegment> geometrySegments =
+            uniqueFirSegments(segments, *itemProjection);
         std::vector<MapItemData> sourceData;
         std::vector<QPointF> labelAnchors;
         sourceData.reserve(segments.size());
         labelAnchors.reserve(segments.size());
-        for (const auto &segment : segments) {
-            sourceData.emplace_back(segment.data);
+        for (auto &segment : segments) {
+            sourceData.emplace_back(std::move(segment.data));
             labelAnchors.emplace_back((segment.first.x() + segment.second.x()) / 2.0,
                                       (segment.first.y() + segment.second.y()) / 2.0);
         }
@@ -1283,8 +1315,20 @@ MapItemDetails MapItemManage::itemDetails (const MapItemType type, const int id)
     return query.queryItemDetails(type, id);
 }
 
+Point2D MapItemManage::project (Point2D position) const {
+    return projection.trans(position);
+}
+
+void MapItemManage::projectInPlace (const std::span<Point2D> positions) const {
+    projection.transInPlace(positions);
+}
+
 std::vector<Point2D> MapItemManage::project (std::vector<Point2D> positions) const {
     return projection.trans(std::move(positions));
+}
+
+Point2D MapItemManage::unproject (Point2D position) const {
+    return projection.revertTrans(position);
 }
 
 std::vector<Point2D> MapItemManage::unproject (std::vector<Point2D> positions) const {
@@ -1317,6 +1361,7 @@ void MapItemManage::updateDisplayPriority (const QTransform &sceneToDevice,
     // applyZoomPolicy() also clears the result of the previous view position.
     applyZoomPolicy();
     std::vector<Candidate> candidates;
+    candidates.reserve(cachedItems.size() * 2);
     QRegion airwayArrowRegion;
     for (const auto &cachedItem : cachedItems) {
         if (auto *pointItem = dynamic_cast<MapPointItem*>(cachedItem.get())) {
@@ -1346,9 +1391,7 @@ void MapItemManage::updateDisplayPriority (const QTransform &sceneToDevice,
         auto *pathItem = dynamic_cast<MapPathItem*>(cachedItem.get());
         if (!pathItem)
             continue;
-        for (const QRectF &arrowBounds : pathItem->airwayArrowBounds(sceneToDevice))
-            airwayArrowRegion += QRegion(arrowBounds.adjusted(
-                -spacing, -spacing, spacing, spacing).toAlignedRect());
+        pathItem->addAirwayArrowRegions(airwayArrowRegion, sceneToDevice, spacing);
         const auto &labels = pathItem->labels();
         for (size_t index = 0; index < labels.size(); ++index) {
             auto *labelItem = labels[index];
