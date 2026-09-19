@@ -42,6 +42,31 @@ void PdfView::setCenterOn (const bool center) {
     centerOn = center;
 }
 
+void PdfView::centerOwnAircraft () {
+    if (!dataProvider || !dataProvider->isConnected() || !transActive
+        || dataProvider->getAvailableNum() <= 0)
+        return;
+
+    const Point2D position{dataProvider->getLatValues()[0], dataProvider->getLonValues()[0]};
+    if (!allFinite(position))
+        return;
+    const auto [x, y] = trans(position);
+    if (!std::isfinite(x) || !std::isfinite(y))
+        return;
+
+    auto *horizontalBar = horizontalScrollBar();
+    auto *verticalBar = verticalScrollBar();
+    const auto centerPosition = [](QScrollBar *bar, const double position, const double viewportCenter) {
+        const double target = std::clamp(bar->value() + position - viewportCenter,
+                                         static_cast<double>(bar->minimum()),
+                                         static_cast<double>(bar->maximum()));
+        bar->setValue(static_cast<int>(std::lround(target)));
+    };
+    centerPosition(horizontalBar, x, viewport()->width() / 2.0);
+    centerPosition(verticalBar, y, viewport()->height() / 2.0);
+    viewport()->update();
+}
+
 /**
  * @brief 加载仿射变换数据集
  * @param data [[lati,longi,x,y],...]
@@ -488,6 +513,8 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
     painter.save();
     // 飞机数据
     StdPlaneInfo info(dataProvider, idx);
+    if (!isSelf && dataProvider->getUseCalVerticalSpeed())
+        info.vs = static_cast<float>(dataProvider->getVerticalSpeed(info.flightId));
     // 移动坐标系
     auto [x,y] = trans(info.lat, info.lon);
     painter.translate(x, y);

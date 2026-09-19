@@ -73,6 +73,24 @@ int AircraftTrail::calculateGeoHeading () const {
 }
 
 /**
+ * @brief 计算垂直速度
+ * @return 垂直速度 (英尺/分钟), 数据不足时为 0
+ * @details 使用最新最多 10 秒内的首尾高度差计算平均垂直速度
+ */
+int AircraftTrail::calculateVerticalSpeed () const {
+    const int size = static_cast<int>(altitudes.size());
+    if (size < 2)
+        return 0;
+    const int spanCount = std::min(size - 1, std::max(1, 10000 / interval));
+    const double first = altitudes[size - 1 - spanCount];
+    const double last = altitudes.back();
+    if (!std::isfinite(first) || !std::isfinite(last))
+        return 0;
+    const double elapsedMinutes = spanCount * interval / 60000.0;
+    return static_cast<int>(std::round((last - first) * m2ft / elapsedMinutes));
+}
+
+/**
  * @brief 获取轨迹点
  * @return 轨迹点引用 (首部最早, 尾部最新)
  */
@@ -84,7 +102,7 @@ std::deque<Point2D>& AircraftTrail::getPoints () {
  * @brief 添加轨迹点, 超出容量时丢弃最早的点
  * @param point 经纬度点 (纬度,经度)
  */
-void AircraftTrail::addPoint (Point2D point) {
+void AircraftTrail::addPoint (Point2D point, const double altitude) {
     if (point == Point2D(0, 0)) { // 初始化时 点可能不可用
         if (!points.empty())
             point = points.back();
@@ -92,8 +110,11 @@ void AircraftTrail::addPoint (Point2D point) {
             return;
     }
     points.push_back(std::move(point));
-    while (static_cast<int>(points.size()) > maxSize)
+    altitudes.push_back(altitude);
+    while (static_cast<int>(points.size()) > maxSize) {
         points.pop_front();
+        altitudes.pop_front();
+    }
 }
 
 /**

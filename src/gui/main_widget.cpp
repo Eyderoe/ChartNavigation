@@ -149,6 +149,10 @@ void main_widget::saveSplitter () const {
     SettingsManager::instance().set(SettingsManager::spliterSta, ui->splitter->saveState(), true);
 }
 
+void main_widget::centerOwnAircraft () const {
+    ui->pdf_widget->centerOwnAircraft();
+}
+
 void main_widget::setDataProvider (DataProvider *provider) const {
     ui->pdf_widget->setDataProvider(provider);
 }

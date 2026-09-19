@@ -246,6 +246,9 @@ void DataProvider::initConnect () {
                     case SettingsManager::useCalGeoHeading:
                         useCalGeo = val.toBool();
                         break;
+                    case SettingsManager::useCalVerticalSpeed:
+                        useCalVerticalSpeed = val.toBool();
+                        break;
                     case SettingsManager::showTrail:
                         showTrail = val.toBool();
                         break;
@@ -278,6 +281,10 @@ bool DataProvider::getShowTrail () const {
 
 bool DataProvider::getUseCalGeo () const {
     return useCalGeo;
+}
+
+bool DataProvider::getUseCalVerticalSpeed () const {
+    return useCalVerticalSpeed;
 }
 
 void DataProvider::simulateDataUpdate () {
@@ -329,7 +336,8 @@ void DataProvider::processDataFrame () {
         if (flightId.empty())
             continue;
         seen.insert(flightId);
-        trails.try_emplace(flightId, intervalMs).first->second.addPoint({multiLatVal[idx], multiLonVal[idx]});
+        trails.try_emplace(flightId, intervalMs).first->second.addPoint(
+            {multiLatVal[idx], multiLonVal[idx]}, multiAltVal[idx]);
     }
     if (trails.size() >= 128) { // map 大小达到 128 后, 一次性清空已消失航班的轨迹
         std::erase_if(trails, [&](const auto &item) {
@@ -412,6 +420,16 @@ int DataProvider::getGroundSpeed (const std::string &flightId) const {
 int DataProvider::getGeoHeading (const std::string &flightId) const {
     const auto it = trails.find(flightId);
     return (it == trails.end()) ? -1 : it->second.calculateGeoHeading();
+}
+
+/**
+ * @brief 获取航班计算垂直速度
+ * @param flightId 航班号
+ * @return 垂直速度 (英尺/分钟), 无该航班轨迹时为 0
+ */
+int DataProvider::getVerticalSpeed (const std::string &flightId) const {
+    const auto it = trails.find(flightId);
+    return (it == trails.end()) ? 0 : it->second.calculateVerticalSpeed();
 }
 
 const std::deque<Point2D>& DataProvider::getPoints (const std::string &flightId) {

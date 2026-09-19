@@ -137,9 +137,14 @@ void SettingsManager::broadcast () {
                 break;
 
             case dataSource:
+            case enrouteZoomLevel:
             case tcasRange:
             case infoMode:
                 emit settingChanged(enumKey, get(enumKey, 0));
+                break;
+
+            case enrouteCenter:
+                emit settingChanged(enumKey, get(enumKey, {}));
                 break;
 
             case planeFollowed:
@@ -152,6 +157,7 @@ void SettingsManager::broadcast () {
             case scaleBarEnable:
             case showTrail:
             case useCalGeoHeading:
+            case useCalVerticalSpeed:
             case debugReplayData:
             case debugStoreData:
                 emit settingChanged(enumKey, get(enumKey, false));

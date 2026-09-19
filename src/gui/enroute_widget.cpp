@@ -13,6 +13,10 @@ void enroute_widget::setDataProvider (DataProvider *provider) {
     ui->graphicsView->setDataProvider(provider);
 }
 
+void enroute_widget::centerOwnAircraft () const {
+    ui->graphicsView->centerOwnAircraft();
+}
+
 void enroute_widget::setAttachedChart (AttachedChart chart) {
     ui->graphicsView->setAttachedChart(std::move(chart));
 }

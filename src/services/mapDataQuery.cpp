@@ -57,10 +57,26 @@ NormalizedBound normalizeBound (const Rect2D &rect) {
  * @return 扩大后的边界。
  */
 Rect2D enlargedBound (const NormalizedBound &requested) {
-    const double latitudeMargin = (requested.top - requested.bottom) * 0.5;
-    const double top = std::clamp(requested.top + latitudeMargin, -maxSupportLat, maxSupportLat);
-    const double bottom = std::clamp(requested.bottom - latitudeMargin, -maxSupportLat, maxSupportLat);
-    const double longitudeSpan = getLongiSpan(requested.left, requested.right) * 2;
+    // MapItemManage 请求 2m×2n 的图元范围；再扩大 2 倍得到 4m×4n 的数据库缓存。
+    constexpr double databaseToItemSpanRatio{2.0};
+    constexpr double maximumLatitudeSpan{maxSupportLat * 2.0};
+    const double requestedLatitudeSpan = requested.top - requested.bottom;
+    const double latitudeSpan = std::min(maximumLatitudeSpan,
+                                         requestedLatitudeSpan * databaseToItemSpanRatio);
+    const double latitudeCenter = (requested.top + requested.bottom) / 2.0;
+    double top = latitudeCenter + latitudeSpan / 2.0;
+    double bottom = latitudeCenter - latitudeSpan / 2.0;
+    if (top > maxSupportLat) {
+        bottom -= top - maxSupportLat;
+        top = maxSupportLat;
+    }
+    if (bottom < -maxSupportLat) {
+        top += -maxSupportLat - bottom;
+        bottom = -maxSupportLat;
+    }
+
+    const double longitudeSpan = std::min(360.0, getLongiSpan(requested.left, requested.right)
+                                                 * databaseToItemSpanRatio);
     if (longitudeSpan >= 360.0)
         return {{top, -180.0}, {bottom, 180.0}};
     const double centerLongitude = getLongiRangeCenter(requested.left, requested.right);
@@ -450,7 +466,7 @@ MapDataQuery::MapDataQuery (const QString &databaseFilePath) :
  * @brief 查询区域内的地图元素
  * @param requestedBound 区域(经纬度表示)
  * @return 区域内元素，以及本次查询是否重新访问了数据库
- * @note 返回区域内元素, 假如传入范围m*n大于缓存范围, 则重新查询数据库2m*2n并更新缓存
+ * @note MapItemManage 传入 2m*2n 的图元范围；缓存未覆盖时查询 4m*4n 并更新缓存。
  */
 std::pair<std::vector<MapItemData>, bool> MapDataQuery::queryMapItemData (const Rect2D &requestedBound) {
     const NormalizedBound requested = normalizeBound(requestedBound);

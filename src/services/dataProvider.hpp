@@ -50,6 +50,7 @@ class DataProvider : public QObject {
         [[nodiscard]] char getWakeCategory (const std::string &icao) const; // 尾流等级
         [[nodiscard]] int getGroundSpeed (const std::string &flightId) const; // 地速, 不可用时为 0
         [[nodiscard]] int getGeoHeading (const std::string &flightId) const; // 计算航向, 不可用时为 -1
+        [[nodiscard]] int getVerticalSpeed (const std::string &flightId) const; // 计算垂直速度, 不可用时为 0
         const std::deque<Point2D>& getPoints (const std::string &flightId);
         [[nodiscard]] short getAlt (float latitude, float longitude) const;
 
@@ -57,6 +58,7 @@ class DataProvider : public QObject {
         [[nodiscard]] InfoMode getInfoMode () const; // 飞行器信息模式
         [[nodiscard]] bool getShowTrail () const;
         [[nodiscard]] bool getUseCalGeo () const;
+        [[nodiscard]] bool getUseCalVerticalSpeed () const;
 
         [[nodiscard]] bool isReplayMode () const;
         [[nodiscard]] size_t replayEventCount () const;
@@ -82,7 +84,7 @@ class DataProvider : public QObject {
         std::deque<Point2D> emptyDeque{}; // 查无航班时返回的空轨迹
         TcasMode tcasMode{TcasMode::nm30};
         InfoMode infoMode{InfoMode::base};
-        bool showTrail{false}, useCalGeo{false};
+        bool showTrail{false}, useCalGeo{false}, useCalVerticalSpeed{false};
 
         bool debugStoreData, debugReplayData;
         std::unique_ptr<QFile> replayData;

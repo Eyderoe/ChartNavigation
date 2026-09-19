@@ -40,10 +40,13 @@ class SettingsManager : public QObject {
 
             dataSource, // 数据源 SimulatorSource(int)
             planeFollowed, // 居中飞机 bool
+            enrouteCenter, // 航路图视口中心 QPointF(经度, 纬度)
+            enrouteZoomLevel, // 航路图缩放等级 MapZoomLevel(int)
             tcasRange, // TCAS显示范围 TcasMode(int)
             infoMode, // 飞行器信息 InfoMode(int)
             showTrail, // 显示飞行器航迹 bool
             useCalGeoHeading, // 使用计算航向 bool
+            useCalVerticalSpeed, // 使用计算垂直速度 bool
             unitConvert, // 选择的单位 string: "0 3 1 1"
 
             chartFolder, // 航图文件夹 String

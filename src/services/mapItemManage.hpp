@@ -13,6 +13,7 @@
 #include <QLineF>
 #include <QPainterPath>
 #include <QPen>
+#include <QPolygonF>
 #include <QRectF>
 #include <QString>
 
@@ -24,6 +25,7 @@
 
 
 class QGraphicsSimpleTextItem;
+class QTransform;
 
 /**
  * @brief 航路、FIR 等线状地图元素。
@@ -39,10 +41,13 @@ class MapPathItem final : public QGraphicsPathItem {
         [[nodiscard]] const MapItemData& mapData () const noexcept;
         [[nodiscard]] const MapItemData* findData (MapItemType type, int id) const noexcept;
         [[nodiscard]] MapItemType itemType () const noexcept;
+        [[nodiscard]] const std::vector<QGraphicsSimpleTextItem*>& labels () const noexcept;
+        [[nodiscard]] std::vector<QRectF> airwayArrowBounds (const QTransform &sceneToDevice) const;
 
         void setLabelsVisible (bool visible);
         void setLabelColor (const QColor &color);
         void setAirwayLabelSegments (const std::vector<QLineF> &segments);
+        void setAirwayLabelPosition (size_t index, qreal position);
     private:
         std::vector<MapItemData> dataItems;
         std::vector<QLineF> airwaySegments;
@@ -63,6 +68,7 @@ class MapPointItem final : public QGraphicsItem {
         [[nodiscard]] const MapItemData& mapData () const noexcept;
         [[nodiscard]] MapItemType itemType () const noexcept;
         [[nodiscard]] QString label () const;
+        [[nodiscard]] QGraphicsSimpleTextItem* labelGraphicsItem () const noexcept;
 
         void setPen (const QPen &pen);
         void setBrush (const QBrush &brush);
@@ -89,6 +95,8 @@ class MapItemManage {
         bool updateViewport (const Rect2D &viewportBound);
         bool refresh (const Rect2D &viewportBound);
         void setZoomLevel (int level);
+        void updateDisplayPriority (const QTransform &sceneToDevice, const QRectF &deviceViewport,
+                                    const QPolygonF &labelSuppressionArea = {});
 
         [[nodiscard]] const QRectF& projectedBound () const noexcept;
         [[nodiscard]] const std::vector<std::unique_ptr<QGraphicsItem>>& items () const noexcept;
@@ -107,6 +115,7 @@ class MapItemManage {
         Rect2D cachedItemBound{};
         QRectF cachedProjectedBound{};
         bool cacheValid{false};
+        bool projectionResetPending{true};
         int currentZoomLevel{1};
         std::vector<std::unique_ptr<QGraphicsItem>> cachedItems;
         QPainterPath airportSymbolPath;

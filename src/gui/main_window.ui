@@ -75,12 +75,19 @@
      <addaction name="action_symbol_extend"/>
      <addaction name="action_symbol_full"/>
     </widget>
+    <widget class="QMenu" name="menu_calculate_data">
+     <property name="title">
+      <string>计算数据</string>
+     </property>
+     <addaction name="action_cal_geo"/>
+     <addaction name="action_cal_vs"/>
+    </widget>
     <addaction name="action_follow"/>
     <addaction name="menu_4"/>
     <addaction name="menu_5"/>
     <addaction name="menu_2"/>
+    <addaction name="menu_calculate_data"/>
     <addaction name="action_show_trail"/>
-    <addaction name="action_cal_geo"/>
    </widget>
    <addaction name="menu_top_1_file"/>
    <addaction name="menu_top_2_simu"/>
@@ -99,6 +106,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="action_follow"/>
+   <addaction name="action_center"/>
    <addaction name="action_add"/>
    <addaction name="action_switch"/>
    <addaction name="action_dark"/>
@@ -163,6 +171,21 @@
    </property>
    <property name="toolTip">
     <string>跟踪飞行器</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_center">
+   <property name="icon">
+    <iconset resource="../../resources.qrc">
+     <normaloff>:/toolbar/resources/toolbarIcon/center.svg</normaloff>:/toolbar/resources/toolbarIcon/center.svg</iconset>
+   </property>
+   <property name="text">
+    <string>居中自身</string>
+   </property>
+   <property name="toolTip">
+    <string>居中自身</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
@@ -360,7 +383,15 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>使用计算航向</string>
+    <string>计算航向</string>
+   </property>
+  </action>
+  <action name="action_cal_vs">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>计算垂直速度</string>
    </property>
   </action>
  </widget>

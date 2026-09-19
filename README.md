@@ -6,7 +6,8 @@
 - Android：在现实生活中，为无聊的飞行增添一点乐趣
 
 <p align="center">
-  <img src="resources/screenshoot/show_day.png" width="60%" alt="Screenshot">
+  <img src="resources/screenshoot/show_day.png" width="70%" alt="Screenshot">
+<img src="resources/screenshoot/show_day_enroute.png" width="70%" alt="Screenshot">
 </p>
 
 ## 疯批

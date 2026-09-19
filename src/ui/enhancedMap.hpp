@@ -24,12 +24,15 @@ class QResizeEvent;
 class QToolButton;
 class QTextEdit;
 
+enum class MapZoomLevel : int { nm25, nm50, nm100, nm200 };
+
 class MapView : public QGraphicsView {
         Q_OBJECT
     public:
         explicit MapView (QWidget *parent = nullptr);
         ~MapView () override;
         void setDataProvider (DataProvider *provider);
+        void centerOwnAircraft ();
         void setAttachedChart (AttachedChart chart);
         void clearAttachedChart ();
         [[nodiscard]] bool hasAttachedChart () const noexcept;
@@ -58,6 +61,7 @@ class MapView : public QGraphicsView {
         void updateZoomControls ();
         void onDataUpdated ();
         void updateAttachedChart ();
+        void updateMapItemLabels ();
 
         [[nodiscard]] Rect2D geographicViewport (const Point2D &center) const;
         [[nodiscard]] Point2D geographicCenterFromView () const;
@@ -93,7 +97,7 @@ class MapView : public QGraphicsView {
         QPoint mousePressPosition;
         QToolButton *zoomInButton{};
         QToolButton *zoomOutButton{};
-        int zoomLevel{1};
+        MapZoomLevel zoomLevel{MapZoomLevel::nm50};
 };
 
 #endif //CHARTNAVIGATION_ENHANCEDMAP_HPP

@@ -15,6 +15,7 @@ class PdfView final : public QPdfView {
     public:
         explicit PdfView (QWidget *parent = nullptr);
         void setCenterOn (bool center);
+        void centerOwnAircraft ();
         void setColorTheme (bool darkTheme);
         void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
         void closeSimulation () const;

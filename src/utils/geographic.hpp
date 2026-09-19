@@ -4,6 +4,7 @@
 
 #include <deque>
 #include <GeographicLib/LambertConformalConic.hpp>
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -26,12 +27,14 @@ class AircraftTrail {
         explicit AircraftTrail (int interval);
         [[nodiscard]] int calculateGroundSpeed () const;
         [[nodiscard]] int calculateGeoHeading () const;
+        [[nodiscard]] int calculateVerticalSpeed () const;
         std::deque<Point2D>& getPoints ();
-        void addPoint (Point2D point);
+        void addPoint (Point2D point, double altitude = std::numeric_limits<double>::quiet_NaN());
     private:
         int interval; // 数据间隔 ms
         int maxSize; // 队列大小, 至多存储一分钟
         std::deque<Point2D> points; // 轨迹点, 尾部为最新
+        std::deque<double> altitudes; // 海拔高度 (米), 与轨迹点一一对应
 };
 
 class DynamicLCC { // WGS84,兰伯特等角圆锥投影.投影一般分类标准[等角,等积,等距]

@@ -35,6 +35,10 @@ constexpr std::array<double, 4> zoomLongEdgesNauticalMiles{25.0, 50.0, 100.0, 20
 constexpr qreal airportSymbolLineWidth{12.0 / 5.0};
 constexpr qreal fixSymbolLineWidth{10.0 / 6.0};
 
+constexpr int zoomLevelIndex (const MapZoomLevel level) noexcept {
+    return static_cast<int>(level);
+}
+
 struct MapItemColors {
     QColor pen;
     QColor label;
@@ -46,8 +50,8 @@ MapItemColors itemColors (const MapItemType type, const bool dark) {
     if (dark) {
         switch (type) {
             case MapItemType::airport:
-                return {QColor(80, 200, 255), QColor(225, 225, 225),
-                        Qt::NoBrush, airportSymbolLineWidth};
+                return {QColor(QStringLiteral("#005A9C")), QColor(225, 225, 225),
+                        QBrush(QColor(QStringLiteral("#005A9C"))), airportSymbolLineWidth};
             case MapItemType::awy:
                 return {QColor(90, 150, 255), QColor(225, 225, 225)};
             case MapItemType::fir:
@@ -57,7 +61,7 @@ MapItemColors itemColors (const MapItemType type, const bool dark) {
                 return {QColor(230, 230, 230), QColor(225, 225, 225),
                         Qt::NoBrush, fixSymbolLineWidth};
             case MapItemType::mora:
-                return {QColor(115, 115, 115), QColor(225, 225, 225), QBrush(QColor(90, 90, 90, 20))};
+                return {QColor(115, 115, 115), QColor(225, 225, 225)};
             case MapItemType::navaid:
                 return {QColor(210, 110, 230), QColor(225, 225, 225)};
         }
@@ -67,9 +71,9 @@ MapItemColors itemColors (const MapItemType type, const bool dark) {
     switch (type) {
         case MapItemType::airport:
             return {QColor(QStringLiteral("#006B8F")), QColor(QStringLiteral("#17212B")),
-                    Qt::NoBrush, airportSymbolLineWidth};
+                    QBrush(QColor(QStringLiteral("#006B8F"))), airportSymbolLineWidth};
         case MapItemType::awy:
-            return {QColor(QStringLiteral("#245AA5")), QColor(QStringLiteral("#1D3F73")),
+            return {QColor(QStringLiteral("#245AA5")), Qt::black,
                     Qt::NoBrush, lightLineWidth};
         case MapItemType::fir:
             return {QColor(QStringLiteral("#55556F")), QColor(QStringLiteral("#303044")),
@@ -78,10 +82,9 @@ MapItemColors itemColors (const MapItemType type, const bool dark) {
             return {QColor(QStringLiteral("#263238")), QColor(QStringLiteral("#17212B")),
                     Qt::NoBrush, fixSymbolLineWidth};
         case MapItemType::mora:
-            return {QColor(QStringLiteral("#747B83")), QColor(QStringLiteral("#454B52")),
-                    QBrush(QColor(65, 85, 105, 12))};
+            return {QColor(QStringLiteral("#747B83")), QColor(QStringLiteral("#454B52"))};
         case MapItemType::navaid:
-            return {QColor(QStringLiteral("#8A278F")), QColor(QStringLiteral("#671B6B")),
+            return {QColor(QStringLiteral("#8A278F")), Qt::black,
                     Qt::NoBrush, lightLineWidth};
     }
     return {};
@@ -170,30 +173,99 @@ QString detailsText (const MapItemDetails &details) {
             const QString frequency = item.type == NavaidType::ndb
                                         ? QStringLiteral("%1 kHz").arg(static_cast<int>(std::lround(item.frequency)))
                                         : QStringLiteral("%1 MHz").arg(item.frequency, 0, 'f', 2);
+            const QString altitude = item.type == NavaidType::ndb
+                                       ? QString{}
+                                       : QStringLiteral("高度：%1英尺<br>").arg(item.altitudeFeet);
             return QStringLiteral(
                 "<div class='detail-title'>导航台</div>"
                 "<div class='detail-body'>识别：%1<br>名称：%2<br>类型：%3<br>频率：%4<br>"
-                "高度：%5英尺<br>%6</div>")
+                "%5%6</div>")
                 .arg(escapedText(item.ident), escapedText(item.name), navaidTypeText(item.type), frequency)
-                .arg(item.altitudeFeet)
+                .arg(altitude)
                 .arg(coordinateText(item.position));
         }
     }, details);
 }
 
+QString relativeAltitudeText (const float altitude, const float ownAltitude, const float verticalSpeed) {
+    if (!std::isfinite(altitude) || !std::isfinite(ownAltitude))
+        return QStringLiteral("—");
+    const double deltaAltitude = (altitude - ownAltitude) * m2ft;
+    const int hundredsOfFeet = static_cast<int>(std::round(deltaAltitude / 100.0));
+    QString text = QStringLiteral("%1%2")
+                       .arg(hundredsOfFeet >= 0 ? QStringLiteral("+") : QStringLiteral("-"))
+                       .arg(std::abs(hundredsOfFeet), 2, 10, QLatin1Char('0'));
+    if (verticalSpeed >= 500.0F)
+        text += QStringLiteral("↑");
+    else if (verticalSpeed <= -500.0F)
+        text += QStringLiteral("↓");
+    return text;
+}
+
 QRectF drawAircraftLabel (QPainter &painter, const QPointF &aircraftPosition,
-                          const QString &flightId) {
-    if (flightId.isEmpty())
+                          const std::vector<QString> &lines) {
+    if (lines.empty())
         return {};
     QFont font = painter.font();
     font.setBold(true);
     font.setPixelSize(13);
     QPainterPath textPath;
-    textPath.addText(aircraftPosition + QPointF{18.0, 5.0}, font, flightId);
+    constexpr qreal lineHeight{14.0};
+    qreal baselineOffset = 5.0 - lineHeight * (static_cast<qreal>(lines.size()) - 1.0) / 2.0;
+    for (const QString &line : lines) {
+        if (!line.isEmpty())
+            textPath.addText(aircraftPosition + QPointF{18.0, baselineOffset}, font, line);
+        baselineOffset += lineHeight;
+    }
     painter.strokePath(textPath, QPen(QColor(0, 0, 0, 245), 4.0,
                                      Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     painter.fillPath(textPath, Qt::white);
     return textPath.boundingRect();
+}
+
+void drawAircraftTrail (QPainter &painter, const std::deque<Point2D> &points,
+                        const MapItemManage &itemManager, const QTransform &sceneToDevice) {
+    if (points.size() < 2)
+        return;
+
+    std::vector<Point2D> geographicPoints;
+    geographicPoints.reserve(points.size());
+    for (const Point2D &point : points) {
+        if (allFinite(point) && std::abs(point.first) <= maxSupportLat)
+            geographicPoints.push_back(point);
+    }
+    if (geographicPoints.size() < 2)
+        return;
+
+    const auto projectedPoints = itemManager.project(std::move(geographicPoints));
+    if (projectedPoints.size() < 2)
+        return;
+
+    std::vector<QPointF> devicePoints;
+    devicePoints.reserve(projectedPoints.size());
+    for (const auto &[x, y] : projectedPoints) {
+        if (std::isfinite(x) && std::isfinite(y))
+            devicePoints.push_back(sceneToDevice.map(QPointF{x, y}));
+    }
+    if (devicePoints.size() < 2)
+        return;
+
+    QPainterPath path(devicePoints.front());
+    for (std::size_t index = 0; index + 1 < devicePoints.size(); ++index) {
+        const QPointF &p0 = devicePoints[index == 0 ? 0 : index - 1];
+        const QPointF &p1 = devicePoints[index];
+        const QPointF &p2 = devicePoints[index + 1];
+        const QPointF &p3 = devicePoints[std::min(index + 2, devicePoints.size() - 1)];
+        path.cubicTo(p1 + (p2 - p0) / 6.0, p2 - (p3 - p1) / 6.0, p2);
+    }
+
+    const QColor color(239, 142, 92);
+    QLinearGradient gradient(devicePoints.back(), devicePoints.front());
+    gradient.setColorAt(0.0, QColor(color.red(), color.green(), color.blue(), 200));
+    gradient.setColorAt(1.0, QColor(color.red(), color.green(), color.blue(), 100));
+    painter.setPen(QPen(QBrush(gradient), 3.0, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawPath(path);
 }
 
 } // namespace
@@ -254,15 +326,30 @@ MapView::MapView (QWidget *parent) : QGraphicsView(parent), scene(new QGraphicsS
     zoomOutButton->setToolTip(tr("缩小地图"));
 
     connect(zoomInButton, &QToolButton::clicked, this, [this] {
-        setZoomLevel(zoomLevel - 1);
+        setZoomLevel(zoomLevelIndex(zoomLevel) - 1);
     });
     connect(zoomOutButton, &QToolButton::clicked, this, [this] {
-        setZoomLevel(zoomLevel + 1);
+        setZoomLevel(zoomLevelIndex(zoomLevel) + 1);
     });
+
+    auto &settings = SettingsManager::instance();
+    bool zoomLevelValid{};
+    const int savedZoomLevel = settings.get(SettingsManager::enrouteZoomLevel,
+                                            zoomLevelIndex(MapZoomLevel::nm50)).toInt(&zoomLevelValid);
+    if (zoomLevelValid && savedZoomLevel >= zoomLevelIndex(MapZoomLevel::nm25)
+        && savedZoomLevel <= zoomLevelIndex(MapZoomLevel::nm200))
+        zoomLevel = static_cast<MapZoomLevel>(savedZoomLevel);
+
+    const QVariant savedCenter = settings.get(SettingsManager::enrouteCenter);
+    if (savedCenter.canConvert<QPointF>()) {
+        const QPointF center = savedCenter.toPointF();
+        if (allFinite(center.x(), center.y()) && std::abs(center.y()) <= maxSupportLat)
+            geographicCenter = {center.y(), normalizeLongitude(center.x())};
+    }
+
     updateZoomControls();
     positionZoomControls();
 
-    auto &settings = SettingsManager::instance();
     connect(&settings, qOverload<SettingsManager::ConstKey, const QVariant&>(&SettingsManager::settingChanged), this,
             [this](const SettingsManager::ConstKey key, const QVariant &value) {
                 switch (key) {
@@ -282,13 +369,21 @@ MapView::MapView (QWidget *parent) : QGraphicsView(parent), scene(new QGraphicsS
                     applyColorTheme(value.toBool());
             });
 
-    // 等布局给出 viewport 的最终尺寸后再做第一次 50 海里范围查询。
+    // 等布局给出 viewport 的最终尺寸后，再按恢复的缩放等级做第一次范围查询。
     QTimer::singleShot(0, this, [this] {
         reloadDatabase(SettingsManager::instance().get(SettingsManager::airacPath, {}).toString());
     });
 }
 
 MapView::~MapView () {
+    auto &settings = SettingsManager::instance();
+    settings.set(SettingsManager::enrouteZoomLevel, zoomLevelIndex(zoomLevel), true);
+
+    const Point2D center = geographicCenterFromView();
+    if (allFinite(center) && std::abs(center.first) <= maxSupportLat)
+        settings.set(SettingsManager::enrouteCenter,
+                     QPointF{normalizeLongitude(center.second), center.first}, true);
+
     // scene 同时登记了 MapItemManage 持有的图元和 scene 自己持有的附件图元。
     // 先让 view 脱离 scene，再按各自所有权释放，避免退出时 scene/view 的析构回调
     // 访问另一方正在销毁的对象（Debug Qt 对这种顺序尤其敏感）。
@@ -312,9 +407,20 @@ void MapView::setDataProvider (DataProvider *provider) {
     viewport()->update();
 }
 
+void MapView::centerOwnAircraft () {
+    if (!itemManager || !dataProvider || !dataProvider->isConnected()
+        || dataProvider->getAvailableNum() <= 0)
+        return;
+
+    const Point2D position{dataProvider->getLatValues()[0], dataProvider->getLonValues()[0]};
+    if (allFinite(position) && std::abs(position.first) <= maxSupportLat)
+        updateViewport(position, true);
+}
+
 void MapView::setAttachedChart (AttachedChart chart) {
     attachedChart = std::move(chart);
     updateAttachedChart();
+    updateMapItemLabels();
 }
 
 void MapView::clearAttachedChart () {
@@ -324,6 +430,7 @@ void MapView::clearAttachedChart () {
         delete attachedChartItem;
         attachedChartItem = nullptr;
     }
+    updateMapItemLabels();
     viewport()->update();
 }
 
@@ -363,6 +470,21 @@ void MapView::drawForeground (QPainter *painter, const QRectF &rect) {
     painter->setWorldTransform(QTransform{});
     painter->setRenderHint(QPainter::Antialiasing, true);
     painter->setRenderHint(QPainter::SmoothPixmapTransform, true);
+    const bool isFarthestZoom = zoomLevel == MapZoomLevel::nm200;
+    if (dataProvider->getShowTrail() && !isFarthestZoom) {
+        for (size_t index = 1; index < available; ++index) {
+            const Point2D geographicPosition{latitudes[index], longitudes[index]};
+            const Point2D projectedPosition = projectedPositions[index];
+            if (!allFinite(geographicPosition, projectedPosition)
+                || std::abs(geographicPosition.first) > maxSupportLat
+                || !aircraftVisible(geographicPosition, ownPosition, altitudes[index], altitudes[0],
+                                    dataProvider->getTcasMode()))
+                continue;
+            const auto flightId = slice<std::string>(flightIds, static_cast<int>(index));
+            if (!flightId.empty())
+                drawAircraftTrail(*painter, dataProvider->getPoints(flightId), *itemManager, sceneToDevice);
+        }
+    }
     for (size_t index = 0; index < available; ++index) {
         const Point2D geographicPosition{latitudes[index], longitudes[index]};
         const Point2D projectedPosition = projectedPositions[index];
@@ -384,17 +506,53 @@ void MapView::drawForeground (QPainter *painter, const QRectF &rect) {
                        aircraftSize);
         painter->save();
         painter->translate(devicePosition);
-        const double track = std::isfinite(tracks[index])
-                               ? std::fmod(static_cast<double>(tracks[index]) + 720.0, 360.0)
-                               : 0.0;
+        double track = std::isfinite(tracks[index])
+                         ? std::fmod(static_cast<double>(tracks[index]) + 720.0, 360.0)
+                         : 0.0;
+        if (dataProvider->getUseCalGeo()) {
+            const int calculatedHeading = dataProvider->getGeoHeading(
+                slice<std::string>(flightIds, static_cast<int>(index)));
+            if (calculatedHeading != -1)
+                track = calculatedHeading;
+        }
         painter->rotate(track);
         painter->scale(scale, scale);
         painter->drawPixmap(-pixmap.width() / 2, -pixmap.height() / 2, pixmap);
         painter->restore();
-        const QRectF labelRect = zoomLevel < 2
-                                   ? drawAircraftLabel(*painter, devicePosition,
-                                                       slice<QString>(flightIds, static_cast<int>(index)))
-                                   : QRectF{};
+        QRectF labelRect;
+        if (index != 0 && zoomLevel == MapZoomLevel::nm50) {
+            float verticalSpeed = dataProvider->getVsValues()[index];
+            if (dataProvider->getUseCalVerticalSpeed()) {
+                const std::string flightId = slice<std::string>(flightIds, static_cast<int>(index));
+                verticalSpeed = static_cast<float>(dataProvider->getVerticalSpeed(flightId));
+            }
+            labelRect = drawAircraftLabel(
+                *painter, devicePosition,
+                {relativeAltitudeText(altitudes[index], altitudes[0], verticalSpeed)});
+        } else if (index != 0 && zoomLevel == MapZoomLevel::nm25) {
+            const std::string flightId = slice<std::string>(flightIds, static_cast<int>(index));
+            float verticalSpeed = dataProvider->getVsValues()[index];
+            if (dataProvider->getUseCalVerticalSpeed())
+                verticalSpeed = static_cast<float>(dataProvider->getVerticalSpeed(flightId));
+
+            std::vector<QString> labelLines{
+                relativeAltitudeText(altitudes[index], altitudes[0], verticalSpeed)
+            };
+            if (dataProvider->getInfoMode() != InfoMode::base)
+                labelLines.push_back(QString::fromStdString(flightId));
+            if (dataProvider->getInfoMode() == InfoMode::full) {
+                const std::string aircraftType = slice<std::string>(dataProvider->getFlightIcao(),
+                                                                    static_cast<int>(index));
+                const char wakeCategory = dataProvider->getWakeCategory(aircraftType);
+                const QString wakeText = wakeCategory == ' '
+                                           ? QStringLiteral("(%1)").arg(QString::fromStdString(aircraftType))
+                                           : QString{QChar::fromLatin1(wakeCategory)};
+                labelLines.push_back(QStringLiteral("%1 %2")
+                                         .arg(dataProvider->getGroundSpeed(flightId))
+                                         .arg(wakeText));
+            }
+            labelRect = drawAircraftLabel(*painter, devicePosition, labelLines);
+        }
         if (!labelRect.isEmpty())
             hitRect = hitRect.united(labelRect);
         aircraftHitRegions.push_back({index, hitRect.adjusted(-4.0, -4.0, 4.0, 4.0)});
@@ -434,6 +592,7 @@ void MapView::mouseReleaseEvent (QMouseEvent *event) {
         mousePanning = false;
         if (!mouseDragged)
             showDetailsAt(event->position().toPoint());
+        scheduleViewportUpdate();
         event->accept();
         return;
     }
@@ -494,7 +653,7 @@ void MapView::updateViewport (const Point2D &center, const bool fitViewport, con
 
     const Rect2D viewportBound = geographicViewport(center);
     QScopedValueRollback guard(updatingView, true);
-    itemManager->setZoomLevel(zoomLevel);
+    itemManager->setZoomLevel(zoomLevelIndex(zoomLevel));
     const bool rebuilt = forceRebuild ? itemManager->refresh(viewportBound)
                                       : itemManager->updateViewport(viewportBound);
 
@@ -527,15 +686,16 @@ void MapView::updateViewport (const Point2D &center, const bool fitViewport, con
         projectedCenter = mapToScene(viewport()->rect().center());
     }
     geographicCenter = center;
+    updateMapItemLabels();
 }
 
 void MapView::scheduleViewportUpdate () {
-    if (updatingView || !itemManager || viewportUpdatePending)
+    if (mousePanning || updatingView || !itemManager || viewportUpdatePending)
         return;
     viewportUpdatePending = true;
     QTimer::singleShot(0, this, [this] {
         viewportUpdatePending = false;
-        if (updatingView || !itemManager)
+        if (mousePanning || updatingView || !itemManager)
             return;
         try {
             updateViewport(geographicCenterFromView(), false);
@@ -586,17 +746,9 @@ void MapView::applyColorTheme (const bool dark) {
             QPen pen(colors.pen);
             pen.setCosmetic(true);
             pen.setWidthF(colors.width);
-            QColor labelColor = colors.label;
-            if (const auto *navaid = std::get_if<MapNavData>(&pointItem->mapData());
-                navaid && navaid->navType == NavaidType::ndb) {
-                const QColor ndbColor = dark ? QColor(QStringLiteral("#F08080"))
-                                             : QColor(QStringLiteral("#800000"));
-                pen.setColor(ndbColor);
-                labelColor = ndbColor;
-            }
             pointItem->setPen(pen);
             pointItem->setBrush(colors.brush);
-            pointItem->setLabelColor(labelColor);
+            pointItem->setLabelColor(colors.label);
         }
     }
     viewport()->update();
@@ -653,6 +805,16 @@ void MapView::updateAttachedChart () {
     attachedChartItem->setTransform(transform);
     attachedChartItem->show();
     viewport()->update();
+}
+
+void MapView::updateMapItemLabels () {
+    if (!itemManager)
+        return;
+
+    QPolygonF suppressionArea;
+    if (attachedChartItem && attachedChartItem->isVisible())
+        suppressionArea = attachedChartItem->mapToScene(attachedChartItem->boundingRect());
+    itemManager->updateDisplayPriority(viewportTransform(), viewport()->rect(), suppressionArea);
 }
 
 void MapView::showMessage (const QString &message) {
@@ -757,8 +919,9 @@ void MapView::showAircraftDetails (const std::size_t index) {
 
 void MapView::setZoomLevel (const int level) {
     const int boundedLevel = std::clamp(level, 0, static_cast<int>(zoomLongEdgesNauticalMiles.size()) - 1);
-    const bool changed = zoomLevel != boundedLevel;
-    zoomLevel = boundedLevel;
+    const auto boundedZoomLevel = static_cast<MapZoomLevel>(boundedLevel);
+    const bool changed = zoomLevel != boundedZoomLevel;
+    zoomLevel = boundedZoomLevel;
     updateZoomControls();
     if (changed && itemManager)
         updateViewport(geographicCenter, true, true);
@@ -768,20 +931,31 @@ void MapView::updateZoomControls () {
     if (!zoomInButton || !zoomOutButton)
         return;
 
-    zoomInButton->setEnabled(zoomLevel > 0);
-    zoomOutButton->setEnabled(zoomLevel + 1 < static_cast<int>(zoomLongEdgesNauticalMiles.size()));
+    zoomInButton->setEnabled(zoomLevel != MapZoomLevel::nm25);
+    zoomOutButton->setEnabled(zoomLevel != MapZoomLevel::nm200);
 }
 
 void MapView::onDataUpdated () {
     if (!dataProvider || !dataProvider->isConnected())
+        return;
+    if (mousePanning)
         return;
     if (selectedAircraft)
         showAircraftDetails(*selectedAircraft);
     if (followAircraft && itemManager && dataProvider->getAvailableNum() > 0) {
         const Point2D position{dataProvider->getLatValues()[0], dataProvider->getLonValues()[0]};
         if (allFinite(position) && std::abs(position.first) <= maxSupportLat) {
-            updateViewport(position, true);
-            return;
+            const auto projectedPositions = itemManager->project({position});
+            if (projectedPositions.size() == 1 && allFinite(projectedPositions.front())) {
+                const auto &[x, y] = projectedPositions.front();
+                constexpr int edge{10};
+                const QRect trackingArea = viewport()->rect().adjusted(-edge, -edge, edge, edge);
+                // 跟踪只维持仍在视口内的飞机；用户把飞机移出视口后，不再主动拉回。
+                if (trackingArea.contains(mapFromScene(QPointF{x, y}))) {
+                    updateViewport(position, true);
+                    return;
+                }
+            }
         }
     }
     viewport()->update();
@@ -792,7 +966,8 @@ Rect2D MapView::geographicViewport (const Point2D &center) const {
     const double height = std::max(1, viewport()->height());
     double horizontalHalfDistance{};
     double verticalHalfDistance{};
-    const double longEdgeNauticalMiles = zoomLongEdgesNauticalMiles[static_cast<std::size_t>(zoomLevel)];
+    const double longEdgeNauticalMiles = zoomLongEdgesNauticalMiles[
+        static_cast<std::size_t>(zoomLevelIndex(zoomLevel))];
     if (width >= height) {
         horizontalHalfDistance = longEdgeNauticalMiles / 2.0;
         verticalHalfDistance = horizontalHalfDistance * height / width;

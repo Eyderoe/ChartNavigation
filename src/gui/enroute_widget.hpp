@@ -19,6 +19,7 @@ public:
     explicit enroute_widget(QWidget *parent = nullptr);
     ~enroute_widget() override;
     void setDataProvider (DataProvider *provider);
+    void centerOwnAircraft () const;
     void setAttachedChart (AttachedChart chart);
     void clearAttachedChart ();
     [[nodiscard]] bool hasAttachedChart () const noexcept;

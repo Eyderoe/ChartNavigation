@@ -18,6 +18,7 @@
     </qresource>
     <qresource prefix="/toolbar">
         <file>resources/toolbarIcon/airplane.svg</file>
+        <file>resources/toolbarIcon/center.svg</file>
         <file>resources/toolbarIcon/link.svg</file>
         <file>resources/toolbarIcon/night.svg</file>
         <file>resources/toolbarIcon/rotate.svg</file>

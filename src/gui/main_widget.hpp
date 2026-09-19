@@ -37,6 +37,7 @@ class main_widget final : public QWidget {
         void loadFolder (const QString &folder) const;
         void saveSplitter () const;
         void setDataProvider (DataProvider *provider) const;
+        void centerOwnAircraft () const;
         [[nodiscard]] std::optional<AttachedChart> currentPageAttachment ();
     private:
         Ui::main_widget *ui;

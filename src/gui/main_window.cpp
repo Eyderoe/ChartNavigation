@@ -185,6 +185,10 @@ void main_window::initConnect () {
                         break;
                     case SettingsManager::useCalGeoHeading:
                         ui->action_cal_geo->setChecked(val.toBool());
+                        break;
+                    case SettingsManager::useCalVerticalSpeed:
+                        ui->action_cal_vs->setChecked(val.toBool());
+                        break;
                     default:
                         break;
                 }
@@ -219,8 +223,17 @@ void main_window::initConnect () {
     connect(ui->action_follow, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::planeFollowed, checked);
     });
+    connect(ui->action_center, &QAction::triggered, this, [this] {
+        if (stackedWidget->currentWidget() == pdfBrowser)
+            pdfBrowser->centerOwnAircraft();
+        else if (stackedWidget->currentWidget() == enroute)
+            enroute->centerOwnAircraft();
+    });
     connect(ui->action_cal_geo, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::useCalGeoHeading, checked);
+    });
+    connect(ui->action_cal_vs, &QAction::triggered, this, [&](const bool checked) {
+        SettingsManager::instance().set(SettingsManager::useCalVerticalSpeed, checked);
     });
     connect(ui->action_show_trail, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::showTrail, checked);
@@ -229,13 +242,14 @@ void main_window::initConnect () {
         attachmentAvailable = available;
         updateAttachmentAction();
     });
-    connect(ui->action_add, &QAction::triggered, this, [this](const bool checked) {
-        if (!checked) {
+    connect(ui->action_add, &QAction::triggered, this, [this] {
+        const bool attached = enroute->hasAttachedChart();
+        const bool canAttachCurrentPage = stackedWidget->currentWidget() == pdfBrowser && attachmentAvailable;
+        if (canAttachCurrentPage) {
+            if (auto chart = pdfBrowser->currentPageAttachment())
+                enroute->setAttachedChart(std::move(*chart));
+        } else if (attached) {
             enroute->clearAttachedChart();
-        } else if (auto chart = pdfBrowser->currentPageAttachment()) {
-            enroute->setAttachedChart(std::move(*chart));
-        } else {
-            ui->action_add->setChecked(false);
         }
         updateAttachmentAction();
     });
@@ -292,7 +306,7 @@ void main_window::initConnect () {
 void main_window::updateAttachmentAction () {
     const bool attached = enroute && enroute->hasAttachedChart();
     ui->action_add->setChecked(attached);
-    ui->action_add->setEnabled(attached || attachmentAvailable);
+    ui->action_add->setEnabled(true);
     ui->action_add->setToolTip(attached ? tr("取消附加航图") : tr("添加航图至航路"));
 }
 
