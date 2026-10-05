@@ -17,6 +17,10 @@ void enroute_widget::centerOwnAircraft () const {
     ui->graphicsView->centerOwnAircraft();
 }
 
+void enroute_widget::calculateProjection () const {
+    ui->graphicsView->calculateProjection();
+}
+
 void enroute_widget::setAttachedChart (AttachedChart chart) {
     ui->graphicsView->setAttachedChart(std::move(chart));
 }

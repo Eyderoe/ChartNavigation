@@ -912,7 +912,7 @@ QPainterPath MapPathItem::shape () const {
 
 void MapPathItem::paint (QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QGraphicsPathItem::paint(painter, option, widget);
-    if (itemType() != MapItemType::awy)
+    if (itemType() != MapItemType::awy || !airwayArrowsVisible)
         return;
 
     const qreal lineWidth = std::max(pen().widthF(), airwayLineWidth);
@@ -948,7 +948,7 @@ const std::vector<QGraphicsSimpleTextItem*>& MapPathItem::labels () const noexce
 
 void MapPathItem::addAirwayArrowRegions (QRegion &region, const QTransform &sceneToDevice,
                                          const qreal margin) const {
-    if (itemType() != MapItemType::awy)
+    if (itemType() != MapItemType::awy || !airwayArrowsVisible)
         return;
 
     const qreal lineWidth = std::max(pen().widthF(), airwayLineWidth);
@@ -975,6 +975,13 @@ void MapPathItem::setPen (const QPen &pen) {
 void MapPathItem::setLabelsVisible (const bool visible) {
     for (auto *labelItem : labelItems)
         labelItem->setVisible(visible);
+}
+
+void MapPathItem::setAirwayArrowsVisible (const bool visible) {
+    if (airwayArrowsVisible == visible)
+        return;
+    airwayArrowsVisible = visible;
+    update();
 }
 
 void MapPathItem::setLabelColor (const QColor &color) {
@@ -1169,7 +1176,7 @@ bool MapItemManage::updateViewport (const Rect2D &viewportBound) {
 
     // 扩大可视边界作为图元缓存缓冲区；数据库缓存换代时才同步重设投影。
     const Rect2D newItemBound = expandForItems(viewport);
-    auto [mapData, queriedDatabase] = query.queryMapItemData(newItemBound);
+    auto [mapData, queriedDatabase] = query.queryMapItemData(newItemBound, currentZoomLevel >= 4);
     projectionResetPending = projectionResetPending || queriedDatabase;
 
     DynamicLCC newProjection;
@@ -1284,6 +1291,13 @@ bool MapItemManage::refresh (const Rect2D &viewportBound) {
     }
 }
 
+bool MapItemManage::reproject (const Rect2D &viewportBound) {
+    if (!normalizeBound(viewportBound).valid)
+        return false;
+    projectionResetPending = true;
+    return refresh(viewportBound);
+}
+
 const QRectF& MapItemManage::projectedBound () const noexcept {
     return cachedProjectedBound;
 }
@@ -1336,7 +1350,7 @@ std::vector<Point2D> MapItemManage::unproject (std::vector<Point2D> positions) c
 }
 
 void MapItemManage::setZoomLevel (const int level) {
-    const int boundedLevel = std::clamp(level, 0, 3);
+    const int boundedLevel = std::clamp(level, 0, 4);
     if (currentZoomLevel == boundedLevel)
         return;
     currentZoomLevel = boundedLevel;
@@ -1495,7 +1509,10 @@ void MapItemManage::updateDisplayPriority (const QTransform &sceneToDevice,
 void MapItemManage::applyZoomPolicy () {
     for (const auto &item : cachedItems) {
         if (auto *pathItem = dynamic_cast<MapPathItem*>(item.get())) {
+            pathItem->setVisible(true);
             pathItem->setLabelsVisible(currentZoomLevel < 2);
+            if (pathItem->itemType() == MapItemType::awy)
+                pathItem->setAirwayArrowsVisible(currentZoomLevel < 4);
         } else if (auto *pointItem = dynamic_cast<MapPointItem*>(item.get())) {
             const MapItemType type = pointItem->itemType();
             if (type == MapItemType::mora) {
@@ -1503,8 +1520,11 @@ void MapItemManage::applyZoomPolicy () {
                 pointItem->setVisible(visible);
                 pointItem->setLabelsVisible(visible);
             } else {
-                pointItem->setVisible(true);
-                pointItem->setLabelsVisible(currentZoomLevel < 2 || type == MapItemType::airport);
+                const bool visible = currentZoomLevel < 4 || type == MapItemType::airport;
+                pointItem->setVisible(visible);
+                pointItem->setLabelsVisible(visible && (currentZoomLevel < 2
+                                                        || (type == MapItemType::airport
+                                                            && currentZoomLevel < 4)));
             }
         }
     }

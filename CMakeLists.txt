@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.28)
 #-DCMAKE_PREFIX_PATH="/Users/eyderoe/Qt/6.9.3/macos/lib/cmake"
 
 # 版本号, 适用于安卓, mac和win意义不大
-set(APP_VERSION_MAJOR 2)
-set(APP_VERSION_MINOR 1)
-set(APP_VERSION_PATCH 5)
+set(APP_VERSION_MAJOR 26)
+set(APP_VERSION_MINOR 9)
+set(APP_VERSION_PATCH 20)
 set(APP_VERSION "${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_PATCH}")
 math(EXPR APP_VERSION_CODE "${APP_VERSION_MAJOR}*10000 + ${APP_VERSION_MINOR}*100 + ${APP_VERSION_PATCH}")
 
@@ -64,6 +64,7 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/utils/affineTransformer.hpp
         src/ui/pdfView.cpp
         src/ui/pdfView.hpp
+        src/ui/aircraftPixmap.hpp
         src/ui/stackedWidget.cpp
         src/ui/stackedWidget.hpp
         src/ui/theme.cpp

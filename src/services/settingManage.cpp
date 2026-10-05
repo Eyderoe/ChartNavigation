@@ -140,6 +140,7 @@ void SettingsManager::broadcast () {
             case enrouteZoomLevel:
             case tcasRange:
             case infoMode:
+            case plane_style:
                 emit settingChanged(enumKey, get(enumKey, 0));
                 break;
 

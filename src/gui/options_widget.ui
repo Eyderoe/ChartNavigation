@@ -37,6 +37,49 @@
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="style_groupBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>样式</string>
+         </property>
+         <layout class="QGridLayout" name="style_gridLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="planeStyle_label">
+            <property name="text">
+             <string>⚪ 飞行器样式：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="planeStyle_comboBox">
+            <item>
+             <property name="text">
+              <string>卡通</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>简约</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QLabel" name="planeStyle_label_remark">
+            <property name="text">
+             <string>航图以及航路页面航空器显示的样式</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="path_groupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">

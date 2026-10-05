@@ -181,7 +181,7 @@ jobs:
         run: |
           "$VCPKG_ROOT/vcpkg" install \
             boost-system boost-asio boost-dynamic-bitset boost-pool \
-            geographiclib sqlitecpp \
+            geographiclib "sqlite3[rtree]" sqlitecpp \
             --triplet arm64-android
 
       - name: Build qcoro from source

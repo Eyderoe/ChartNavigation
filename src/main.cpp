@@ -35,7 +35,7 @@ int main (int argc, char *argv[]) {
     qDebug() << "QSettings path: " << QSettings().fileName();
     // 图标
     QIcon ico;
-    ico.addFile(":/icon/resources/navi.png", QSize(256, 256));
+    ico.addFile(":/icon/resources/icons/navi.png", QSize(256, 256));
     QApplication::setWindowIcon(ico);
     // 窗口
     main_window window;

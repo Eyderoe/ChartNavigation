@@ -235,6 +235,7 @@ void main_window::initConnect () {
     connect(ui->action_cal_vs, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::useCalVerticalSpeed, checked);
     });
+    connect(ui->action_cal_projection, &QAction::triggered, enroute, &enroute_widget::calculateProjection);
     connect(ui->action_show_trail, &QAction::triggered, this, [&](const bool checked) {
         SettingsManager::instance().set(SettingsManager::showTrail, checked);
     });

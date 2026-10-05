@@ -81,6 +81,7 @@
      </property>
      <addaction name="action_cal_geo"/>
      <addaction name="action_cal_vs"/>
+     <addaction name="action_cal_projection"/>
     </widget>
     <addaction name="action_follow"/>
     <addaction name="menu_4"/>
@@ -392,6 +393,11 @@
    </property>
    <property name="text">
     <string>计算垂直速度</string>
+   </property>
+  </action>
+  <action name="action_cal_projection">
+   <property name="text">
+    <string>计算投影</string>
    </property>
   </action>
  </widget>

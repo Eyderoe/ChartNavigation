@@ -37,6 +37,7 @@ class SettingsManager : public QObject {
 
             onlyDisplayPdf, // 是否只显示PDF bool
             showThumb, // 显示缩略图 bool
+            plane_style, // 飞行器样式 int: 0=卡通, 1=简约
 
             dataSource, // 数据源 SimulatorSource(int)
             planeFollowed, // 居中飞机 bool

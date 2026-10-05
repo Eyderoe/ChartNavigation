@@ -96,7 +96,7 @@ jobs:
         run: |
           "$VCPKG_ROOT/vcpkg" install \
             boost-system boost-asio boost-dynamic-bitset boost-pool \
-            geographiclib sqlitecpp \
+            geographiclib "sqlite3[rtree]" sqlitecpp \
             --triplet arm64-osx
 
       - name: Build qcoro from source (avoids vcpkg qtbase conflict)
@@ -120,16 +120,16 @@ jobs:
         run: |
           ICONSET_DIR="${{ github.workspace }}/navi.iconset"
           mkdir -p "$ICONSET_DIR"
-          sips -z 16 16   resources/navi.png --out "$ICONSET_DIR/icon_16x16.png"
-          sips -z 32 32   resources/navi.png --out "$ICONSET_DIR/icon_16x16@2x.png"
-          sips -z 32 32   resources/navi.png --out "$ICONSET_DIR/icon_32x32.png"
-          sips -z 64 64   resources/navi.png --out "$ICONSET_DIR/icon_32x32@2x.png"
-          sips -z 128 128 resources/navi.png --out "$ICONSET_DIR/icon_128x128.png"
-          sips -z 256 256 resources/navi.png --out "$ICONSET_DIR/icon_128x128@2x.png"
-          sips -z 256 256 resources/navi.png --out "$ICONSET_DIR/icon_256x256.png"
-          sips -z 512 512 resources/navi.png --out "$ICONSET_DIR/icon_256x256@2x.png"
-          sips -z 512 512 resources/navi.png --out "$ICONSET_DIR/icon_512x512.png"
-          sips -z 1024 1024 resources/navi.png --out "$ICONSET_DIR/icon_512x512@2x.png"
+          sips -z 16 16   resources/icons/navi.png --out "$ICONSET_DIR/icon_16x16.png"
+          sips -z 32 32   resources/icons/navi.png --out "$ICONSET_DIR/icon_16x16@2x.png"
+          sips -z 32 32   resources/icons/navi.png --out "$ICONSET_DIR/icon_32x32.png"
+          sips -z 64 64   resources/icons/navi.png --out "$ICONSET_DIR/icon_32x32@2x.png"
+          sips -z 128 128 resources/icons/navi.png --out "$ICONSET_DIR/icon_128x128.png"
+          sips -z 256 256 resources/icons/navi.png --out "$ICONSET_DIR/icon_128x128@2x.png"
+          sips -z 256 256 resources/icons/navi.png --out "$ICONSET_DIR/icon_256x256.png"
+          sips -z 512 512 resources/icons/navi.png --out "$ICONSET_DIR/icon_256x256@2x.png"
+          sips -z 512 512 resources/icons/navi.png --out "$ICONSET_DIR/icon_512x512.png"
+          sips -z 1024 1024 resources/icons/navi.png --out "$ICONSET_DIR/icon_512x512@2x.png"
           iconutil -c icns "$ICONSET_DIR" -o resources/navi.icns
 
       - name: Configure

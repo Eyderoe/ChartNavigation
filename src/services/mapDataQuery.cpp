@@ -410,9 +410,11 @@ void appendMora (std::vector<MapItemData> &items, const Database &database, cons
  * @brief 查询并转换所有类型的地图元素。
  * @param database 地图数据库。
  * @param queryBound 查询边界。
+ * @param overviewOnly 是否仅查询远距总览需要的机场、航路和 FIR。
  * @return 查询到的地图元素列表。
  */
-std::vector<MapItemData> queryAllItems (const Database &database, const NormalizedBound &queryBound) {
+std::vector<MapItemData> queryAllItems (const Database &database, const NormalizedBound &queryBound,
+                                        const bool overviewOnly) {
     std::vector<MapItemData> items;
     // 机场
     visitSpatialRows(database, "airport_rtree", "airport",
@@ -437,6 +439,9 @@ std::vector<MapItemData> queryAllItems (const Database &database, const Normaliz
                                       Point2D(std::get<double>(row[3]), std::get<double>(row[4])),
                                       static_cast<int>(std::get<int64_t>(row[5])), MapItemType::fir));
     });
+    if (overviewOnly)
+        return items;
+
     // 航点
     visitSpatialRows(database, "fix_rtree", "fix", "t.ident,t.latitude,t.longitude,t.id", queryBound,
                      [&items, &airwayFixIds](SQLiteRow &&row) {
@@ -467,26 +472,34 @@ MapDataQuery::MapDataQuery (const QString &databaseFilePath) :
 /**
  * @brief 查询区域内的地图元素
  * @param requestedBound 区域(经纬度表示)
+ * @param overviewOnly 是否仅返回机场、航路和 FIR。
  * @return 区域内元素，以及本次查询是否重新访问了数据库
  * @note MapItemManage 传入 2m*2n 的图元范围；缓存未覆盖时查询 4m*4n 并更新缓存。
  */
-std::pair<std::vector<MapItemData>, bool> MapDataQuery::queryMapItemData (const Rect2D &requestedBound) {
+std::pair<std::vector<MapItemData>, bool> MapDataQuery::queryMapItemData (
+    const Rect2D &requestedBound, const bool overviewOnly) {
     const NormalizedBound requested = normalizeBound(requestedBound);
     if (!requested.valid)
         return {{}, false};
     // 尝试更新
     const NormalizedBound cached = normalizeBound(bound);
-    const bool needRequire = !cacheValid || !contains(cached, requested);
+    const bool needRequire = !cacheValid || !contains(cached, requested)
+                             || (!overviewOnly && overviewOnlyCache);
     if (needRequire) {
         bound = enlargedBound(requested);
         const NormalizedBound expanded = normalizeBound(bound);
-        cache = queryAllItems(*db, expanded);
+        cache = queryAllItems(*db, expanded, overviewOnly);
         cacheValid = true;
+        overviewOnlyCache = overviewOnly;
     }
     // 返回查询范围内的
     std::vector<MapItemData> result;
     result.reserve(cache.size());
     for (const auto &item : cache) {
+        const MapItemType type = std::visit([](const auto &data) { return data.type; }, item);
+        if (overviewOnly && type != MapItemType::airport && type != MapItemType::awy
+            && type != MapItemType::fir)
+            continue;
         if (intersects(itemBound(item), requested))
             result.emplace_back(item);
     }

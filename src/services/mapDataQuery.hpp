@@ -91,7 +91,8 @@ class MapDataQuery {
     using cacheKey = std::pair<MapItemType, int>;
     public:
         explicit MapDataQuery (const QString &databaseFilePath);
-        std::pair<std::vector<MapItemData>, bool> queryMapItemData (const Rect2D &requestedBound);
+        std::pair<std::vector<MapItemData>, bool> queryMapItemData (const Rect2D &requestedBound,
+                                                                   bool overviewOnly = false);
         MapItemDetails queryItemDetails (MapItemType type, int id);
     private:
         std::unique_ptr<Database> db;
@@ -99,6 +100,7 @@ class MapDataQuery {
         std::map<cacheKey, MapItemDetails> detailCache;
         Rect2D bound; // 实际缓存区域
         bool cacheValid{false};
+        bool overviewOnlyCache{false};
 };
 
 #endif //CHARTNAVIGATION_MAPDATAQUERY_HPP

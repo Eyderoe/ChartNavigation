@@ -48,6 +48,7 @@ class MapPathItem final : public QGraphicsPathItem {
 
         void setPen (const QPen &pen);
         void setLabelsVisible (bool visible);
+        void setAirwayArrowsVisible (bool visible);
         void setLabelColor (const QColor &color);
         void setAirwayLabelSegments (const std::vector<QLineF> &segments);
         void setAirwayLabelPosition (size_t index, qreal position);
@@ -59,6 +60,7 @@ class MapPathItem final : public QGraphicsPathItem {
         std::vector<QGraphicsSimpleTextItem*> labelItems;
         QPainterPath itemShape;
         QRectF itemBounds;
+        bool airwayArrowsVisible{true};
 };
 
 /**
@@ -105,6 +107,7 @@ class MapItemManage {
 
         bool updateViewport (const Rect2D &viewportBound);
         bool refresh (const Rect2D &viewportBound);
+        bool reproject (const Rect2D &viewportBound);
         void setZoomLevel (int level);
         void updateDisplayPriority (const QTransform &sceneToDevice, const QRectF &deviceViewport,
                                     const QPolygonF &labelSuppressionArea = {});

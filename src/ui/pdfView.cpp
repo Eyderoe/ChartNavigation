@@ -1,4 +1,5 @@
 #include "pdfView.hpp"
+#include "aircraftPixmap.hpp"
 #include "utils/stringProcess.hpp"
 #include "utils/constValue.hpp"
 #include "utils/geographic.hpp"
@@ -21,8 +22,9 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     // 地图绘制
-    plane.load(":/map/resources/plane_small.png");
-    otherPlane.load(":/map/resources/plane_small_2.png");
+    const auto pixmaps = loadAircraftPixmaps(SettingsManager::instance().get(SettingsManager::plane_style, 0).toInt());
+    plane = pixmaps.own;
+    otherPlane = pixmaps.traffic;
 }
 
 /**
@@ -48,7 +50,7 @@ void PdfView::centerOwnAircraft () {
         return;
 
     const Point2D position{dataProvider->getLatValues()[0], dataProvider->getLonValues()[0]};
-    if (!allFinite(position))
+    if (!isMappedPosition(position))
         return;
     const auto [x, y] = trans(position);
     if (!std::isfinite(x) || !std::isfinite(y))
@@ -75,10 +77,11 @@ void PdfView::centerOwnAircraft () {
  * @note 看 navi 才意识到, 在变换良好的情况下可以直接计算旋转角度啊, 没有写在这里的必要性
  */
 void PdfView::loadMappingData (const std::vector<std::vector<double>> &data, const double rotateDegree,
-                               const double threshold) {
+                               const double threshold, const QPainterPath &area) {
     SettingsManager &ins = SettingsManager::instance();
 
     rotate = rotateDegree;
+    mappedArea = area;
     transActive = transformer.loadData(data, threshold);
     affineQuality = AffineQuality::inop;
     if (!transActive) {
@@ -121,18 +124,35 @@ std::optional<AttachedChart> PdfView::currentPageAttachment () {
     const QImage renderedImage = document()->render(page, imageSize);
     if (renderedImage.isNull())
         return std::nullopt;
-    QImage image(imageSize, QImage::Format_RGB32);
-    image.fill(Qt::white);
+    const double scaleX = imageSize.width() / pageSize.width();
+    const double scaleY = imageSize.height() / pageSize.height();
+    QRect cropRect(QPoint{}, imageSize);
+    if (!mappedArea.isEmpty()) {
+        const QTransform toPixels = QTransform::fromScale(scaleX, scaleY);
+        cropRect = toPixels.mapRect(mappedArea.boundingRect()).toAlignedRect().intersected(cropRect);
+    }
+    if (cropRect.isEmpty())
+        return std::nullopt;
+    QImage image(cropRect.size(), mappedArea.isEmpty() ? QImage::Format_RGB32 : QImage::Format_ARGB32_Premultiplied);
+    image.fill(mappedArea.isEmpty() ? QColor(Qt::white) : QColor(Qt::transparent));
     {
         QPainter painter(&image);
-        painter.drawImage(QPoint{}, renderedImage);
+        if (!mappedArea.isEmpty()) {
+            const QTransform toImage(scaleX, 0, 0, scaleY, -cropRect.x(), -cropRect.y());
+            painter.setClipPath(toImage.map(mappedArea));
+            painter.fillRect(image.rect(), Qt::white);
+        }
+        painter.drawImage(-cropRect.topLeft(), renderedImage);
     }
 
+    const QRectF pointRect(cropRect.x() / scaleX, cropRect.y() / scaleY,
+                           cropRect.width() / scaleX, cropRect.height() / scaleY);
+
     const std::array<Point2D, 4> corners{
-        transformer.rtransform(0.0, 0.0),
-        transformer.rtransform(pageSize.width(), 0.0),
-        transformer.rtransform(pageSize.width(), pageSize.height()),
-        transformer.rtransform(0.0, pageSize.height())
+        transformer.rtransform(pointRect.left(), pointRect.top()),
+        transformer.rtransform(pointRect.right(), pointRect.top()),
+        transformer.rtransform(pointRect.right(), pointRect.bottom()),
+        transformer.rtransform(pointRect.left(), pointRect.bottom())
     };
     if (!std::ranges::all_of(corners, [](const Point2D &corner) { return allFinite(corner); }))
         return std::nullopt;
@@ -340,10 +360,17 @@ void PdfView::paintEvent (QPaintEvent *event) {
         check = false;
     // 飞机绘制逻辑
     if (check) {
+        painter.save();
+        if (!mappedArea.isEmpty()) {
+            const QPointF origin = pointToViewport(0, 0), unit = pointToViewport(1, 1);
+            const QTransform toViewport(unit.x() - origin.x(), 0, 0, unit.y() - origin.y(), origin.x(), origin.y());
+            painter.setClipPath(toViewport.map(mappedArea));
+        }
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setRenderHint(QPainter::SmoothPixmapTransform);
         for (int i = 0; i < dataProvider->getAvailableNum(); ++i)
             drawPlane(painter, i);
+        painter.restore();
     }
 
     // 覆盖 QPdfView 在新页面图像到达前画出的空白页。不缩放快照，避免二次插值发糊。
@@ -357,7 +384,20 @@ void PdfView::paintEvent (QPaintEvent *event) {
  * @note 发现有一些变量可以约掉, 让ai直接重写了, 看不懂就倒回去看手写的那版
  */
 std::pair<double, double> PdfView::trans (const double latitude, const double longitude) {
-    auto [x, y] = transformer.transform(latitude, longitude);
+    const auto [x, y] = transformer.transform(latitude, longitude);
+    const QPointF point = pointToViewport(x, y);
+    return {point.x(), point.y()};
+}
+
+bool PdfView::isMappedPosition (const Point2D &position) {
+    if (!allFinite(position))
+        return false;
+    const auto [x, y] = transformer.transform(position);
+    return std::isfinite(x) && std::isfinite(y)
+           && (mappedArea.isEmpty() || mappedArea.contains(QPointF(x, y)));
+}
+
+QPointF PdfView::pointToViewport (const double x, const double y) const {
     const auto viewSize = viewport()->size();
     const auto scale = zoomFactor() * screen()->logicalDotsPerInch() / 72; // PDF点 → 设备像素
     const auto logicDocSize = scale * getDocSize();
@@ -513,6 +553,10 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
     painter.save();
     // 飞机数据
     StdPlaneInfo info(dataProvider, idx);
+    if (!isMappedPosition({info.lat, info.lon})) {
+        painter.restore();
+        return;
+    }
     const AircraftTrail *aircraftTrail{};
     bool trailLoaded{};
     const auto trailForPlane = [&] {
@@ -640,6 +684,8 @@ void PdfView::onDataUpdated () {
     // 不使用居中
     viewport()->update(); // 保证至少更新下, 不然自身不处于viewport()中其它不会更新
     if (!centerOn || dragging)
+        return;
+    if (!isMappedPosition({dataProvider->getLatValues()[0], dataProvider->getLonValues()[0]}))
         return;
 
     // 自身居中逻辑

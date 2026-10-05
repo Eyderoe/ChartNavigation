@@ -3,6 +3,7 @@
 
 #include <QtPdfWidgets/QPdfView>
 #include <QPointer>
+#include <QPainterPath>
 #include <optional>
 
 #include "services/attachedChart.hpp"
@@ -17,7 +18,8 @@ class PdfView final : public QPdfView {
         void setCenterOn (bool center);
         void centerOwnAircraft ();
         void setColorTheme (bool darkTheme);
-        void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold);
+        void loadMappingData (const std::vector<std::vector<double>> &data, double rotateDegree, double threshold,
+                              const QPainterPath &mappedArea = {});
         void closeSimulation () const;
         void setDataProvider (DataProvider *provider);
         void fetchScale ();
@@ -37,6 +39,8 @@ class PdfView final : public QPdfView {
         // 模拟器部分
         std::pair<double, double> trans (const Point2D &position);
         std::pair<double, double> trans (double latitude, double longitude);
+        [[nodiscard]] QPointF pointToViewport (double x, double y) const;
+        [[nodiscard]] bool isMappedPosition (const Point2D &position);
         void drawPlane (QPainter &painter, int idx = 0);
         void onDataUpdated ();
         // 杂
@@ -58,6 +62,7 @@ class PdfView final : public QPdfView {
         AffineTransformer transformer{};
         bool transActive{false};
         AffineQuality affineQuality{AffineQuality::inop};
+        QPainterPath mappedArea; // PDF 点坐标；Tnavi 的 planview 减去 insets。
         // 模拟器
         QPointer<DataProvider> dataProvider;
         QPixmap plane, otherPlane;

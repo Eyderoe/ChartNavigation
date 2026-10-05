@@ -1,16 +1,18 @@
 <RCC>
     <qresource prefix="/map">
-        <file>resources/plane_small.png</file>
-        <file>resources/plane_small_2.png</file>
+        <file>resources/planes/plane_small.png</file>
+        <file>resources/planes/plane_small_2.png</file>
+        <file>resources/planes/plane_self_plain.svg</file>
+        <file>resources/planes/plane_other_plain.svg</file>
     </qresource>
     <qresource prefix="/icon">
-        <file>resources/navi16.ico</file>
-        <file>resources/navi32.ico</file>
-        <file>resources/navi48.ico</file>
-        <file>resources/navi64.ico</file>
-        <file>resources/navi128.ico</file>
-        <file>resources/navi256.ico</file>
-        <file>resources/navi.png</file>
+        <file>resources/icons/navi16.ico</file>
+        <file>resources/icons/navi32.ico</file>
+        <file>resources/icons/navi48.ico</file>
+        <file>resources/icons/navi64.ico</file>
+        <file>resources/icons/navi128.ico</file>
+        <file>resources/icons/navi256.ico</file>
+        <file>resources/icons/navi.png</file>
     </qresource>
     <qresource prefix="/css">
         <file>resources/qdarkstyle/dark/darkstyle.qss</file>

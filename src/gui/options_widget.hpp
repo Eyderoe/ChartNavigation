@@ -24,6 +24,7 @@ class options_widget final : public QWidget {
         void readSettings () const;
         void setFontSize () const;
     private slots:
+        static void on_planeStyle_comboBox_currentIndexChanged (int index);
         void on_chartFolder_lineEdit_editingFinished ();
         void on_mappingFoler_lineEdit_editingFinished ();
         void on_globeFoler_lineEdit_editingFinished ();

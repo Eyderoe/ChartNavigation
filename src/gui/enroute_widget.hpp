@@ -20,6 +20,7 @@ public:
     ~enroute_widget() override;
     void setDataProvider (DataProvider *provider);
     void centerOwnAircraft () const;
+    void calculateProjection () const;
     void setAttachedChart (AttachedChart chart);
     void clearAttachedChart ();
     [[nodiscard]] bool hasAttachedChart () const noexcept;

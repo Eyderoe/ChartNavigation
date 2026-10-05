@@ -24,7 +24,7 @@ class QResizeEvent;
 class QToolButton;
 class QTextEdit;
 
-enum class MapZoomLevel : int { nm25, nm50, nm100, nm200 };
+enum class MapZoomLevel : int { nm25, nm50, nm100, nm200, nm400 };
 
 class MapView : public QGraphicsView {
         Q_OBJECT
@@ -33,6 +33,7 @@ class MapView : public QGraphicsView {
         ~MapView () override;
         void setDataProvider (DataProvider *provider);
         void centerOwnAircraft ();
+        void calculateProjection ();
         void setAttachedChart (AttachedChart chart);
         void clearAttachedChart ();
         [[nodiscard]] bool hasAttachedChart () const noexcept;
@@ -46,8 +47,11 @@ class MapView : public QGraphicsView {
         void scrollContentsBy (int dx, int dy) override;
 
     private:
+        enum class ViewportUpdateMode { useCache, rebuildItems, recalculateProjection };
+
         void reloadDatabase (const QString &databasePath);
-        void updateViewport (const Point2D &center, bool fitViewport, bool forceRebuild = false);
+        void updateViewport (const Point2D &center, bool fitViewport,
+                             ViewportUpdateMode mode = ViewportUpdateMode::useCache);
         void scheduleViewportUpdate ();
         void attachManagedItems ();
         void applyColorTheme (bool dark);

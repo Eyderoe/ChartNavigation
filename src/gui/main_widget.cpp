@@ -7,6 +7,34 @@
 #include "services/settingManage.hpp"
 #include "services/dataProvider.hpp"
 
+#include <cmath>
+#include <stdexcept>
+
+namespace {
+nlohmann::json readMappingFile (const QString &path) {
+    QFile file(path);
+    if (!file.exists())
+        return {};
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << path << " 无法读取";
+        return {};
+    }
+    try {
+        return nlohmann::json::parse(file.readAll().toStdString());
+    } catch (const nlohmann::json::exception &) {
+        qWarning() << path << " 解析失败";
+        return {};
+    }
+}
+
+double mappingNumber (const nlohmann::json &object, const char *key) {
+    const double value = object.at(key).get<double>();
+    if (!std::isfinite(value))
+        throw std::runtime_error("映射坐标非有限值");
+    return value;
+}
+}
+
 
 /**
  * @brief 程序启动时初始化文件树和文件夹选择框
@@ -165,56 +193,120 @@ std::optional<AttachedChart> main_widget::currentPageAttachment () {
  * @brief 从映射文件中加载仿射变换数据(一个机场文件的数据)
  */
 void main_widget::loadPdfFileMapping () {
+    fileData = {};
+    tnaviData = {};
     // 文件夹可用性
     const QString mappingFolder = SettingsManager::instance().get(SettingsManager::dataFolder, "").toString();
     const QDir mappingDir(mappingFolder);
     if (!mappingDir.exists()) {
-        fileData = {};
         return;
     }
-    // 映射文件可用性 ZUCK.Tmap
+    // Tmap 按基本名取页配置；Tnavi 按 ICAO-index_number 精确匹配。
     const QString baseName = QFileInfo(pdfFilePath).completeBaseName();
     const QString icao = baseName.left(4);
-    const QString mappingFilePath = mappingDir.filePath(icao + ".Tmap");
-    QFile mappingFile(mappingFilePath);
-    if (!mappingFile.exists()) {
-        fileData = {};
-        return;
+    const auto airportConfig = readMappingFile(mappingDir.filePath(icao + ".Tmap"));
+    if (airportConfig.is_object()) {
+        if (const auto it = airportConfig.find(baseName.toStdString()); it != airportConfig.end())
+            fileData = it.value();
     }
-    // 航图文件可用性 ZUCK-3P-01
-    mappingFile.open(QIODevice::ReadOnly);
-    QTextStream stream(&mappingFile);
-    auto airportConfig = nlohmann::json{};
-    try {
-        airportConfig = nlohmann::json::parse(stream.readAll().toUtf8().constData());
-    } catch (nlohmann::json::parse_error &ex) {
-        qDebug() << mappingFilePath << " 解析失败";
-        return;
+    tnaviData = readMappingFile(mappingDir.filePath(icao + ".Tnavi"));
+}
+
+main_widget::MappingInfo main_widget::loadTnaviMapping () const {
+    const auto *charts = &tnaviData;
+    // 本地示例是数组；Navigraph 原型的顶层对象包含 charts 数组。
+    if (tnaviData.is_object()) {
+        const auto it = tnaviData.find("charts");
+        if (it == tnaviData.end())
+            return {{}, 0, 0, {}};
+        charts = &it.value();
     }
-    const auto it = airportConfig.find(baseName.toStdString());
-    if (it == airportConfig.end()) {
-        fileData = {};
-        return;
+    if (!charts->is_array())
+        return {{}, 0, 0, {}};
+
+    const QString baseName = QFileInfo(pdfFilePath).completeBaseName();
+    for (const auto &chart : *charts) {
+        if (!chart.is_object() || !chart.contains("index_number") || !chart["index_number"].is_string())
+            continue;
+        const QString chartName = baseName.left(4) + "-"
+                                  + QString::fromStdString(chart["index_number"].get<std::string>());
+        if (chartName != baseName)
+            continue;
+        try {
+            if (!chart.value("is_georeferenced", false))
+                return {{}, 0, 0, {}};
+            const double width = mappingNumber(chart, "width");
+            const double height = mappingNumber(chart, "height");
+            if (width <= 0 || height <= 0)
+                return {{}, 0, 0, {}};
+            constexpr double pointsPerPixel = 72.0 / 360.0;
+            const auto pixelRect = [&](const nlohmann::json &pixels) {
+                const double x1 = mappingNumber(pixels, "x1"), x2 = mappingNumber(pixels, "x2");
+                const double y1 = mappingNumber(pixels, "y1"), y2 = mappingNumber(pixels, "y2");
+                if (x1 < 0 || x1 > width || x2 < 0 || x2 > width
+                    || y1 < 0 || y1 > height || y2 < 0 || y2 > height || x1 == x2 || y1 == y2)
+                    throw std::runtime_error("配准区域超出航图或退化");
+                return QRectF(QPointF(x1 * pointsPerPixel, (height - y1) * pointsPerPixel),
+                              QPointF(x2 * pointsPerPixel, (height - y2) * pointsPerPixel)).normalized();
+            };
+            const auto &boxes = chart.at("bounding_boxes");
+            const auto &planview = boxes.at("planview");
+            const auto &pixels = planview.at("pixels");
+            const auto &latlng = planview.at("latlng");
+            const QRectF bounds = pixelRect(pixels);
+            const double lat1 = mappingNumber(latlng, "lat1"), lat2 = mappingNumber(latlng, "lat2");
+            const double lon1 = mappingNumber(latlng, "lng1"), lon2 = mappingNumber(latlng, "lng2");
+            if (std::abs(lat1) > 90 || std::abs(lat2) > 90 || std::abs(lon1) > 180
+                || std::abs(lon2) > 180 || lat1 == lat2 || lon1 == lon2)
+                return {{}, 0, 0, {}};
+            // 经纬度与两个对角点一一对应，不能排序后重新配对。
+            const double x1 = mappingNumber(pixels, "x1") * pointsPerPixel;
+            const double x2 = mappingNumber(pixels, "x2") * pointsPerPixel;
+            const double y1 = (height - mappingNumber(pixels, "y1")) * pointsPerPixel;
+            const double y2 = (height - mappingNumber(pixels, "y2")) * pointsPerPixel;
+            QPainterPath mappedArea;
+            mappedArea.addRect(bounds);
+            if (const auto it = boxes.find("insets"); it != boxes.end() && !it->is_null()) {
+                if (!it->is_array())
+                    return {{}, 0, 0, {}};
+                for (const auto &inset : *it) {
+                    QPainterPath excluded;
+                    excluded.addRect(pixelRect(inset.at("pixels")));
+                    mappedArea = mappedArea.subtracted(excluded);
+                }
+            }
+            if (mappedArea.isEmpty())
+                return {{}, 0, 0, {}};
+            return {{{lat1, lon1, x1, y1}, {lat1, lon2, x2, y1},
+                     {lat2, lon2, x2, y2}, {lat2, lon1, x1, y2}},
+                    0, chart.value("category", "") == "APT" ? 10.0 : 5.0, mappedArea};
+        } catch (const std::exception &ex) {
+            qWarning() << chartName << " Tnavi 配准数据无效:" << ex.what();
+            return {{}, 0, 0, {}};
+        }
     }
-    fileData = std::move(it.value());
+    return {{}, 0, 0, {}};
 }
 
 /**
  * @brief 从缓存中加载仿射变换数据(一页的数据)
  * @param pageNum 页码
- * @brief {映射数据,旋转角度,阈值}
+ * @brief {映射数据,旋转角度,阈值,配准区域}
  */
 main_widget::MappingInfo main_widget::loadPdfPageMapping (const int pageNum) {
     // 页码可用性
     const nlohmann::basic_json<> *availableData{nullptr};
     for (const auto &pageConfig : fileData) {
-        if (const auto &header = pageConfig[0]; header["page"] == pageNum - 1) {
+        if (!pageConfig.is_array() || pageConfig.empty() || !pageConfig[0].is_object())
+            continue;
+        if (const auto &header = pageConfig[0]; header.contains("page") && header["page"] == pageNum - 1) {
             availableData = &pageConfig;
             break;
         }
     }
     if (availableData == nullptr)
-        return {{}, 0, 0};
+        // Tnavi 每条记录是一张单页航图，不复用到 PDF 的后续页面。
+        return pageNum == 1 ? loadTnaviMapping() : MappingInfo{{}, 0, 0, {}};
     // 装载数据
     std::vector<std::vector<double>> data;
     data.reserve(availableData->size() - 1);
@@ -227,7 +319,7 @@ main_widget::MappingInfo main_widget::loadPdfPageMapping (const int pageNum) {
         data.push_back({d1, d2, d3, d4});
     }
     const bool isAirport = (*availableData)[0]["type"] == "parking"; // 机场图10 终端区5
-    return {data, (*availableData)[0]["rotate"], isAirport ? 10.0 : 5.0};
+    return {data, (*availableData)[0]["rotate"], isAirport ? 10.0 : 5.0, {}};
 }
 
 /**
@@ -248,8 +340,8 @@ void main_widget::on_pageNum_spinBox_valueChanged (const int pageNum) {
     const auto pdf = ui->pdf_widget;
     pdf->pageNavigator()->jump(pageNumCorrect - 1, {0, 0}); // 不是很懂这个location
     // 映射数据加载
-    const auto [data, rotate,threshold] = loadPdfPageMapping(pageNumCorrect);
-    ui->pdf_widget->loadMappingData(data, rotate, threshold);
+    const auto [data, rotate, threshold, mappedArea] = loadPdfPageMapping(pageNumCorrect);
+    ui->pdf_widget->loadMappingData(data, rotate, threshold, mappedArea);
     emit attachmentAvailabilityChanged(ui->pdf_widget->canAttachCurrentPage());
 }
 

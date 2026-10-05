@@ -1,0 +1,2878 @@
+[
+  {
+    "icao_airport_identifier": "ZUCK",
+    "iata_airport_designator": "CKG",
+    "longest_runway": 10498,
+    "latitude": 29.7189,
+    "longitude": 106.6414,
+    "magnetic_variation": 2.9,
+    "elevation": 1365,
+    "name": "JIANGBEI",
+    "city": "ZHONGQING",
+    "state_province_code": "",
+    "state_province_name": "",
+    "country_code": "CHN",
+    "country_name": "China",
+    "fuel_types": [
+      "JET A",
+      "JET 5"
+    ],
+    "oxygen": [
+      "Low Pressure Bottle"
+    ],
+    "repairs": [
+      "Minor Engine",
+      "Major Airframe",
+      "Major Engine"
+    ],
+    "landing_fee": true,
+    "jet_starting_unit": false,
+    "precision_airport": true,
+    "beacon": false,
+    "customs": true,
+    "airport_type": "Public/civil",
+    "time_zone": "-8:00=UTC",
+    "icao_code": "ZU",
+    "daylight_savings": false,
+    "datum_code": "WGE",
+    "revision_date": "20261407",
+    "parsed_cycle": "2628",
+    "std_charts": true,
+    "cao_charts": false,
+    "vfr_charts": false
+  },
+  {
+    "index_number": "5L-01",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "RNV CAT1/2 ILSD z RW02L",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89855888486366,
+          "lat1": 30.530741713778564,
+          "lng2": 107.43082816760617,
+          "lat2": 28.646325419839034
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I02LZ"
+    ],
+    "runways": [
+      "02L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck67"
+  },
+  {
+    "index_number": "5L-02",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "CAT1/2 ILSD y RW02L",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89400250055999,
+          "lat1": 30.528026949106536,
+          "lng2": 107.43676276493905,
+          "lat2": 28.64844821171868
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I02LY"
+    ],
+    "runways": [
+      "02L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck68"
+  },
+  {
+    "index_number": "5L-03",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "RNV ILSD z RW02R",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89854045043474,
+          "lat1": 30.530738222439087,
+          "lng2": 107.43082658028558,
+          "lat2": 28.646327470462833
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I02RZ"
+    ],
+    "runways": [
+      "02R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck69"
+  },
+  {
+    "index_number": "5L-04",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "ILSD y RW02R",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89403049185425,
+          "lat1": 30.527994411410752,
+          "lng2": 107.43681092598825,
+          "lat2": 28.648416048928006
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I02RY"
+    ],
+    "runways": [
+      "02R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck70"
+  },
+  {
+    "index_number": "5L-05",
+    "revision_date": "20260903",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "RNV ILSD z RW03L",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.87031257548378,
+          "lat1": 30.4604420781975,
+          "lng2": 107.39972882402817,
+          "lat2": 28.574655373928458
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I03LZ"
+    ],
+    "runways": [
+      "03L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck71"
+  },
+  {
+    "index_number": "5L-06",
+    "revision_date": "20260903",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "ILSD y RW03L",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.86451855983935,
+          "lat1": 30.456851526923458,
+          "lng2": 107.40742004080737,
+          "lat2": 28.577275414086284
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I03LY"
+    ],
+    "runways": [
+      "03L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck72"
+  },
+  {
+    "index_number": "5L-07",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "RNV ILSD z RW03R",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.87034622725338,
+          "lat1": 30.460390236629145,
+          "lng2": 107.39972910078305,
+          "lat2": 28.574681779207577
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I03RZ"
+    ],
+    "runways": [
+      "03R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck73"
+  },
+  {
+    "index_number": "5L-08",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "ILSD y RW03R",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.86441650187977,
+          "lat1": 30.456886857282907,
+          "lng2": 107.40742050704536,
+          "lat2": 28.57731264943218
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I03RY"
+    ],
+    "runways": [
+      "03R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck74"
+  },
+  {
+    "index_number": "5L-09",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "RNV ILSD z RW20L",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89681709381689,
+          "lat1": 30.64541636155884,
+          "lng2": 107.43426366569986,
+          "lat2": 28.75916859449605
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I20LZ"
+    ],
+    "runways": [
+      "20L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck75"
+  },
+  {
+    "index_number": "5L-10",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "ILSD y RW20L",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.59257741170663,
+          "lat1": 30.837673118081394,
+          "lng2": 107.65007385926809,
+          "lat2": 28.331577105220738
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I20LY"
+    ],
+    "runways": [
+      "20L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck76"
+  },
+  {
+    "index_number": "5L-11",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "RNV ILSD z RW20R",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89677946511739,
+          "lat1": 30.64543382669651,
+          "lng2": 107.43432863399856,
+          "lat2": 28.759142282502424
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I20RZ"
+    ],
+    "runways": [
+      "20R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck77"
+  },
+  {
+    "index_number": "5L-12",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "ILSD y RW20R",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.59255222560549,
+          "lat1": 30.83771676343774,
+          "lng2": 107.6500265108114,
+          "lat2": 28.3316203389119
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I20RY"
+    ],
+    "runways": [
+      "20R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck78"
+  },
+  {
+    "index_number": "5L-13",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "RNV ILSD z RW21L",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89592953744551,
+          "lat1": 30.64626874112086,
+          "lng2": 107.43478232824539,
+          "lat2": 28.75847596873309
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I21LZ"
+    ],
+    "runways": [
+      "21L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck79"
+  },
+  {
+    "index_number": "5L-14",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "ILSD y RW21L",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89392267642758,
+          "lat1": 30.641697296696584,
+          "lng2": 107.43726832535698,
+          "lat2": 28.76212943411426
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I21LY"
+    ],
+    "runways": [
+      "21L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck80"
+  },
+  {
+    "index_number": "5L-15",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "RNV CAT1/2 ILSD z RW21R",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89808506359995,
+          "lat1": 30.64616572250287,
+          "lng2": 107.43206879002759,
+          "lat2": 28.758586395182263
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I21RZ"
+    ],
+    "runways": [
+      "21R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck81"
+  },
+  {
+    "index_number": "5L-16",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": true,
+    "name": "CAT1/2 ILSD y RW21R",
+    "type_code": "01",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89404203766102,
+          "lat1": 30.64177393566377,
+          "lng2": 107.43736471400535,
+          "lat2": 28.762205646550303
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "I21RY"
+    ],
+    "runways": [
+      "21R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck82"
+  },
+  {
+    "index_number": "5P-1",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "RNP RW02L",
+    "type_code": "1L",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.08815473822195,
+          "lat1": 30.13365977215467,
+          "lng2": 107.10971944056183,
+          "lat2": 28.87738866551604
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "R02L"
+    ],
+    "runways": [
+      "02L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck59"
+  },
+  {
+    "index_number": "5P-2",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "RNP RW02R",
+    "type_code": "1L",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.10106979028089,
+          "lat1": 30.14743649529054,
+          "lng2": 107.12263606749912,
+          "lat2": 28.89116903323589
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "R02R"
+    ],
+    "runways": [
+      "02R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck60"
+  },
+  {
+    "index_number": "5P-3",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "RNP RW03L",
+    "type_code": "1L",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.1477266955478,
+          "lat1": 30.147664208071447,
+          "lng2": 107.16792447509329,
+          "lat2": 28.890312593012414
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "R03L"
+    ],
+    "runways": [
+      "03L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck61"
+  },
+  {
+    "index_number": "5P-4",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "RNP RW03R",
+    "type_code": "1L",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.12075375254037,
+          "lat1": 30.14096160664475,
+          "lng2": 107.14089990888606,
+          "lat2": 28.883619136511943
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "R03R"
+    ],
+    "runways": [
+      "03R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck62"
+  },
+  {
+    "index_number": "5P-5",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "RNP RW20L",
+    "type_code": "1L",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89718933749343,
+          "lat1": 30.64531683203399,
+          "lng2": 107.43355079149691,
+          "lat2": 28.759364568744072
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "R20L"
+    ],
+    "runways": [
+      "20L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck63"
+  },
+  {
+    "index_number": "5P-6",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "RNP RW20R",
+    "type_code": "1L",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89715196816523,
+          "lat1": 30.64532804306346,
+          "lng2": 107.43361206001352,
+          "lat2": 28.759351463686908
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "R20R"
+    ],
+    "runways": [
+      "20R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck64"
+  },
+  {
+    "index_number": "5P-7",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "RNP RW21L",
+    "type_code": "1L",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2822,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89787007617069,
+          "lat1": 30.64624276492962,
+          "lng2": 107.4325086220749,
+          "lat2": 28.758580226557303
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "R21L"
+    ],
+    "runways": [
+      "21L"
+    ],
+    "width": 2822,
+    "height": 3937,
+    "id": "zuck65"
+  },
+  {
+    "index_number": "5P-8",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "RNP RW21R",
+    "type_code": "1L",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89802476346468,
+          "lat1": 30.646228896063747,
+          "lng2": 107.43205695267667,
+          "lat2": 28.75858037794739
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "R21R"
+    ],
+    "runways": [
+      "21R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck66"
+  },
+  {
+    "index_number": "5V-1",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "VORD RW02L",
+    "type_code": "03",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.07169279083203,
+          "lat1": 30.20148595909655,
+          "lng2": 107.10060187146065,
+          "lat2": 28.94843791167187
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "D02L"
+    ],
+    "runways": [
+      "02L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck83"
+  },
+  {
+    "index_number": "5V-2",
+    "revision_date": "20260416",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "VORD RW02R",
+    "type_code": "03",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.07169279083203,
+          "lat1": 30.20148595909655,
+          "lng2": 107.10060187146065,
+          "lat2": 28.94843791167187
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "D02R"
+    ],
+    "runways": [
+      "02R"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck84"
+  },
+  {
+    "index_number": "5V-3",
+    "revision_date": "20260219",
+    "category": "APP",
+    "precision_approach": false,
+    "name": "VORD RW20L",
+    "type_code": "03",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.96816604436965,
+          "lat1": 30.647026252468414,
+          "lng2": 107.51152598824116,
+          "lat2": 28.767458655290085
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "D20L"
+    ],
+    "runways": [
+      "20L"
+    ],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck85"
+  },
+  {
+    "index_number": "2A-1",
+    "revision_date": "20260903",
+    "category": "APT",
+    "precision_approach": null,
+    "type_code": "AP",
+    "name": "Aerodrome Chart",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 5258,
+    "height": 3938,
+    "id": "zuck2"
+  },
+  {
+    "index_number": "2P-1",
+    "revision_date": "20260903",
+    "category": "APT",
+    "precision_approach": null,
+    "type_code": "AP",
+    "name": "Parking Position",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 4226,
+          "x2": 7242,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.62527436787343,
+          "lat1": 29.70601531258646,
+          "lng2": 106.68172060003259,
+          "lat2": 29.751954047672896
+        }
+      },
+      "insets": []
+    },
+    "procedures": [],
+    "runways": [],
+    "width": 7242,
+    "height": 4226,
+    "id": "zuck3"
+  },
+  {
+    "index_number": "4P-01",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(VINEX) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.80267446123568,
+          "lat1": 31.34689584817359,
+          "lng2": 107.81386310377127,
+          "lat2": 28.82968216645095
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "VINE1J",
+      "VINE2H"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck37"
+  },
+  {
+    "index_number": "4P-02",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(VINEX) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.64621168068939,
+          "lat1": 31.189901706461974,
+          "lng2": 107.65148346503295,
+          "lat2": 28.679467500615313
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "VINXD2",
+      "VINXE1"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck38"
+  },
+  {
+    "index_number": "4P-03",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(KADVA.P701) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.9742274494954,
+          "lat1": 31.261064097535005,
+          "lng2": 107.98265360184578,
+          "lat2": 28.743969752582068
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "KADV1J",
+      "KADV2H",
+      "P701AJ",
+      "P701BH"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck39"
+  },
+  {
+    "index_number": "4P-04",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(KADVA.P701) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.72136104183085,
+          "lat1": 31.11655613460847,
+          "lng2": 107.72695862641703,
+          "lat2": 28.605737173431258
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "KADVD2",
+      "KADVE1",
+      "P701D2",
+      "P701E1"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck40"
+  },
+  {
+    "index_number": "4P-05",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(IRPOG) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.13031789189563,
+          "lat1": 31.116449406625737,
+          "lng2": 108.13839858670062,
+          "lat2": 28.591137143195898
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "IRPG1J",
+      "IRPG2H",
+      "IRPG3G",
+      "IRPG4F"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck41"
+  },
+  {
+    "index_number": "4P-06",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(IRPOG) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.80308240058008,
+          "lat1": 30.92711016444417,
+          "lng2": 107.81002728289333,
+          "lat2": 28.416102540490638
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "IRPGD2",
+      "IRPGE1"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck42"
+  },
+  {
+    "index_number": "4P-07",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(P702) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.82402649729654,
+          "lat1": 30.259368969356156,
+          "lng2": 107.32777271999026,
+          "lat2": 28.37452730631136
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "P702AJ",
+      "P702BH"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck43"
+  },
+  {
+    "index_number": "4P-08",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(P702) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.81024618133267,
+          "lat1": 30.235755217923504,
+          "lng2": 107.31572658013974,
+          "lat2": 28.35138583563293
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "P702D2",
+      "P702E1"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck44"
+  },
+  {
+    "index_number": "4P-09",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(SEGDA) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.8175594964933,
+          "lat1": 30.247339549829736,
+          "lng2": 107.32320192224302,
+          "lat2": 28.362853876082195
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "SEGD1J",
+      "SEGD2H"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck45"
+  },
+  {
+    "index_number": "4P-10",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(SEGDA) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.84476337433891,
+          "lat1": 30.215976517106174,
+          "lng2": 107.35080604761322,
+          "lat2": 28.332147062513478
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "SEGDD2",
+      "SEGDE1"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck46"
+  },
+  {
+    "index_number": "4P-11",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(VINEX) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.99905146770259,
+          "lat1": 31.180038811883378,
+          "lng2": 107.51029545014163,
+          "lat2": 29.29311468443875
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "VINE6K",
+      "VINE7L"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck47"
+  },
+  {
+    "index_number": "4P-12",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(VINEX) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.07608083444657,
+          "lat1": 31.20458996455089,
+          "lng2": 107.58711689327056,
+          "lat2": 29.316158934818006
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "VINEQ6",
+      "VINER7"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck48"
+  },
+  {
+    "index_number": "4P-13",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(KADVA.P701) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.26811191465775,
+          "lat1": 31.10696752369917,
+          "lng2": 107.77773876507186,
+          "lat2": 29.219971014626694
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "KADV6K",
+      "KADV7L",
+      "P701FK",
+      "P701GL"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck49"
+  },
+  {
+    "index_number": "4P-14",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(KADVA.P701) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.59019890637082,
+          "lat1": 30.851028469976207,
+          "lng2": 107.59262937194002,
+          "lat2": 29.590366675919334
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "KADVQ6",
+      "P701Q6"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck50"
+  },
+  {
+    "index_number": "4P-15",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(IRPOG) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.46281550631413,
+          "lat1": 30.875234316464585,
+          "lng2": 107.9699912992822,
+          "lat2": 28.983501297846253
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "IRPG6K",
+      "IRPG7L",
+      "IRPG8M",
+      "IRPG9N"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck51"
+  },
+  {
+    "index_number": "4P-16",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(IRPOG) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.53060179012884,
+          "lat1": 31.02157240867772,
+          "lng2": 108.03514866397188,
+          "lat2": 29.13009703349721
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "IRPGQ6"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck52"
+  },
+  {
+    "index_number": "4P-17",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(P702) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.6754011504662,
+          "lat1": 30.841355065594048,
+          "lng2": 107.68412712040809,
+          "lat2": 28.326165464932345
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "P702FK",
+      "P702GL"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck53"
+  },
+  {
+    "index_number": "4P-18",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(P702) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.51394218661035,
+          "lat1": 30.89020929653639,
+          "lng2": 107.53224141686981,
+          "lat2": 28.37592221260477
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "P702Q6",
+      "P702R7"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck54"
+  },
+  {
+    "index_number": "4P-19",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(SEGDA) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.93387819576026,
+          "lat1": 30.83882141220817,
+          "lng2": 107.94433981453702,
+          "lat2": 28.32403851223403
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "SEGD6K",
+      "SEGD7L"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck55"
+  },
+  {
+    "index_number": "4P-20",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "(SEGDA) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.49393462414497,
+          "lat1": 30.883337612091008,
+          "lng2": 107.51434311248572,
+          "lat2": 28.368889146674697
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "SEGDQ6",
+      "SEGDR7"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck56"
+  },
+  {
+    "index_number": "4T-1",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck31"
+  },
+  {
+    "index_number": "4T-2",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck32"
+  },
+  {
+    "index_number": "4T-3",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck33"
+  },
+  {
+    "index_number": "4T-4",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck34"
+  },
+  {
+    "index_number": "4T-5",
+    "revision_date": "20260319",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck35"
+  },
+  {
+    "index_number": "4T-6",
+    "revision_date": "20260319",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck36"
+  },
+  {
+    "index_number": "4V-1",
+    "revision_date": "20260219",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "02B.03B",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [
+      "IRPG0S",
+      "IRPG5T",
+      "KADV0S",
+      "KADV5T",
+      "P701MS",
+      "P701NT",
+      "P702MS",
+      "P702NT",
+      "SEGD0S",
+      "SEGD5T",
+      "VINX0S"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck57"
+  },
+  {
+    "index_number": "4V-2",
+    "revision_date": "20260319",
+    "category": "ARR",
+    "precision_approach": null,
+    "type_code": "J2",
+    "name": "20B.21B",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [
+      "IRPGU0",
+      "IRPGW5",
+      "KADVU0",
+      "KADVW5",
+      "P701U0",
+      "P701W5",
+      "P702U0",
+      "P702W5",
+      "SEGDU0",
+      "SEGDW5",
+      "VINXU0"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck58"
+  },
+  {
+    "index_number": "3P-01",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(OVNUL) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.37897162515736,
+          "lat1": 30.816233218307733,
+          "lng2": 107.38729891634846,
+          "lat2": 29.55737170989475
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "OVNU1Z"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck9"
+  },
+  {
+    "index_number": "3P-02",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(GUVIV) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.48324410771765,
+          "lat1": 30.808007052490073,
+          "lng2": 107.49356240574416,
+          "lat2": 29.550257572272947
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "GUVV1Z"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck10"
+  },
+  {
+    "index_number": "3P-03",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(OLNER) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.55982906100941,
+          "lat1": 30.693374059618897,
+          "lng2": 107.56311967256015,
+          "lat2": 29.434751720979282
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "OLNE1Z",
+      "OLNE2X"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck11"
+  },
+  {
+    "index_number": "3P-04",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(P614) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.01619078752468,
+          "lat1": 30.48910225459098,
+          "lng2": 107.52222260524373,
+          "lat2": 28.602920914552605
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "P614Z1"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck12"
+  },
+  {
+    "index_number": "3P-05",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(VILUS) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.84452394519256,
+          "lat1": 30.4913957242529,
+          "lng2": 107.35080242430377,
+          "lat2": 28.605335999216305
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "VILU1Z"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck13"
+  },
+  {
+    "index_number": "3P-06",
+    "revision_date": "20260611",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(NUDVO) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.04679696723225,
+          "lat1": 30.450237573778995,
+          "lng2": 107.5553617334937,
+          "lat2": 28.56391012739593
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "NUDV1Z"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck14"
+  },
+  {
+    "index_number": "3P-07",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(URGEG) 02B.03B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.98050422640644,
+          "lat1": 30.83938832019048,
+          "lng2": 106.9882458948137,
+          "lat2": 29.58251489476823
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "URGE1Z"
+    ],
+    "runways": [
+      "02L",
+      "02R",
+      "03L",
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck15"
+  },
+  {
+    "index_number": "3P-08",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(OVNUL) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.90768249592104,
+          "lat1": 31.024353233418207,
+          "lng2": 107.41749483205668,
+          "lat2": 29.140258591626004
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "OVNU6Y"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck16"
+  },
+  {
+    "index_number": "3P-09",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(GUVIV) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.98091777926672,
+          "lat1": 31.06569117975585,
+          "lng2": 107.48763653350665,
+          "lat2": 29.182216680365894
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "GUVV6Y"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck17"
+  },
+  {
+    "index_number": "3P-10",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(OLNER) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.10314339127413,
+          "lat1": 30.881611790685565,
+          "lng2": 107.60580371213841,
+          "lat2": 28.99632506885081
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "OLNE6Y",
+      "OLNE7W"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck18"
+  },
+  {
+    "index_number": "3P-11",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(P614) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.06724076965607,
+          "lat1": 30.328178630113268,
+          "lng2": 107.56804571475736,
+          "lat2": 28.440846461513303
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "P614Y6"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck19"
+  },
+  {
+    "index_number": "3P-12",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(VILUS) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.89608290185312,
+          "lat1": 30.350602527487244,
+          "lng2": 107.39334569215752,
+          "lat2": 28.464044365326437
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "VILU6Y"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck20"
+  },
+  {
+    "index_number": "3P-13",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(NUDVO) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 106.05278395774404,
+          "lat1": 30.34927269505616,
+          "lng2": 107.5325137717672,
+          "lat2": 28.46877354089284
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "NUDV6Y"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck21"
+  },
+  {
+    "index_number": "3P-14",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "(URGEG) 20B.21B RNV",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2777,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.8528564282188,
+          "lat1": 31.06666896447725,
+          "lng2": 107.36011702432467,
+          "lat2": 29.18084936601057
+        }
+      },
+      "insets": []
+    },
+    "procedures": [
+      "URGE6Y"
+    ],
+    "runways": [
+      "20L",
+      "20R",
+      "21L",
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck22"
+  },
+  {
+    "index_number": "3T-1",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck4"
+  },
+  {
+    "index_number": "3T-2",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck5"
+  },
+  {
+    "index_number": "3T-3",
+    "revision_date": "20260319",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck6"
+  },
+  {
+    "index_number": "3T-4",
+    "revision_date": "20260319",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck7"
+  },
+  {
+    "index_number": "3T-5",
+    "revision_date": "20260319",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "Ref Table",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck8"
+  },
+  {
+    "index_number": "3V-1",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "02L",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [
+      "GUVV0W",
+      "NUDV0W",
+      "OLNE0W",
+      "OVNU0W",
+      "P614W0",
+      "URGE0W",
+      "VILU0W"
+    ],
+    "runways": [
+      "02L"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck23"
+  },
+  {
+    "index_number": "3V-2",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "02R",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [
+      "GUVV2U",
+      "NUDV2U",
+      "OLNEU2",
+      "OVNU2U",
+      "P614U2",
+      "URGE2U",
+      "VILU2U"
+    ],
+    "runways": [
+      "02R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck24"
+  },
+  {
+    "index_number": "3V-3",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "03L",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [
+      "GUVV3T",
+      "NUDV3T",
+      "OLNE3T",
+      "OVNU3T",
+      "P614T3",
+      "URGE3T",
+      "VILU3T"
+    ],
+    "runways": [
+      "03L"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck25"
+  },
+  {
+    "index_number": "3V-4",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "03R",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [
+      "GUVV4S",
+      "NUDV4S",
+      "OLNE4S",
+      "OVNU4S",
+      "P614S4",
+      "URGE4S",
+      "VILU4S"
+    ],
+    "runways": [
+      "03R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck26"
+  },
+  {
+    "index_number": "3V-5",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "20L",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [
+      "GUVV5R",
+      "NUDV5R",
+      "OLNE5R",
+      "OVNU5R",
+      "P614R5",
+      "URGE5R",
+      "VILU5R"
+    ],
+    "runways": [
+      "20L"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck27"
+  },
+  {
+    "index_number": "3V-6",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "20R",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [
+      "GUVV7M",
+      "NUDV7M",
+      "OLNE7M",
+      "OVNU7M",
+      "P614M7",
+      "URGE7M",
+      "VILU7M"
+    ],
+    "runways": [
+      "20R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck28"
+  },
+  {
+    "index_number": "3V-7",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "21L",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [
+      "GUVV8L",
+      "NUDV8L",
+      "OLNE8L",
+      "OVNU8L",
+      "P614L8",
+      "URGE8L",
+      "VILU8L"
+    ],
+    "runways": [
+      "21L"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck29"
+  },
+  {
+    "index_number": "3V-8",
+    "revision_date": "20260219",
+    "category": "DEP",
+    "precision_approach": null,
+    "type_code": "G2",
+    "name": "21R",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [
+      "GUVV9K",
+      "NUDV9K",
+      "OLNE9K",
+      "OVNU9K",
+      "P614K9",
+      "URGE9K",
+      "VILU9K"
+    ],
+    "runways": [
+      "21R"
+    ],
+    "width": 2777,
+    "height": 3937,
+    "id": "zuck30"
+  },
+  {
+    "index_number": "1M-1",
+    "revision_date": "20260219",
+    "category": "REF",
+    "precision_approach": null,
+    "type_code": "B",
+    "name": "Minimum Vectoring Altitude",
+    "is_georeferenced": true,
+    "bounding_boxes": {
+      "planview": {
+        "pixels": {
+          "x1": 0,
+          "y1": 3937,
+          "x2": 2821,
+          "y2": 0
+        },
+        "latlng": {
+          "lng1": 105.32455339550542,
+          "lat1": 31.75564572664051,
+          "lng2": 108.41084808980622,
+          "lat2": 27.996442208748807
+        }
+      },
+      "insets": []
+    },
+    "procedures": [],
+    "runways": [],
+    "width": 2821,
+    "height": 3937,
+    "id": "zuck1"
+  },
+  {
+    "index_number": "6A-1",
+    "revision_date": "20250612",
+    "category": "REF",
+    "precision_approach": null,
+    "name": "Obstacle Chart-A",
+    "type_code": "MG",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 8574,
+    "height": 3846,
+    "id": "zuck86"
+  },
+  {
+    "index_number": "6A-2",
+    "revision_date": "20250612",
+    "category": "REF",
+    "precision_approach": null,
+    "name": "Obstacle Chart-A",
+    "type_code": "MG",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 6590,
+    "height": 3846,
+    "id": "zuck87"
+  },
+  {
+    "index_number": "6D-1",
+    "revision_date": "20250612",
+    "category": "REF",
+    "precision_approach": null,
+    "name": "Precision Approach Terrain",
+    "type_code": "MG",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 5385,
+    "height": 4087,
+    "id": "zuck88"
+  },
+  {
+    "index_number": "6D-2",
+    "revision_date": "20250612",
+    "category": "REF",
+    "precision_approach": null,
+    "name": "Precision Approach Terrain",
+    "type_code": "MG",
+    "is_georeferenced": false,
+    "bounding_boxes": null,
+    "procedures": [],
+    "runways": [],
+    "width": 5391,
+    "height": 4087,
+    "id": "zuck89"
+  }
+]

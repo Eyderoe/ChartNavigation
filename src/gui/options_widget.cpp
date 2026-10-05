@@ -33,12 +33,18 @@ options_widget::options_widget (QWidget *parent) : QWidget(parent), ui(new Ui::o
 
 void options_widget::readSettings () const {
     SettingsManager &ins = SettingsManager::instance();
+    // 样式
+    ui->planeStyle_comboBox->setCurrentIndex(ins.get(SettingsManager::plane_style, 0).toInt() == 1 ? 1 : 0);
     // 文件
     ui->chartFolder_lineEdit->setText(ins.get(SettingsManager::chartFolder, "").toString());
     ui->mappingFoler_lineEdit->setText(ins.get(SettingsManager::dataFolder, "").toString());
     ui->globeFoler_lineEdit->setText(ins.get(SettingsManager::globeFolder, "").toString());
     ui->airac_lineEdit->setText(ins.get(SettingsManager::airacPath, "").toString());
     ui->onlyPdf_comboBox->setCurrentIndex(ins.get(SettingsManager::onlyDisplayPdf, true).toBool() ? 0 : 1);
+}
+
+void options_widget::on_planeStyle_comboBox_currentIndexChanged (int index) {
+    SettingsManager::instance().set(SettingsManager::plane_style, index, true);
 }
 
 void options_widget::on_chartFolder_lineEdit_editingFinished () {

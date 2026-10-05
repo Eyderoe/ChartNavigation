@@ -2,6 +2,7 @@
 #define CHARTNAVIGATION_MAIN_WIDGET_HPP
 
 #include <QWidget>
+#include <QPainterPath>
 #include <QtPdf/QtPdf>
 #include <optional>
 
@@ -28,6 +29,7 @@ class main_widget final : public QWidget {
             std::vector<std::vector<double>> mappingData;
             double rotateAngle;
             double threshold;
+            QPainterPath mappedArea; // 空路径表示 Tmap 不限制配准区域。
         };
     public:
         explicit main_widget (QWidget *parent = nullptr);
@@ -45,9 +47,11 @@ class main_widget final : public QWidget {
         QMetaObject::Connection documentStatusConnection;
         QString pdfFilePath{};
         nlohmann::json fileData{};
+        nlohmann::json tnaviData{};
 
         void loadPdfFileMapping ();
         MappingInfo loadPdfPageMapping (int pageNum);
+        MappingInfo loadTnaviMapping () const;
         void initFileTree () const;
         void initConnect ();
     private Q_SLOTS:

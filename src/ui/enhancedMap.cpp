@@ -1,4 +1,5 @@
 #include "enhancedMap.hpp"
+#include "aircraftPixmap.hpp"
 
 #include <QFileInfo>
 #include <QApplication>
@@ -32,7 +33,7 @@
 
 namespace {
 
-constexpr std::array<double, 4> zoomLongEdgesNauticalMiles{25.0, 50.0, 100.0, 200.0};
+constexpr std::array<double, 5> zoomLongEdgesNauticalMiles{25.0, 50.0, 100.0, 200.0, 400.0};
 constexpr qreal airportSymbolLineWidth{12.0 / 5.0};
 constexpr qreal fixSymbolLineWidth{10.0 / 6.0};
 
@@ -282,8 +283,9 @@ MapView::MapView (QWidget *parent) : QGraphicsView(parent), scene(new QGraphicsS
     setTransformationAnchor(QGraphicsView::AnchorViewCenter);
     setResizeAnchor(QGraphicsView::AnchorViewCenter);
     viewport()->setCursor(Qt::ArrowCursor);
-    ownAircraftPixmap.load(QStringLiteral(":/map/resources/plane_small.png"));
-    trafficAircraftPixmap.load(QStringLiteral(":/map/resources/plane_small_2.png"));
+    const auto pixmaps = loadAircraftPixmaps(SettingsManager::instance().get(SettingsManager::plane_style, 0).toInt());
+    ownAircraftPixmap = pixmaps.own;
+    trafficAircraftPixmap = pixmaps.traffic;
 
     // 浮层挂在 QGraphicsView 本身，而不是它的绘图 viewport 上。viewport 会在滚动和
     // 场景重绘中刷新；把普通 QWidget 放进去会出现点击后不绘制、下一次移动才突然出现。
@@ -338,7 +340,7 @@ MapView::MapView (QWidget *parent) : QGraphicsView(parent), scene(new QGraphicsS
     const int savedZoomLevel = settings.get(SettingsManager::enrouteZoomLevel,
                                             zoomLevelIndex(MapZoomLevel::nm50)).toInt(&zoomLevelValid);
     if (zoomLevelValid && savedZoomLevel >= zoomLevelIndex(MapZoomLevel::nm25)
-        && savedZoomLevel <= zoomLevelIndex(MapZoomLevel::nm200))
+        && savedZoomLevel <= zoomLevelIndex(MapZoomLevel::nm400))
         zoomLevel = static_cast<MapZoomLevel>(savedZoomLevel);
 
     const QVariant savedCenter = settings.get(SettingsManager::enrouteCenter);
@@ -418,6 +420,12 @@ void MapView::centerOwnAircraft () {
         updateViewport(position, true);
 }
 
+void MapView::calculateProjection () {
+    if (!itemManager)
+        return;
+    updateViewport(geographicCenterFromView(), false, ViewportUpdateMode::recalculateProjection);
+}
+
 void MapView::setAttachedChart (AttachedChart chart) {
     attachedChart = std::move(chart);
     updateAttachedChart();
@@ -491,8 +499,8 @@ void MapView::drawForeground (QPainter *painter, const QRectF &rect) {
     painter->setWorldTransform(QTransform{});
     painter->setRenderHint(QPainter::Antialiasing, true);
     painter->setRenderHint(QPainter::SmoothPixmapTransform, true);
-    const bool isFarthestZoom = zoomLevel == MapZoomLevel::nm200;
-    if (dataProvider->getShowTrail() && !isFarthestZoom) {
+    const bool hideTrails = zoomLevel == MapZoomLevel::nm200 || zoomLevel == MapZoomLevel::nm400;
+    if (dataProvider->getShowTrail() && !hideTrails) {
         for (size_t index = 1; index < available; ++index) {
             const Point2D geographicPosition{latitudes[index], longitudes[index]};
             const Point2D projectedPosition = projectedPositions[index];
@@ -671,15 +679,18 @@ void MapView::reloadDatabase (const QString &databasePath) {
     }
 }
 
-void MapView::updateViewport (const Point2D &center, const bool fitViewport, const bool forceRebuild) {
+void MapView::updateViewport (const Point2D &center, const bool fitViewport, const ViewportUpdateMode mode) {
     if (!itemManager || viewport()->width() <= 1 || viewport()->height() <= 1)
         return;
 
     const Rect2D viewportBound = geographicViewport(center);
     QScopedValueRollback guard(updatingView, true);
     itemManager->setZoomLevel(zoomLevelIndex(zoomLevel));
-    const bool rebuilt = forceRebuild ? itemManager->refresh(viewportBound)
-                                      : itemManager->updateViewport(viewportBound);
+    const bool rebuilt = mode == ViewportUpdateMode::recalculateProjection
+                             ? itemManager->reproject(viewportBound)
+                         : mode == ViewportUpdateMode::rebuildItems
+                             ? itemManager->refresh(viewportBound)
+                             : itemManager->updateViewport(viewportBound);
 
     if (rebuilt) {
         attachManagedItems();
@@ -778,7 +789,8 @@ void MapView::applyColorTheme (const bool dark) {
 }
 
 void MapView::updateAttachedChart () {
-    if (!attachedChart || attachedChart->image.isNull() || !itemManager) {
+    if (!attachedChart || attachedChart->image.isNull() || !itemManager
+        || zoomLevel == MapZoomLevel::nm400) {
         if (attachedChartItem)
             attachedChartItem->hide();
         return;
@@ -946,7 +958,7 @@ void MapView::setZoomLevel (const int level) {
     zoomLevel = boundedZoomLevel;
     updateZoomControls();
     if (changed && itemManager)
-        updateViewport(geographicCenter, true, true);
+        updateViewport(geographicCenter, true, ViewportUpdateMode::rebuildItems);
 }
 
 void MapView::updateZoomControls () {
@@ -954,7 +966,7 @@ void MapView::updateZoomControls () {
         return;
 
     zoomInButton->setEnabled(zoomLevel != MapZoomLevel::nm25);
-    zoomOutButton->setEnabled(zoomLevel != MapZoomLevel::nm200);
+    zoomOutButton->setEnabled(zoomLevel != MapZoomLevel::nm400);
 }
 
 void MapView::onDataUpdated () {
