@@ -34,35 +34,51 @@ options_widget::options_widget (QWidget *parent) : QWidget(parent), ui(new Ui::o
 void options_widget::readSettings () const {
     SettingsManager &ins = SettingsManager::instance();
     // 样式
-    ui->planeStyle_comboBox->setCurrentIndex(ins.get(SettingsManager::plane_style, 0).toInt() == 1 ? 1 : 0);
+    ui->planeStyle_comboBox->setCurrentIndex(ins.getPending(SettingsManager::plane_style, 0).toInt() == 1 ? 1 : 0);
+    ui->darkChartStyle_comboBox->setCurrentIndex(ins.getPending(SettingsManager::darkChartStyle, 0).toInt() == 1 ? 1 : 0);
+    ui->projection_comboBox->setCurrentIndex(ins.getPending(SettingsManager::mapProjection, 0).toInt() == 1 ? 1 : 0);
+    const int fileTreeStyle = ins.getPending(SettingsManager::fileTreeStyle, 0).toInt();
+    ui->fileTreeStyle_comboBox->setCurrentIndex(fileTreeStyle >= 0 && fileTreeStyle <= 2 ? fileTreeStyle : 0);
+    ui->onlyPdf_comboBox->setCurrentIndex(ins.getPending(SettingsManager::onlyDisplayPdf, true).toBool() ? 0 : 1);
     // 文件
-    ui->chartFolder_lineEdit->setText(ins.get(SettingsManager::chartFolder, "").toString());
-    ui->mappingFoler_lineEdit->setText(ins.get(SettingsManager::dataFolder, "").toString());
-    ui->globeFoler_lineEdit->setText(ins.get(SettingsManager::globeFolder, "").toString());
-    ui->airac_lineEdit->setText(ins.get(SettingsManager::airacPath, "").toString());
-    ui->onlyPdf_comboBox->setCurrentIndex(ins.get(SettingsManager::onlyDisplayPdf, true).toBool() ? 0 : 1);
+    ui->chartFolder_lineEdit->setText(ins.getPending(SettingsManager::chartFolder, "").toString());
+    ui->mappingFoler_lineEdit->setText(ins.getPending(SettingsManager::dataFolder, "").toString());
+    ui->globeFoler_lineEdit->setText(ins.getPending(SettingsManager::globeFolder, "").toString());
+    ui->airac_lineEdit->setText(ins.getPending(SettingsManager::airacPath, "").toString());
 }
 
 void options_widget::on_planeStyle_comboBox_currentIndexChanged (int index) {
-    SettingsManager::instance().set(SettingsManager::plane_style, index, true);
+    SettingsManager::instance().setPending(SettingsManager::plane_style, index);
+}
+
+void options_widget::on_fileTreeStyle_comboBox_currentIndexChanged (int index) {
+    SettingsManager::instance().setPending(SettingsManager::fileTreeStyle, index);
+}
+
+void options_widget::on_darkChartStyle_comboBox_currentIndexChanged (int index) {
+    SettingsManager::instance().setPending(SettingsManager::darkChartStyle, index);
+}
+
+void options_widget::on_projection_comboBox_currentIndexChanged (int index) {
+    SettingsManager::instance().setPending(SettingsManager::mapProjection, index);
 }
 
 void options_widget::on_chartFolder_lineEdit_editingFinished () {
-    SettingsManager::instance().set(SettingsManager::chartFolder, ui->chartFolder_lineEdit->text(), true);
+    SettingsManager::instance().setPending(SettingsManager::chartFolder, ui->chartFolder_lineEdit->text());
 }
 
 void options_widget::on_mappingFoler_lineEdit_editingFinished () {
-    SettingsManager::instance().set(SettingsManager::dataFolder, ui->mappingFoler_lineEdit->text(), true);
+    SettingsManager::instance().setPending(SettingsManager::dataFolder, ui->mappingFoler_lineEdit->text());
 }
 
 void options_widget::on_globeFoler_lineEdit_editingFinished () {
-    SettingsManager::instance().set(SettingsManager::globeFolder, ui->globeFoler_lineEdit->text(), true);
+    SettingsManager::instance().setPending(SettingsManager::globeFolder, ui->globeFoler_lineEdit->text());
 }
 
 void options_widget::on_airac_lineEdit_editingFinished () {
-    SettingsManager::instance().set(SettingsManager::airacPath, ui->airac_lineEdit->text(), true);
+    SettingsManager::instance().setPending(SettingsManager::airacPath, ui->airac_lineEdit->text());
 }
 
 void options_widget::on_onlyPdf_comboBox_currentIndexChanged (int index) {
-    SettingsManager::instance().set(SettingsManager::onlyDisplayPdf, index == 0, true);
+    SettingsManager::instance().setPending(SettingsManager::onlyDisplayPdf, index == 0);
 }

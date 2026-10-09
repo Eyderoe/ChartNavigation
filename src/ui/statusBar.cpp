@@ -1,9 +1,10 @@
 #include "statusBar.hpp"
+#include "pdfView.hpp"
 #include <QString>
 
 #include "utils/constValue.hpp"
 
-StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
+StatusBar::StatusBar (QStatusBar *bar, PdfView *pdfView, QObject *parent) : QObject(parent) {
     auto addSeparator = [bar] () {
         auto *line = new QFrame(bar);
         line->setFrameShape(QFrame::VLine);
@@ -33,6 +34,8 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
         errorLabel = new QLabel("定位精度不可用");
         bar->addWidget(errorLabel);
     }
+    if constexpr (platform != MultiPlatform::androidOS)
+        initCursorCoordinates(pdfView);
     // 定时器
     timer.setInterval(1000);
     connect(&timer, &QTimer::timeout, this, &StatusBar::update);
@@ -84,6 +87,62 @@ StatusBar::StatusBar (QStatusBar *bar, QObject *parent) : QObject(parent) {
                         break;
                 }
             });
+}
+
+void StatusBar::initCursorCoordinates (PdfView *pdfView) {
+    if (!pdfView)
+        return;
+    cursorView = pdfView;
+    cursorSeparator = new QFrame(bar);
+    cursorSeparator->setFrameShape(QFrame::VLine);
+    cursorSeparator->setFrameShadow(QFrame::Sunken);
+    cursorSeparator->setFixedWidth(1);
+    cursorSeparator->setStyleSheet("color: gray; background-color: gray;");
+    bar->addWidget(cursorSeparator);
+    cursorLabel = new QLabel(bar);
+    bar->addWidget(cursorLabel);
+    cursorSeparator->hide();
+    cursorLabel->hide();
+
+    pdfView->viewport()->installEventFilter(this);
+    cursorTimer.setTimerType(Qt::PreciseTimer);
+    cursorTimer.setInterval(200); // 光标坐标最多每秒刷新 5 次。
+    connect(&cursorTimer, &QTimer::timeout, this, &StatusBar::updateCursorCoordinates);
+    cursorTimer.start();
+    connect(&SettingsManager::instance(),
+            qOverload<SettingsManager::TempKey, const QVariant&>(&SettingsManager::settingChanged), this,
+            [this](const SettingsManager::TempKey key, const QVariant &value) {
+                if (key == SettingsManager::affineError && !std::isfinite(value.toDouble())) {
+                    cursorLabel->hide();
+                    cursorSeparator->hide();
+                }
+            });
+}
+
+bool StatusBar::eventFilter (QObject *watched, QEvent *event) {
+    if (cursorView && watched == cursorView->viewport()) {
+        switch (event->type()) {
+            case QEvent::Leave:
+            case QEvent::Hide:
+                cursorLabel->hide();
+                cursorSeparator->hide();
+                break;
+            default:
+                break;
+        }
+    }
+    return QObject::eventFilter(watched, event);
+}
+
+void StatusBar::updateCursorCoordinates () {
+    if (!cursorLabel)
+        return;
+    const auto position = cursorView ? cursorView->currentCursorPosition() : std::nullopt;
+    if (position)
+        cursorLabel->setText(QString("光标(%1,%2)")
+                                 .arg(position->first, 0, 'f', 3).arg(position->second, 0, 'f', 3));
+    cursorLabel->setVisible(position.has_value());
+    cursorSeparator->setVisible(position.has_value());
 }
 
 void StatusBar::update () {

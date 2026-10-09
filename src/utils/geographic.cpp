@@ -372,6 +372,92 @@ std::vector<Point2D> DynamicLCC::revertTrans (std::vector<Point2D> positions) co
     return positions;
 }
 
+void MapProjection::reset (const double left, const double right, double bottom, double top) {
+    valid = false;
+    if (!allFinite(left, right, bottom, top) || std::abs(bottom) > maxSupportLat || std::abs(top) > maxSupportLat)
+        return;
+    if (type == Type::dynamicLCC) {
+        lcc.reset(left, right, bottom, top);
+        valid = true;
+        return;
+    }
+    if (bottom > top)
+        std::swap(bottom, top);
+    constexpr double radius{6378137.0}; // Web 墨卡托使用 WGS84 长半轴作为球半径。
+    centralMeridian = normalizeLongitude(getLongiRangeCenter(left, right), true);
+    falseEasting = radius * getLongiSpan(left, right) * degreeToRadian / 2.0;
+    falseNorthing = radius * std::asinh(std::tan(top * degreeToRadian));
+    valid = allFinite(centralMeridian, falseEasting, falseNorthing);
+}
+
+Point2D MapProjection::trans (Point2D position) const {
+    transInPlace(std::span{&position, 1});
+    return position;
+}
+
+void MapProjection::transInPlace (const std::span<Point2D> positions) const {
+    if (!valid) {
+        std::ranges::fill(positions, Point2D{NaN, NaN});
+        return;
+    }
+    if (type == Type::dynamicLCC) {
+        lcc.transInPlace(positions);
+        return;
+    }
+    // https://proj.org/en/stable/operations/projections/webmerc.html
+    // 与 Web 墨卡托相同的球面公式，仅平移原点并翻转 y 以适配场景。
+    constexpr double radius{6378137.0};
+    for (auto &position : positions) {
+        if (!allFinite(position) || std::abs(position.first) > maxSupportLat) {
+            position = {NaN, NaN};
+            continue;
+        }
+        position = {
+            falseEasting + radius * normalizeLongitude(position.second - centralMeridian) * degreeToRadian,
+            falseNorthing - radius * std::asinh(std::tan(position.first * degreeToRadian))
+        };
+    }
+}
+
+std::vector<Point2D> MapProjection::trans (std::vector<Point2D> positions) const {
+    transInPlace(positions);
+    return positions;
+}
+
+Point2D MapProjection::revertTrans (Point2D position) const {
+    revertTransInPlace(std::span{&position, 1});
+    return position;
+}
+
+void MapProjection::revertTransInPlace (const std::span<Point2D> positions) const {
+    if (!valid) {
+        std::ranges::fill(positions, Point2D{NaN, NaN});
+        return;
+    }
+    if (type == Type::dynamicLCC) {
+        lcc.revertTransInPlace(positions);
+        return;
+    }
+    constexpr double radius{6378137.0};
+    for (auto &position : positions) {
+        if (!allFinite(position)) {
+            position = {NaN, NaN};
+            continue;
+        }
+        const double latitude = std::atan(std::sinh((falseNorthing - position.second) / radius)) * radianToDegree;
+        const double longitude = centralMeridian + (position.first - falseEasting) / radius * radianToDegree;
+        if (!allFinite(latitude, longitude) || std::abs(latitude) > maxSupportLat + 1e-10)
+            position = {NaN, NaN};
+        else
+            position = {std::clamp(latitude, -maxSupportLat, maxSupportLat), normalizeLongitude(longitude)};
+    }
+}
+
+std::vector<Point2D> MapProjection::revertTrans (std::vector<Point2D> positions) const {
+    revertTransInPlace(positions);
+    return positions;
+}
+
 /**
  * @brief 简单计算AB两点距离
  * @param lat1 A.纬度

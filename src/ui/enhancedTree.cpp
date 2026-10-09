@@ -3,9 +3,52 @@
 #include <rapidhash.h>
 
 #include "enhancedTree.hpp"
+#include "chartColor.hpp"
+#include "json.hpp"
 
-#include "utils/android.hpp"
+#include "android/android.hpp"
 #include "utils/constValue.hpp"
+
+namespace {
+QHash<QString, QString> readChartNames (const QString &path, const QString &icao) {
+    QFile file(path);
+    if (!file.exists())
+        return {};
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << path << " 无法读取";
+        return {};
+    }
+    QHash<QString, QString> names;
+    try {
+        const auto data = nlohmann::json::parse(file.readAll().toStdString());
+        const auto *charts = &data;
+        if (data.is_object()) {
+            const auto it = data.find("charts");
+            if (it == data.end())
+                return {};
+            charts = &it.value();
+        }
+        if (!charts->is_array())
+            return {};
+        for (const auto &chart : *charts) {
+            if (!chart.is_object())
+                continue;
+            const auto index = chart.find("index_number"), name = chart.find("name");
+            if (index == chart.end() || name == chart.end() || !index->is_string() || !name->is_string())
+                continue;
+            const QString indexText = QString::fromStdString(index->get<std::string>());
+            const QString nameText = QString::fromStdString(name->get<std::string>());
+            if (indexText.trimmed().isEmpty() || nameText.trimmed().isEmpty())
+                continue;
+            names.insert(icao + "-" + indexText, nameText);
+        }
+    } catch (const nlohmann::json::exception &) {
+        qWarning() << path << " 解析失败";
+        return {};
+    }
+    return names;
+}
+}
 
 
 Node::Node (QString baseDir, const QString &name, const bool isFolder) : baseDir(std::move(baseDir)),
@@ -89,6 +132,11 @@ Tree::Tree (QWidget *parent) : QTreeWidget(parent) {
                         for (const auto node : visibleNodes)
                             loadThumb(node);
                         break;
+                    case SettingsManager::darkChartStyle:
+                        if (darkTheme)
+                            for (const auto node : visibleNodes)
+                                loadThumb(node);
+                        break;
                     default:
                         break;
                 }
@@ -123,6 +171,7 @@ void Tree::loadFolder (const QString &folder) {
     clear();
     // 运行
     const int count = traverseRead(folder, this);
+    updateFileNames();
     visibleNodes.reserve(count);
     // 后置操作
     for (int i = 0; i < topLevelItemCount(); ++i) {
@@ -131,6 +180,36 @@ void Tree::loadFolder (const QString &folder) {
             continue;
         visibleNodes.insert(item);
         loadThumb(item);
+    }
+}
+
+/**
+ * @brief 复杂样式按 ICAO-index_number 查找航图名称，保留节点的原始文件路径。
+ */
+void Tree::updateFileNames () {
+    SettingsManager &settings = SettingsManager::instance();
+    const int style = settings.get(SettingsManager::fileTreeStyle, 0).toInt();
+    if (style != 1 && style != 2)
+        return;
+    const QString mappingFolder = settings.get(SettingsManager::dataFolder, "").toString();
+    if (mappingFolder.isEmpty() || !QDir(mappingFolder).exists())
+        return;
+    const QDir mappingDir(mappingFolder);
+    // 每次构建文件树，每个机场只读取一次；缺失或无效的文件也缓存空结果。
+    QHash<QString, QHash<QString, QString>> airportNames;
+    for (QTreeWidgetItemIterator it(this); *it; ++it) {
+        auto *node = dynamic_cast<Node*>(*it);
+        if (!node || node->isFolder || !node->isPdf)
+            continue;
+        const QString baseName = QFileInfo(node->baseDir).completeBaseName();
+        if (baseName.size() <= 5 || baseName.at(4) != '-')
+            continue;
+        const QString icao = baseName.left(4);
+        if (!airportNames.contains(icao))
+            airportNames.insert(icao, readChartNames(mappingDir.filePath(icao + ".Tnavi"), icao));
+        const auto &names = airportNames[icao];
+        if (const auto name = names.constFind(baseName); name != names.cend())
+            node->setText(0, style == 1 ? icao + "-" + name.value() : name.value());
     }
 }
 
@@ -227,6 +306,6 @@ QCoro::Task<> Tree::loadThumb (Node *item) const {
             co_return;
     }
     if (darkTheme)
-        resultImage.invertPixels();
+        applyDarkChartTheme(resultImage, SettingsManager::instance().get(SettingsManager::darkChartStyle, 0).toInt());
     item->setIcon(0, QIcon(QPixmap::fromImage(resultImage)));
 }

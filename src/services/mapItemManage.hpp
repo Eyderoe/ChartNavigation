@@ -109,6 +109,7 @@ class MapItemManage {
         bool refresh (const Rect2D &viewportBound);
         bool reproject (const Rect2D &viewportBound);
         void setZoomLevel (int level);
+        void setProjectionType (MapProjection::Type type);
         void updateDisplayPriority (const QTransform &sceneToDevice, const QRectF &deviceViewport,
                                     const QPolygonF &labelSuppressionArea = {});
 
@@ -128,7 +129,8 @@ class MapItemManage {
         void applyZoomPolicy ();
 
         MapDataQuery query;
-        DynamicLCC projection;
+        MapProjection projection;
+        MapProjection::Type projectionType{MapProjection::Type::dynamicLCC};
         Rect2D cachedItemBound{};
         QRectF cachedProjectedBound{};
         bool cacheValid{false};

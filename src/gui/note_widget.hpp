@@ -37,8 +37,13 @@ class note_widget : public QWidget {
         [[nodiscard]] std::tuple<QComboBox*, QLineEdit*, QComboBox*, QLineEdit*> getUnit (const QString &name) const;
         void saveUnit (bool save = true) const;
         void initUnit () const;
+        void initPointRelation () const;
+        void updateRelativeInfo () const;
+        void updatePbd () const;
 
         void initAlfaTable () const;
+        void initWeatherReport ();
+        void updateWeatherReport () const;
     private slots:
         void on_comboBox_activated (int index) const;
         void unitConvertChange () const;

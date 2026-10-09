@@ -26,13 +26,14 @@ class PdfView final : public QPdfView {
         void zoomTo (double factor);
         [[nodiscard]] bool canAttachCurrentPage () const;
         [[nodiscard]] std::optional<AttachedChart> currentPageAttachment ();
+        [[nodiscard]] std::optional<Point2D> currentCursorPosition ();
     protected:
         void wheelEvent (QWheelEvent *event) override;
         void mousePressEvent (QMouseEvent *event) override;
         void mouseMoveEvent (QMouseEvent *event) override;
         void mouseReleaseEvent (QMouseEvent *event) override;
-        void paintEvent (QPaintEvent *event) override;
     private:
+        void drawOverlays (QPainter &painter);
         void initConnect ();
         void freezeViewport (double targetZoom);
         void clearFrozenViewport ();

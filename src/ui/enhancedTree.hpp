@@ -44,6 +44,7 @@ class Tree final : public QTreeWidget {
         bool showThumbPic{false}, darkTheme{false}; // 显示缩略图
         bool shouldClean{false};
 
+        void updateFileNames ();
         QCoro::Task<> loadThumb (Node *item) const;
     private Q_SLOTS:
         void expand (const QTreeWidgetItem *item);

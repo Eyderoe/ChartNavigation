@@ -57,6 +57,26 @@ class DynamicLCC { // WGS84,兰伯特等角圆锥投影.投影一般分类标准
         std::unique_ptr<GeographicLib::LambertConformalConic> projection;
 };
 
+// 地图场景坐标：单位米，向东为 x 正方向、向南为 y 正方向。
+class MapProjection {
+    public:
+        enum class Type : int { dynamicLCC, webMercator };
+        explicit MapProjection (Type type = Type::dynamicLCC) : type(type) {}
+        void reset (double left, double right, double bottom, double top);
+        [[nodiscard]] Point2D trans (Point2D position) const;
+        void transInPlace (std::span<Point2D> positions) const;
+        [[nodiscard]] std::vector<Point2D> trans (std::vector<Point2D> positions) const;
+        [[nodiscard]] Point2D revertTrans (Point2D position) const;
+        void revertTransInPlace (std::span<Point2D> positions) const;
+        [[nodiscard]] std::vector<Point2D> revertTrans (std::vector<Point2D> positions) const;
+    private:
+        Type type;
+        DynamicLCC lcc;
+        double centralMeridian{}; // 度；按缓存中心展开经度，保持日期变更线附近连续。
+        double falseEasting{}, falseNorthing{};
+        bool valid{false};
+};
+
 double distanceSimple (double lat1, double lon1, double lat2, double lon2);
 double distanceSimple (const Point2D &loc1, const Point2D &loc2);
 double bearingSimple (double lat1, double lon1, double lat2, double lon2);

@@ -1,5 +1,6 @@
 #include "enhancedMap.hpp"
 #include "aircraftPixmap.hpp"
+#include "chartColor.hpp"
 
 #include <QFileInfo>
 #include <QApplication>
@@ -362,6 +363,9 @@ MapView::MapView (QWidget *parent) : QGraphicsView(parent), scene(new QGraphicsS
                     case SettingsManager::planeFollowed:
                         followAircraft = value.toBool();
                         break;
+                    case SettingsManager::darkChartStyle:
+                        updateAttachedChart();
+                        break;
                     default:
                         break;
                 }
@@ -670,6 +674,8 @@ void MapView::reloadDatabase (const QString &databasePath) {
 
     try {
         itemManager = std::make_unique<MapItemManage>(path);
+        itemManager->setProjectionType(SettingsManager::instance().get(SettingsManager::mapProjection, 0).toInt() == 1
+                                          ? MapProjection::Type::webMercator : MapProjection::Type::dynamicLCC);
         loadedDatabasePath = path;
         updateViewport(geographicCenter, true);
     } catch (const std::exception &error) {
@@ -807,7 +813,7 @@ void MapView::updateAttachedChart () {
 
     QImage themedImage = attachedChart->image;
     if (darkTheme)
-        themedImage.invertPixels(QImage::InvertRgb);
+        applyDarkChartTheme(themedImage, SettingsManager::instance().get(SettingsManager::darkChartStyle, 0).toInt());
     const QPixmap pixmap = QPixmap::fromImage(std::move(themedImage));
     if (pixmap.isNull())
         return;

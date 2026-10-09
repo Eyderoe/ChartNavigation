@@ -659,7 +659,7 @@ std::vector<size_t> firDisplaySegmentIndices (
 }
 
 std::vector<ProjectedGeometrySegment> uniqueFirSegments (const std::vector<ProjectedPathSegment> &segments,
-                                                         const DynamicLCC &projection) {
+                                                         const MapProjection &projection) {
     constexpr double lineKeyTolerance{1.0e-6};
     constexpr double eventTolerance{1.0e-10};
     std::unordered_map<FirLineKey, FirLineGroup, FirLineKeyHash> groups;
@@ -806,7 +806,7 @@ QPainterPath combineSegments (const std::vector<ProjectedGeometrySegment> &segme
     return path;
 }
 
-QRectF projectedRect (const DynamicLCC &projection, const Rect2D &bound) {
+QRectF projectedRect (const MapProjection &projection, const Rect2D &bound) {
     const auto &[topLeft, bottomRight] = bound;
     const double top = topLeft.first;
     const double left = topLeft.second;
@@ -834,7 +834,7 @@ QRectF projectedRect (const DynamicLCC &projection, const Rect2D &bound) {
 // MORA records are one-degree geographic cells.  Keep the projected cell
 // corners instead of rectifying each cell independently: adjacent cells then
 // share the exact same projected edge and can never overlap at high latitude.
-std::optional<QPainterPath> moraFrame (const DynamicLCC &projection, const Rect2D &bound) {
+std::optional<QPainterPath> moraFrame (const MapProjection &projection, const Rect2D &bound) {
     const auto &[topLeft, bottomRight] = bound;
     std::array<Point2D, 4> corners{{
         topLeft,
@@ -1171,7 +1171,7 @@ bool MapItemManage::updateViewport (const Rect2D &viewportBound) {
     const NormalizedBound viewport = normalizeBound(viewportBound);
     if (!viewport.valid)
         return false;
-    if (cacheValid && contains(normalizeBound(cachedItemBound), viewport))
+    if (cacheValid && !projectionResetPending && contains(normalizeBound(cachedItemBound), viewport))
         return false;
 
     // 扩大可视边界作为图元缓存缓冲区；数据库缓存换代时才同步重设投影。
@@ -1179,9 +1179,9 @@ bool MapItemManage::updateViewport (const Rect2D &viewportBound) {
     auto [mapData, queriedDatabase] = query.queryMapItemData(newItemBound, currentZoomLevel >= 4);
     projectionResetPending = projectionResetPending || queriedDatabase;
 
-    DynamicLCC newProjection;
+    MapProjection newProjection{projectionType};
     const bool replaceProjection = projectionResetPending;
-    const DynamicLCC *itemProjection = &projection;
+    const MapProjection *itemProjection = &projection;
     if (replaceProjection) {
         newProjection.reset(newItemBound.first.second, newItemBound.second.second,
                             newItemBound.second.first, newItemBound.first.first);
@@ -1289,6 +1289,13 @@ bool MapItemManage::refresh (const Rect2D &viewportBound) {
         cacheValid = previousCacheState;
         throw;
     }
+}
+
+void MapItemManage::setProjectionType (const MapProjection::Type type) {
+    if (projectionType == type)
+        return;
+    projectionType = type;
+    projectionResetPending = true;
 }
 
 bool MapItemManage::reproject (const Rect2D &viewportBound) {

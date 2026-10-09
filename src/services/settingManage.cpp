@@ -76,6 +76,24 @@ QVariant SettingsManager::get (const ConstKey key, const QVariant &defaultValue)
     }
 }
 
+void SettingsManager::setPending (const ConstKey key, const QVariant &value) {
+    const QString keyName = key2String_const(key);
+    const auto current = cache_const.constFind(keyName);
+    if (current != cache_const.cend() && current.value() == value)
+        pending_const.remove(keyName);
+    else
+        pending_const[keyName] = value;
+    if constexpr (platform == MultiPlatform::androidOS) {
+        settings.setValue(keyName, value);
+        settings.sync();
+    }
+}
+
+QVariant SettingsManager::getPending (const ConstKey key, const QVariant &defaultValue) {
+    const auto pending = pending_const.constFind(key2String_const(key));
+    return pending == pending_const.cend() ? get(key, defaultValue) : pending.value();
+}
+
 /**
  * @brief 设置键值对(临时值)
  * @param key 键
@@ -138,9 +156,12 @@ void SettingsManager::broadcast () {
 
             case dataSource:
             case enrouteZoomLevel:
+            case mapProjection:
             case tcasRange:
             case infoMode:
             case plane_style:
+            case darkChartStyle:
+            case fileTreeStyle:
                 emit settingChanged(enumKey, get(enumKey, 0));
                 break;
 
@@ -230,6 +251,8 @@ SettingsManager::TempKey SettingsManager::string2Key_temp (const QString &keyStr
  */
 void SettingsManager::writeSetting () {
     for (auto [key, value] : cache_const.asKeyValueRange())
+        settings.setValue(key, value);
+    for (auto [key, value] : pending_const.asKeyValueRange())
         settings.setValue(key, value);
     settings.sync();
 }

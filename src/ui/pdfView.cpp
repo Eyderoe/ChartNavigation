@@ -1,5 +1,6 @@
 #include "pdfView.hpp"
 #include "aircraftPixmap.hpp"
+#include "chartColor.hpp"
 #include "utils/stringProcess.hpp"
 #include "utils/constValue.hpp"
 #include "utils/geographic.hpp"
@@ -7,13 +8,45 @@
 
 #include <algorithm>
 #include <format>
+#include <functional>
 #include <ranges>
 #include <span>
 #include <QCursor>
+#include <QGraphicsEffect>
 #include <QPdfPageRenderer>
 
-#include "utils/android.hpp"
+#include "android/android.hpp"
 
+namespace {
+class PdfViewportEffect final : public QGraphicsEffect {
+    public:
+        PdfViewportEffect (std::function<bool()> darkTheme, std::function<void(QPainter &)> overlays)
+            : darkTheme(std::move(darkTheme)), overlays(std::move(overlays)) {}
+
+    protected:
+        void draw (QPainter *painter) override {
+            if (darkTheme()) {
+                QPoint offset;
+                QImage image = sourcePixmap(Qt::DeviceCoordinates, &offset, NoPad).toImage();
+                applyDarkChartTheme(image, SettingsManager::instance().get(SettingsManager::darkChartStyle, 0).toInt());
+                painter->save();
+                painter->setWorldTransform(QTransform{});
+                painter->drawImage(offset, image);
+                painter->restore();
+            } else {
+                drawSource(painter);
+            }
+            // 飞机与冻结帧已是最终颜色，须在航图变色之后绘制。
+            painter->save();
+            overlays(*painter);
+            painter->restore();
+        }
+
+    private:
+        std::function<bool()> darkTheme;
+        std::function<void(QPainter &)> overlays;
+};
+}
 
 PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     initConnect();
@@ -21,6 +54,8 @@ PdfView::PdfView (QWidget *parent) : QPdfView(parent) {
     setZoomMode(ZoomMode::Custom);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    viewport()->setGraphicsEffect(new PdfViewportEffect(
+        [this] { return isDark; }, [this](QPainter &painter) { drawOverlays(painter); }));
     // 地图绘制
     const auto pixmaps = loadAircraftPixmaps(SettingsManager::instance().get(SettingsManager::plane_style, 0).toInt());
     plane = pixmaps.own;
@@ -218,6 +253,10 @@ void PdfView::initConnect () {
                         setCenterOn(val.toBool());
                         break;
                     }
+                    case SettingsManager::darkChartStyle:
+                        clearFrozenViewport();
+                        viewport()->update();
+                        break;
                     default:
                         break;
                 }
@@ -340,17 +379,7 @@ void PdfView::mouseReleaseEvent (QMouseEvent *event) {
     QPdfView::mouseReleaseEvent(event);
 }
 
-void PdfView::paintEvent (QPaintEvent *event) {
-    QPdfView::paintEvent(event);
-    QPainter painter(viewport());
-    // 暗色模式逻辑
-    if (isDark) {
-        painter.save();
-        painter.setCompositionMode(QPainter::CompositionMode_Difference);
-        painter.fillRect(rect(), Qt::white);
-        painter.restore();
-    }
-
+void PdfView::drawOverlays (QPainter &painter) {
     bool check{true};
     if (!dataProvider || !dataProvider->isConnected()) // 模拟器已连接
         check = false;
@@ -395,6 +424,34 @@ bool PdfView::isMappedPosition (const Point2D &position) {
     const auto [x, y] = transformer.transform(position);
     return std::isfinite(x) && std::isfinite(y)
            && (mappedArea.isEmpty() || mappedArea.contains(QPointF(x, y)));
+}
+
+std::optional<Point2D> PdfView::currentCursorPosition () {
+    if (!transActive || !document() || document()->status() != QPdfDocument::Status::Ready
+        || !viewport()->isVisible() || !viewport()->underMouse())
+        return std::nullopt;
+    const int page = pageNavigator()->currentPage();
+    if (page < 0 || page >= document()->pageCount())
+        return std::nullopt;
+
+    const QPointF cursor = viewport()->mapFromGlobal(QCursor::pos());
+    if (!viewport()->rect().contains(cursor.toPoint()))
+        return std::nullopt;
+
+    // 反解飞机绘制使用的同一套坐标，保留居中、页边距、滚动及 DPI 缩放。
+    const QPointF origin = pointToViewport(0, 0), unit = pointToViewport(1, 1);
+    const double scaleX = unit.x() - origin.x(), scaleY = unit.y() - origin.y();
+    if (!std::isfinite(scaleX) || !std::isfinite(scaleY) || scaleX <= 0 || scaleY <= 0)
+        return std::nullopt;
+    const QPointF point((cursor.x() - origin.x()) / scaleX, (cursor.y() - origin.y()) / scaleY);
+    if (!QRectF(QPointF{}, getDocSize()).contains(point)
+        || (!mappedArea.isEmpty() && !mappedArea.contains(point)))
+        return std::nullopt;
+
+    const Point2D position = transformer.rtransform(point.x(), point.y());
+    if (!allFinite(position) || std::abs(position.first) > 90 || std::abs(position.second) > 180)
+        return std::nullopt;
+    return position;
 }
 
 QPointF PdfView::pointToViewport (const double x, const double y) const {
@@ -668,7 +725,11 @@ void PdfView::drawPlane (QPainter &painter, const int idx) {
  * @param darkTheme 是否使用暗色主题
  */
 void PdfView::setColorTheme (const bool darkTheme) {
+    if (isDark == darkTheme)
+        return;
     isDark = darkTheme;
+    clearFrozenViewport();
+    viewport()->update();
 }
 
 /**

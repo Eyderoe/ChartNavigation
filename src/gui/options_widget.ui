@@ -25,14 +25,14 @@
         <x>0</x>
         <y>0</y>
         <width>836</width>
-        <height>604</height>
+        <height>678</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <widget class="QLabel" name="label_master_caution">
          <property name="text">
-          <string>设置会在重启后生效。</string>
+          <string>设置页面中的所有设置均在重启后生效。</string>
          </property>
         </widget>
        </item>
@@ -72,7 +72,133 @@
           <item row="1" column="0" colspan="2">
            <widget class="QLabel" name="planeStyle_label_remark">
             <property name="text">
-             <string>航图以及航路页面航空器显示的样式</string>
+             <string>航图以及航路页面航空器显示的样式。</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="fileTreeStyle_label">
+            <property name="text">
+             <string>⚪ 文件树样式：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QComboBox" name="fileTreeStyle_comboBox">
+            <item>
+             <property name="text">
+              <string>文件名</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>复杂1</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>复杂2</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <widget class="QLabel" name="fileTreeStyle_label_remark">
+            <property name="text">
+             <string>复杂1：ICAO-航图名称，复杂2：航图名称。</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_26">
+            <property name="text">
+             <string>⚪ 文件显示选项：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QComboBox" name="onlyPdf_comboBox">
+            <item>
+             <property name="text">
+              <string>仅PDF</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>所有文件</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="5" column="0" colspan="2">
+           <widget class="QLabel" name="label_remark_6">
+            <property name="text">
+             <string>文件树中对文件类型的筛选。</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="darkChartStyle_label">
+            <property name="text">
+             <string>⚪ 暗色方法：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QComboBox" name="darkChartStyle_comboBox">
+            <item>
+             <property name="text">
+              <string>样式1</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>样式2</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="7" column="0" colspan="2">
+           <widget class="QLabel" name="darkChartStyle_label_remark">
+            <property name="text">
+             <string>航图暗色显示的样式。</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="projection_label">
+            <property name="text">
+             <string>⚪ 投影方式：</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1">
+           <widget class="QComboBox" name="projection_comboBox">
+            <item>
+             <property name="text">
+              <string>动态LCC</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Web 墨卡托</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="9" column="0" colspan="2">
+           <widget class="QLabel" name="projection_label_remark">
+            <property name="text">
+             <string>航路图的投影方式。</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -156,34 +282,6 @@
            <widget class="QLabel" name="label_remark_10">
             <property name="text">
              <string>AIRAC导航数据文件。</string>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="0">
-           <widget class="QLabel" name="label_26">
-            <property name="text">
-             <string>⚪ 文件显示选项：</string>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="1">
-           <widget class="QComboBox" name="onlyPdf_comboBox">
-            <item>
-             <property name="text">
-              <string>仅PDF</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>所有文件</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="9" column="0" colspan="2">
-           <widget class="QLabel" name="label_remark_6">
-            <property name="text">
-             <string>文件树中对文件类型的筛选。</string>
             </property>
            </widget>
           </item>

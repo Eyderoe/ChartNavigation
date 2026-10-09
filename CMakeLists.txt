@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.28)
 
 # 版本号, 适用于安卓, mac和win意义不大
 set(APP_VERSION_MAJOR 26)
-set(APP_VERSION_MINOR 9)
-set(APP_VERSION_PATCH 20)
+set(APP_VERSION_MINOR 10)
+set(APP_VERSION_PATCH 9)
 set(APP_VERSION "${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_PATCH}")
 math(EXPR APP_VERSION_CODE "${APP_VERSION_MAJOR}*10000 + ${APP_VERSION_MINOR}*100 + ${APP_VERSION_PATCH}")
 
@@ -65,6 +65,7 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/ui/pdfView.cpp
         src/ui/pdfView.hpp
         src/ui/aircraftPixmap.hpp
+        src/ui/chartColor.hpp
         src/ui/stackedWidget.cpp
         src/ui/stackedWidget.hpp
         src/ui/theme.cpp
@@ -118,8 +119,8 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/replay_control.ui
         src/connector/replay.cpp
         src/connector/replay.hpp
-        src/utils/android.cpp
-        src/utils/android.hpp
+        platformSp/android/android.cpp
+        platformSp/android/android.hpp
         src/utils/sqliteHelper.cpp
         src/utils/sqliteHelper.hpp
         src/services/positionDevice.cpp
@@ -127,6 +128,8 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/note_widget.cpp
         src/gui/note_widget.hpp
         src/gui/note_widget.ui
+        src/utils/weatherReportParser.cpp
+        src/utils/weatherReportParser.hpp
         src/ui/enhancedMap.cpp
         src/ui/enhancedMap.hpp
         src/services/mapDataQuery.cpp
@@ -165,9 +168,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         QCoro6::Core
 )
 if (WIN32)
-    set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/windows/app.ico")
+    set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/platformSp/windows/app.ico")
     configure_file(
-            "${CMAKE_CURRENT_SOURCE_DIR}/windows/app.rc.in"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platformSp/windows/app.rc.in"
             "${CMAKE_CURRENT_BINARY_DIR}/app.rc"
             @ONLY
     )
@@ -188,6 +191,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/platformSp
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_autogen/include
 )
@@ -226,6 +230,22 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endforeach (QT_LIB)
 endif ()
 if (APPLE)
+    enable_language(OBJCXX)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            OBJCXX_STANDARD 23
+            OBJCXX_STANDARD_REQUIRED ON
+    )
+    target_sources(${PROJECT_NAME} PRIVATE
+            platformSp/mac/macWindow.hpp
+            platformSp/mac/macWindow.mm
+    )
+    set_source_files_properties(platformSp/mac/macWindow.mm PROPERTIES
+            SKIP_PRECOMPILE_HEADERS ON
+            COMPILE_OPTIONS "-fobjc-arc"
+    )
+    find_library(APPKIT_FRAMEWORK AppKit REQUIRED)
+    find_library(COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE "${APPKIT_FRAMEWORK}" "${COREGRAPHICS_FRAMEWORK}")
     set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "Minimum macOS version to target for deployment" FORCE)
     set_target_properties(${PROJECT_NAME} PROPERTIES
             MACOSX_BUNDLE TRUE
@@ -248,7 +268,7 @@ if (ANDROID)
             QT_ANDROID_PACKAGE_NAME "eyderoe.ChartNavigation"
             QT_ANDROID_APP_NAME "ChartNavigation"
             QT_ANDROID_APP_ICON "@drawable/ic_launcher"
-            QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
+            QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/platformSp/android"
             QT_ANDROID_VERSION_CODE "${APP_VERSION_CODE}"
             QT_ANDROID_VERSION_NAME "${APP_VERSION}"
     )

@@ -38,11 +38,14 @@ class SettingsManager : public QObject {
             onlyDisplayPdf, // 是否只显示PDF bool
             showThumb, // 显示缩略图 bool
             plane_style, // 飞行器样式 int: 0=卡通, 1=简约
+            darkChartStyle, // 航图暗色方法 int: 0=样式1(反相并交换红蓝), 1=样式2(反相)
+            fileTreeStyle, // 文件树样式 int: 0=文件名, 1=复杂1(ICAO-name), 2=复杂2(name)
 
             dataSource, // 数据源 SimulatorSource(int)
             planeFollowed, // 居中飞机 bool
             enrouteCenter, // 航路图视口中心 QPointF(经度, 纬度)
             enrouteZoomLevel, // 航路图缩放等级 MapZoomLevel(int)
+            mapProjection, // 航路图投影方式 int: 0=动态LCC, 1=Web墨卡托
             tcasRange, // TCAS显示范围 TcasMode(int)
             infoMode, // 飞行器信息 InfoMode(int)
             showTrail, // 显示飞行器航迹 bool
@@ -79,6 +82,9 @@ class SettingsManager : public QObject {
 
         void set (ConstKey key, const QVariant &value, bool notEmit = false);
         QVariant get (ConstKey key, const QVariant &defaultValue = QVariant());
+        // 设置页面编辑的值仅供下次启动使用；运行中的读取与广播仍使用当前值。
+        void setPending (ConstKey key, const QVariant &value);
+        QVariant getPending (ConstKey key, const QVariant &defaultValue = QVariant());
         void set (TempKey key, const QVariant &value, bool notEmit = false);
         QVariant get (TempKey key, const QVariant &defaultValue = QVariant());
     private:
@@ -86,6 +92,7 @@ class SettingsManager : public QObject {
         ~SettingsManager () override;
         QSettings settings;
         QMap<QString, QVariant> cache_const, cache_temp;
+        QMap<QString, QVariant> pending_const;
 
         static QString key2String_const (ConstKey key);
         static ConstKey string2Key_const (const QString &keyStr);

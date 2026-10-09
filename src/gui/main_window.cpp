@@ -17,7 +17,8 @@
 #include "ui/stackedWidget.hpp"
 #include "services/settingManage.hpp"
 #include "utils/constValue.hpp"
-#include "utils/android.hpp"
+#include "android/android.hpp"
+#include "mac/macWindow.hpp"
 
 
 main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::main_window) {
@@ -58,7 +59,7 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
         menu2toolBar();
     }
     // 初始化状态栏
-    new StatusBar(ui->statusbar, ui->statusbar);
+    new StatusBar(ui->statusbar, pdfBrowser->findChild<PdfView *>(), ui->statusbar);
     // 连接信号
     initConnect();
     // 更新所有设置
@@ -167,10 +168,10 @@ void main_window::initConnect () {
                         ui->action_follow->setChecked(val.toBool());
                         break;
                     case SettingsManager::stayFront:
-                        if (val.toBool())
-                            setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+                        if constexpr (platform == MultiPlatform::macOS)
+                            setMacWindowStayOnTop(this, val.toBool());
                         else
-                            setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
+                            setWindowFlag(Qt::WindowStaysOnTopHint, val.toBool());
                         ui->action_top->setChecked(val.toBool());
                         show();
                         break;

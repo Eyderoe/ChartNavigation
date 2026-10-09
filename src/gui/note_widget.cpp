@@ -3,14 +3,23 @@
 
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QLineEdit>
 #include <QPixmap>
+#include <QRegularExpression>
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <numbers>
+#include <optional>
+
+#include <GeographicLib/Geodesic.hpp>
 
 #include "services/settingManage.hpp"
 #include "utils/stringProcess.hpp"
 #include "utils/constValue.hpp"
+#include "utils/geographic.hpp"
+#include "utils/weatherReportParser.hpp"
 
 
 note_widget::note_widget (QWidget *parent) : QWidget(parent), ui(new Ui::note_widget) {
@@ -27,6 +36,8 @@ note_widget::note_widget (QWidget *parent) : QWidget(parent), ui(new Ui::note_wi
     initGraphic();
     initConversation();
     initUnit();
+    initPointRelation();
+    initWeatherReport();
     initAlfaTable();
 }
 
@@ -165,6 +176,107 @@ void note_widget::initUnit () const {
 void note_widget::initAlfaTable () const {
     const int textSize = static_cast<int>(QFont().pointSize() * 1.5);
     reviseText(ui->alfaTextEdit->document(), textSize);
+}
+
+namespace {
+std::optional<double> readPointRelationNumber (const QString &text, const double minimum, const double maximum) {
+    bool valid{};
+    const double value = text.trimmed().toDouble(&valid);
+    if (!valid || !std::isfinite(value) || value < minimum || value > maximum)
+        return std::nullopt;
+    return value;
+}
+
+std::optional<Point2D> readPointRelationCoordinate (const QLineEdit *edit) {
+    static const QRegularExpression separator{QStringLiteral("[,，\\s]+")};
+    const auto parts = edit->text().trimmed().split(separator, Qt::SkipEmptyParts);
+    if (parts.size() != 2)
+        return std::nullopt;
+    const auto lat = readPointRelationNumber(parts[0], -90.0, 90.0);
+    const auto lon = readPointRelationNumber(parts[1], -180.0, 180.0);
+    if (!lat || !lon)
+        return std::nullopt;
+    return Point2D{*lat, *lon};
+}
+}
+
+void note_widget::initPointRelation () const {
+    for (const auto *edit : {ui->relativePointA, ui->relativePointB})
+        connect(edit, &QLineEdit::textChanged, this, &note_widget::updateRelativeInfo);
+    for (const auto *edit : {ui->pbdPointA, ui->pbdBearing, ui->pbdDistance})
+        connect(edit, &QLineEdit::textChanged, this, &note_widget::updatePbd);
+    updateRelativeInfo();
+    updatePbd();
+}
+
+void note_widget::updateRelativeInfo () const {
+    ui->relativeBearing->setText(tr("角度："));
+    ui->relativeDistance->setText(tr("海里："));
+    const auto pointA = readPointRelationCoordinate(ui->relativePointA);
+    const auto pointB = readPointRelationCoordinate(ui->relativePointB);
+    if (!pointA || !pointB)
+        return;
+    double distance{}, bearing{}, finalBearing{};
+    GeographicLib::Geodesic::WGS84().Inverse(pointA->first, pointA->second, pointB->first, pointB->second,
+                                            distance, bearing, finalBearing);
+    if (!std::isfinite(distance) || !std::isfinite(bearing))
+        return;
+    ui->relativeDistance->setText(tr("海里：%1").arg(QString::number(distance / nm2m, 'f', 3)));
+    if (distance == 0.0) {
+        ui->relativeBearing->setText(tr("角度：未定义"));
+        return;
+    }
+    // 在显示精度下归一化，避免接近正北的角度被四舍五入成 360°。
+    bearing = std::fmod(std::round((bearing + 360.0) * 1000.0) / 1000.0, 360.0);
+    ui->relativeBearing->setText(tr("角度：%1").arg(QString::number(bearing, 'f', 3)));
+}
+
+void note_widget::updatePbd () const {
+    ui->pbdPointB->clear();
+    const auto pointA = readPointRelationCoordinate(ui->pbdPointA);
+    const auto bearing = readPointRelationNumber(ui->pbdBearing->text(), 0.0, 360.0);
+    const auto distance = readPointRelationNumber(ui->pbdDistance->text(), 0.0, std::numeric_limits<double>::max() / nm2m);
+    if (!pointA || !bearing || !distance)
+        return;
+    const Point2D pointB = pointBearingDistance(*pointA, *bearing, *distance);
+    if (!std::isfinite(pointB.first) || !std::isfinite(pointB.second))
+        return;
+    ui->pbdPointB->setText(QStringLiteral("%1 %2")
+                         .arg(QString::number(pointB.first, 'f', 8), QString::number(pointB.second, 'f', 8)));
+}
+
+void note_widget::initWeatherReport () {
+    ui->weatherReportInput->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    auto *timer = new QTimer(this);
+    timer->setSingleShot(true);
+    timer->setInterval(150);
+    connect(ui->weatherReportInput, &QPlainTextEdit::textChanged, timer, qOverload<>(&QTimer::start));
+    connect(timer, &QTimer::timeout, this, &note_widget::updateWeatherReport);
+    updateWeatherReport();
+}
+
+void note_widget::updateWeatherReport () const {
+    if (ui->weatherReportInput->toPlainText().trimmed().isEmpty()) {
+        ui->weatherReportOutput->clear();
+        return;
+    }
+    const auto report = WeatherReport::parse(ui->weatherReportInput->toPlainText());
+    QString html;
+    if (!report.error.isEmpty()) {
+        ui->weatherReportOutput->setPlainText(report.error);
+        return;
+    }
+    if (!report.warnings.isEmpty()) {
+        html += "<p><b>解析提示</b><br/>";
+        html += report.warnings.join("；").toHtmlEscaped();
+        html += "</p><hr/>";
+    }
+    for (const auto &field : report.fields) {
+        html += "<p><b>" + field.name.toHtmlEscaped() + "</b>　<code>"
+            + field.code.toHtmlEscaped() + "</code><br/>"
+            + field.description.toHtmlEscaped() + "</p>";
+    }
+    ui->weatherReportOutput->setHtml(html);
 }
 
 void note_widget::on_comboBox_activated (const int index) const {
