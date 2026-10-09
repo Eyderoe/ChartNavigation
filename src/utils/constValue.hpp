@@ -9,13 +9,13 @@
 
 enum class MultiPlatform { winOS, linuxOS, macOS, androidOS };
 #ifdef _WIN32
-constexpr auto platform = MultiPlatform::winOS;
+    constexpr auto platform = MultiPlatform::winOS;
 #elifdef __ANDROID__
-constexpr auto platform = MultiPlatform::androidOS;
+    constexpr auto platform = MultiPlatform::androidOS;
 #elifdef __APPLE__
-constexpr auto platform = MultiPlatform::macOS;
+    constexpr auto platform = MultiPlatform::macOS;
 #elifdef __linux__
-constexpr auto platform = MultiPlatform::linuxOS;
+    constexpr auto platform = MultiPlatform::linuxOS;
 #endif
 
 constexpr double m2ft{3.28084};

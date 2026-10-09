@@ -89,6 +89,9 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/connector/wlan.hpp
         src/connector/msfs.cpp
         src/connector/msfs.hpp
+        simulationPlugin/msfs/SimConnectClient.cpp
+        simulationPlugin/msfs/SimConnectClient.hpp
+        simulationPlugin/msfs/SimConnectApi.hpp
         src/connector/allAdapter.hpp
         src/gui/main_window.hpp
         src/gui/main_window.cpp
@@ -144,6 +147,9 @@ qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES
         src/connector/plane.proto
 )
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/simulationPlugin/msfs/deployRuntime.cmake")
+msfs_deploy_runtime(${PROJECT_NAME})
 
 
 set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)

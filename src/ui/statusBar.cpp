@@ -162,6 +162,9 @@ void StatusBar::update () {
             case SimulatorSource::xplane:
                 simuStr = "XPlane";
                 break;
+            case SimulatorSource::msfs:
+                simuStr = "MSFS";
+                break;
             case SimulatorSource::replay:
                 simuStr = "回放";
                 break;

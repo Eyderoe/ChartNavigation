@@ -52,6 +52,9 @@ DataProvider::DataProvider (QObject *parent) : QObject(parent) {
         case SimulatorSource::wlan:
             connector = std::make_unique<wlanAdapter>();
             break;
+        case SimulatorSource::msfs:
+            connector = std::make_unique<msfsAdapter>();
+            break;
         case SimulatorSource::real:
             connector = std::make_unique<realAdapter>();
             break;
@@ -121,6 +124,9 @@ void DataProvider::setConnector (const int value) {
             break;
         case SimulatorSource::wlan:
             connector = std::make_unique<wlanAdapter>();
+            break;
+        case SimulatorSource::msfs:
+            connector = std::make_unique<msfsAdapter>();
             break;
         case SimulatorSource::real:
             connector = std::make_unique<realAdapter>();

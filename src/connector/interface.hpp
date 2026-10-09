@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <span>
+#include <cstdint>
+#include <functional>
+#include <string>
 
 
 enum class SimulatorSource {
@@ -10,6 +13,7 @@ enum class SimulatorSource {
     wlan,
     real,
     replay,
+    msfs, // 追加，保留已存设置中的 0..3 编号。
 };
 
 struct DatarefIdx {

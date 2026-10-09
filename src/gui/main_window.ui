@@ -55,6 +55,7 @@
       <string>数据源</string>
      </property>
      <addaction name="action_source_XPlane"/>
+     <addaction name="action_source_msfs"/>
      <addaction name="action_source_wlan"/>
      <addaction name="action_source_real"/>
     </widget>
@@ -267,6 +268,17 @@
    </property>
    <property name="text">
     <string>XPlane</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_source_msfs">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>MSFS</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

@@ -9,9 +9,9 @@ wlanUdp::wlanUdp () : workGuard(asio::make_work_guard(io_context))
     // 绑定组播
     multicastSocket.open(ip::udp::v4());
     multicastSocket.set_option(asio::socket_base::reuse_address(true));
-#ifndef _WIN32 // if constexpr 还是会检查未经过的分支宏定义
-    multicastSocket.set_option(asio::detail::socket_option::boolean<SOL_SOCKET, SO_REUSEPORT>(true));
-#endif
+    #ifndef _WIN32 // Windows 不定义 SO_REUSEPORT，不能只用 if constexpr 隔离。
+        multicastSocket.set_option(asio::detail::socket_option::boolean<SOL_SOCKET, SO_REUSEPORT>(true));
+    #endif
     multicastSocket.bind(ip::udp::endpoint(ip::address_v4::any(), 57316));
     multicastSocket.set_option(ip::multicast::join_group(ip::make_address("239.255.73.16")));
     // 载波监听

@@ -98,6 +98,9 @@ void main_window::setDataSourceGroup (int val) const {
         case SimulatorSource::wlan:
             ui->action_source_wlan->setChecked(true);
             break;
+        case SimulatorSource::msfs:
+            ui->action_source_msfs->setChecked(true);
+            break;
         case SimulatorSource::real:
             ui->action_source_real->setChecked(true);
             break;
@@ -276,6 +279,8 @@ void main_window::initConnect () {
             SettingsManager::instance().set(SettingsManager::dataSource, static_cast<int>(SimulatorSource::xplane));
         else if (action == ui->action_source_wlan)
             SettingsManager::instance().set(SettingsManager::dataSource, static_cast<int>(SimulatorSource::wlan));
+        else if (action == ui->action_source_msfs)
+            SettingsManager::instance().set(SettingsManager::dataSource, static_cast<int>(SimulatorSource::msfs));
         else if (action == ui->action_source_real)
             SettingsManager::instance().set(SettingsManager::dataSource, static_cast<int>(SimulatorSource::real));
         else
@@ -330,6 +335,8 @@ QActionGroup* makeGroup (QWidget *widget, const QString &contain) {
 
 void main_window::initActionGroup () {
     sourceGroup = makeGroup(this, "_source_");
+    if constexpr (platform != MultiPlatform::winOS)
+        ui->action_source_msfs->setVisible(false);
     tcasGroup = makeGroup(this, "_tcas_");
     infoGroup = makeGroup(this, "_symbol_");
 }

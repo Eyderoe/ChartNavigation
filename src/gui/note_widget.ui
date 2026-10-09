@@ -261,6 +261,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </property>
            <item>
             <widget class="QScrollArea" name="scrollArea">
+             <property name="verticalScrollBarPolicy">
+              <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+             </property>
+             <property name="horizontalScrollBarPolicy">
+              <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+             </property>
              <property name="widgetResizable">
               <bool>true</bool>
              </property>
@@ -496,6 +502,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <item>
             <widget class="QScrollArea" name="pointRelationScrollArea">
              <property name="frameShape"><enum>QFrame::Shape::NoFrame</enum></property>
+             <property name="horizontalScrollBarPolicy"><enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum></property>
              <property name="widgetResizable"><bool>true</bool></property>
              <widget class="QWidget" name="pointRelationContents">
               <layout class="QVBoxLayout" name="pointRelationContentsLayout">
