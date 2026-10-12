@@ -674,8 +674,10 @@ void MapView::reloadDatabase (const QString &databasePath) {
 
     try {
         itemManager = std::make_unique<MapItemManage>(path);
-        itemManager->setProjectionType(SettingsManager::instance().get(SettingsManager::mapProjection, 0).toInt() == 1
-                                          ? MapProjection::Type::webMercator : MapProjection::Type::dynamicLCC);
+        const int mapProjection = SettingsManager::instance().get(SettingsManager::mapProjection, 0).toInt();
+        itemManager->setProjectionType(mapProjection >= 0 && mapProjection <= static_cast<int>(MapProjection::Type::gnomonic)
+                                          ? static_cast<MapProjection::Type>(mapProjection)
+                                          : MapProjection::Type::dynamicLCC);
         loadedDatabasePath = path;
         updateViewport(geographicCenter, true);
     } catch (const std::exception &error) {

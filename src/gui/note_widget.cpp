@@ -1,4 +1,5 @@
 #include "note_widget.hpp"
+#include "games/games.hpp"
 #include "ui_note_widget.h"
 
 #include <QGraphicsScene>
@@ -8,10 +9,12 @@
 #include <QRegularExpression>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <numbers>
 #include <optional>
+#include <vector>
 
 #include <GeographicLib/Geodesic.hpp>
 
@@ -39,9 +42,11 @@ note_widget::note_widget (QWidget *parent) : QWidget(parent), ui(new Ui::note_wi
     initPointRelation();
     initWeatherReport();
     initAlfaTable();
+    games = new Games(ui, this);
 }
 
 note_widget::~note_widget () {
+    delete games;
     delete ui;
 }
 

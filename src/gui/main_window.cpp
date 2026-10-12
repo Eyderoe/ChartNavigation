@@ -25,6 +25,11 @@ main_window::main_window (QWidget *parent) : QMainWindow(parent), ui(new Ui::mai
     ui->setupUi(this);
     // 初始化页面
     stackedWidget = new StackedWidget(this);
+    // Hidden pages contribute to QStackedWidget's minimum height. Let the
+    // current content fit the window without imposing those page heights.
+    auto centralPolicy = stackedWidget->sizePolicy();
+    centralPolicy.setVerticalPolicy(QSizePolicy::Ignored);
+    stackedWidget->setSizePolicy(centralPolicy);
     pdfBrowser = new main_widget(this);
     enroute = new enroute_widget(this);
     note = new note_widget(this);

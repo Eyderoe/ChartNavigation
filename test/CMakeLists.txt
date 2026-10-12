@@ -3,10 +3,11 @@ add_executable(unit_tests
         stringProcess_test.cpp
         ../src/utils/stringProcess.cpp
         geographic_test.cpp
+        mapProjection_test.cpp
+        aircraftTrail_test.cpp
         ../src/utils/geographic.cpp
         mapDataQuery_test.cpp
         ../src/services/mapDataQuery.cpp
-        ../src/services/mapItemManage.cpp
         ../src/utils/sqliteHelper.cpp
         noaaGlobe_test.cpp
         ../src/utils/noaaGlobe.cpp
@@ -30,8 +31,6 @@ target_link_libraries(unit_tests PRIVATE
         GeographicLib::GeographicLib
         SQLiteCpp
         Qt::Core
-        Qt::Gui
-        Qt::Widgets
 )
 
 add_test(NAME AllTests COMMAND unit_tests)

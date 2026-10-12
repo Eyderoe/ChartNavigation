@@ -36,7 +36,9 @@ void options_widget::readSettings () const {
     // 样式
     ui->planeStyle_comboBox->setCurrentIndex(ins.getPending(SettingsManager::plane_style, 0).toInt() == 1 ? 1 : 0);
     ui->darkChartStyle_comboBox->setCurrentIndex(ins.getPending(SettingsManager::darkChartStyle, 0).toInt() == 1 ? 1 : 0);
-    ui->projection_comboBox->setCurrentIndex(ins.getPending(SettingsManager::mapProjection, 0).toInt() == 1 ? 1 : 0);
+    const int mapProjection = ins.getPending(SettingsManager::mapProjection, 0).toInt();
+    ui->projection_comboBox->setCurrentIndex(mapProjection >= 0 && mapProjection < ui->projection_comboBox->count()
+                                               ? mapProjection : 0);
     const int fileTreeStyle = ins.getPending(SettingsManager::fileTreeStyle, 0).toInt();
     ui->fileTreeStyle_comboBox->setCurrentIndex(fileTreeStyle >= 0 && fileTreeStyle <= 2 ? fileTreeStyle : 0);
     ui->onlyPdf_comboBox->setCurrentIndex(ins.getPending(SettingsManager::onlyDisplayPdf, true).toBool() ? 0 : 1);

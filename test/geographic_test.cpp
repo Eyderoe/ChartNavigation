@@ -20,9 +20,9 @@ void checkDistance (const Point2D &from, const Point2D &to) {
 
 double geographicLibBearing (const Point2D &from, const Point2D &to) {
     double distance{};
-    double bearing{};
+    double bearing{}, finalBearing{};
     GeographicLib::Geodesic::WGS84().Inverse(from.first, from.second, to.first, to.second,
-                                             distance, bearing);
+                                             distance, bearing, finalBearing);
     return std::fmod(bearing + 360.0, 360.0);
 }
 
@@ -31,7 +31,8 @@ void checkBearing (const Point2D &from, const Point2D &to) {
     const double actual = bearingSimple(from, to);
     const double difference = std::abs(actual - expected);
     const double circularDifference = std::min(difference, 360.0 - difference);
-    CHECK(circularDifference / std::max(expected, 1.0) <= 0.05);
+    // Bearings use an absolute angular tolerance, including around north (0/360).
+    CHECK(circularDifference <= 1.0);
 }
 
 
@@ -51,6 +52,13 @@ TEST_CASE("point distance") {
 }
 
 TEST_CASE("point angle") {
+    SUBCASE("north wrap and cardinal directions") {
+        checkBearing({30, 110}, {31, 109.999});
+        checkBearing({30, 110}, {31, 110.001});
+        CHECK(bearingSimple({0, 10}, {0, 11}) == doctest::Approx(90));
+        CHECK(bearingSimple({0, 10}, {0, 9}) == doctest::Approx(270));
+        CHECK(bearingSimple({30, 110}, {29, 110}) == doctest::Approx(180));
+    }
     SUBCASE("normal 1") {
         checkBearing({31.23, 121.47}, {39.90, 116.40});
     }

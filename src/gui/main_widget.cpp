@@ -119,16 +119,12 @@ main_widget::main_widget (QWidget *parent) : QWidget(parent), ui(new Ui::main_wi
 }
 
 main_widget::~main_widget () {
-    // QWidget 会在派生类析构完成后才删除 Designer 创建的子控件，而 document
-    // 是更早登记的直接子对象；QObject 默认析构顺序会因此先删 PdfView、后删
-    // document。显式解除二者关系并先销毁 document，保证它在 close()/析构时
-    // 发出的状态信号不会碰到已经析构的 QPdfView。
-    if (document) {
-        disconnect(documentStatusConnection);
-        ui->pdf_widget->setDocument(nullptr);
-        delete document;
-        document = nullptr;
-    }
+    // Qt 6.9.3 的 setDocument(nullptr) 会让内部 QPdfLinkModel 尝试连接空文档。
+    // 先销毁 PdfView，使视图及其 renderer 的连接断开，再销毁仍然存活的文档。
+    // 此时 ui 也还在，文档关闭期间不会触发访问已释放控件的回调。
+    disconnect(documentStatusConnection);
+    delete ui->pdf_widget;
+    delete document;
     delete ui;
 }
 

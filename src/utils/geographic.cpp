@@ -383,8 +383,15 @@ void MapProjection::reset (const double left, const double right, double bottom,
     }
     if (bottom > top)
         std::swap(bottom, top);
-    constexpr double radius{6378137.0}; // Web 墨卡托使用 WGS84 长半轴作为球半径。
     centralMeridian = normalizeLongitude(getLongiRangeCenter(left, right), true);
+    if (type == Type::gnomonic) {
+        const double centerLatitude = (bottom + top) / 2.0 * degreeToRadian;
+        centerLatitudeSin = std::sin(centerLatitude);
+        centerLatitudeCos = std::cos(centerLatitude);
+        valid = allFinite(centralMeridian, centerLatitudeSin, centerLatitudeCos);
+        return;
+    }
+    constexpr double radius{6378137.0}; // Web 墨卡托使用 WGS84 长半轴作为球半径。
     falseEasting = radius * getLongiSpan(left, right) * degreeToRadian / 2.0;
     falseNorthing = radius * std::asinh(std::tan(top * degreeToRadian));
     valid = allFinite(centralMeridian, falseEasting, falseNorthing);
@@ -402,6 +409,36 @@ void MapProjection::transInPlace (const std::span<Point2D> positions) const {
     }
     if (type == Type::dynamicLCC) {
         lcc.transInPlace(positions);
+        return;
+    }
+    if (type == Type::gnomonic) {
+        // https://proj.org/en/stable/operations/projections/gnom.html
+        // 从球心投射到中心点的切平面；大圆映为直线，原点为切点，y 向南。
+        for (auto &position : positions) {
+            if (!allFinite(position) || std::abs(position.first) > maxSupportLat) {
+                position = {NaN, NaN};
+                continue;
+            }
+            const double latitude = position.first * degreeToRadian;
+            const double longitude = normalizeLongitude(position.second - centralMeridian) * degreeToRadian;
+            const double sinLatitude = std::sin(latitude);
+            const double cosLatitude = std::cos(latitude);
+            const double cosLongitude = std::cos(longitude);
+            const double cosDistance = centerLatitudeSin * sinLatitude
+                                       + centerLatitudeCos * cosLatitude * cosLongitude;
+            // 地平线及背面没有有限的正向投影；容差吸收 90 度处的浮点误差。
+            if (cosDistance <= 1e-12) {
+                position = {NaN, NaN};
+                continue;
+            }
+            position = {
+                avgEarthRadius * cosLatitude * std::sin(longitude) / cosDistance,
+                -avgEarthRadius * (centerLatitudeCos * sinLatitude
+                                  - centerLatitudeSin * cosLatitude * cosLongitude) / cosDistance
+            };
+            if (!allFinite(position))
+                position = {NaN, NaN};
+        }
         return;
     }
     // https://proj.org/en/stable/operations/projections/webmerc.html
@@ -436,6 +473,28 @@ void MapProjection::revertTransInPlace (const std::span<Point2D> positions) cons
     }
     if (type == Type::dynamicLCC) {
         lcc.revertTransInPlace(positions);
+        return;
+    }
+    if (type == Type::gnomonic) {
+        for (auto &position : positions) {
+            if (!allFinite(position)) {
+                position = {NaN, NaN};
+                continue;
+            }
+            // 切平面上的点确定球心射线；先缩放分量，避免远处坐标溢出。
+            const double scale = std::max({avgEarthRadius, std::abs(position.first), std::abs(position.second)});
+            const double east = position.first / scale;
+            const double north = -position.second / scale;
+            const double radial = avgEarthRadius / scale;
+            const double horizontal = radial * centerLatitudeCos - north * centerLatitudeSin;
+            const double latitude = std::atan2(radial * centerLatitudeSin + north * centerLatitudeCos,
+                                               std::hypot(east, horizontal)) * radianToDegree;
+            const double longitude = centralMeridian + std::atan2(east, horizontal) * radianToDegree;
+            if (!allFinite(latitude, longitude) || std::abs(latitude) > maxSupportLat + 1e-10)
+                position = {NaN, NaN};
+            else
+                position = {std::clamp(latitude, -maxSupportLat, maxSupportLat), normalizeLongitude(longitude)};
+        }
         return;
     }
     constexpr double radius{6378137.0};

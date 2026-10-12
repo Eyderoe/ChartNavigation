@@ -83,6 +83,9 @@
              <string>字母表</string>
             </property>
            </item>
+           <item>
+            <property name="text"><string>小游戏</string></property>
+           </item>
           </widget>
          </item>
          <item>
@@ -545,7 +548,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </item>
                <item>
                 <widget class="QLabel" name="pbdTitle">
-                 <property name="text"><string>点关系</string></property>
+                 <property name="text"><string>PBD</string></property>
                 </widget>
                </item>
                <item>
@@ -591,8 +594,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="pbdPointB">
-                 <property name="readOnly"><bool>true</bool></property>
+                <widget class="QLabel" name="pbdPointB">
+                 <property name="text"><string/></property>
+                 <property name="textInteractionFlags"><set>Qt::TextInteractionFlag::TextSelectableByMouse</set></property>
                 </widget>
                </item>
                <item>
@@ -648,6 +652,665 @@ P Q R S T [20]
 U V W X Y [25]
 Z</string>
              </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="pageMiniGames">
+          <layout class="QVBoxLayout" name="miniGamesLayout">
+           <property name="leftMargin"><number>0</number></property>
+           <property name="topMargin"><number>0</number></property>
+           <property name="rightMargin"><number>0</number></property>
+           <property name="bottomMargin"><number>0</number></property>
+           <item>
+            <layout class="QHBoxLayout" name="miniGamesSelectorLayout">
+             <item>
+              <widget class="QComboBox" name="miniGamesComboBox">
+               <item><property name="text"><string>24点</string></property></item>
+               <item><property name="text"><string>猜数字（1A2B）</string></property></item>
+               <item><property name="text"><string>Countdown 数字游戏</string></property></item>
+               <item><property name="text"><string>数字金字塔</string></property></item>
+               <item><property name="text"><string>Lights Out（5×5）</string></property></item>
+               <item><property name="text"><string>2048</string></property></item>
+               <item><property name="text"><string>解绳（Untangle）</string></property></item>
+               <item><property name="text"><string>洪水（Flood）</string></property></item>
+               <item><property name="text"><string>四色定理（Map）</string></property></item>
+               <item><property name="text"><string>立方体（Cube）</string></property></item>
+               <item><property name="text"><string>孔明棋（Pegs）</string></property></item>
+               <item><property name="text"><string>管网（Net）</string></property></item>
+               <item><property name="text"><string>十五数码（Fifteen）</string></property></item>
+               <item><property name="text"><string>扫雷（Mines）</string></property></item>
+               <item><property name="text"><string>路标（Signpost）</string></property></item>
+               <item><property name="text"><string>数独（Solo）</string></property></item>
+               <item><property name="text"><string>围栏（Palisade）</string></property></item>
+               <item><property name="text"><string>帐篷（Tents）</string></property></item>
+               <item><property name="text"><string>不死族（Undead）</string></property></item>
+              </widget>
+             </item>
+             <item>
+              <spacer name="miniGamesSelectorSpacer">
+               <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+               <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QStackedWidget" name="miniGamesStackWidget">
+             <property name="currentIndex"><number>0</number></property>
+             <widget class="QWidget" name="pageTwentyFour">
+              <layout class="QVBoxLayout" name="twentyFourLayout">
+               <property name="leftMargin"><number>0</number></property>
+               <property name="topMargin"><number>0</number></property>
+               <property name="rightMargin"><number>0</number></property>
+               <property name="bottomMargin"><number>0</number></property>
+               <item>
+                <layout class="QHBoxLayout" name="twentyFourCardsLayout">
+                 <item><widget class="QLabel" name="twentyFourCard1"/></item>
+                 <item><widget class="QLabel" name="twentyFourCard2"/></item>
+                 <item><widget class="QLabel" name="twentyFourCard3"/></item>
+                 <item><widget class="QLabel" name="twentyFourCard4"/></item>
+                 <item>
+                  <widget class="QToolButton" name="twentyFourDealButton">
+                   <property name="text"><string>换牌</string></property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="twentyFourInput">
+                 <property name="placeholderText"><string>输入 inop 显示答案</string></property>
+                 <property name="toolTip"><string>每张牌使用一次，用 + - * / 和括号凑出24，按回车检查。</string></property>
+                 <property name="maxLength"><number>128</number></property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="twentyFourFeedback">
+                 <property name="minimumSize"><size><width>0</width><height>20</height></size></property>
+                 <property name="text"><string/></property>
+                 <property name="wordWrap"><bool>true</bool></property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="twentyFourSpacer">
+                 <property name="orientation"><enum>Qt::Orientation::Vertical</enum></property>
+                 <property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageGuessNumber">
+              <layout class="QVBoxLayout" name="guessNumberLayout">
+               <property name="leftMargin"><number>0</number></property>
+               <property name="topMargin"><number>0</number></property>
+               <property name="rightMargin"><number>0</number></property>
+               <property name="bottomMargin"><number>0</number></property>
+               <item>
+                <widget class="QLabel" name="guessNumberRules">
+                 <property name="text"><string>猜四位不重复数字（0–9，可以以0开头）。A：数字和位置都正确；B：数字正确，位置不对。</string></property>
+                 <property name="wordWrap"><bool>true</bool></property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="guessNumberInputLayout">
+                 <item>
+                  <widget class="QLineEdit" name="guessNumberInput">
+                   <property name="placeholderText"><string>输入四位不重复数字，回车猜测</string></property>
+                   <property name="maxLength"><number>32</number></property>
+                   <property name="inputMethodHints"><set>Qt::InputMethodHint::ImhDigitsOnly</set></property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="guessNumberNewButton">
+                   <property name="text"><string>新一局</string></property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QLabel" name="guessNumberFeedback">
+                 <property name="minimumSize"><size><width>0</width><height>20</height></size></property>
+                 <property name="text"><string/></property>
+                 <property name="wordWrap"><bool>true</bool></property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPlainTextEdit" name="guessNumberHistory">
+                 <property name="readOnly"><bool>true</bool></property>
+                 <property name="placeholderText"><string>猜测记录会显示在这里</string></property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageCountdown">
+              <layout class="QVBoxLayout" name="countdownLayout">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="countdownRules">
+                 <property name="text">
+                  <string>用给定的六个数字和 + - * /、括号尽可能接近目标，差值越小越好，不保证能精确命中。每个数字最多用一次，可以不用完；所有中间结果必须是正整数。</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="countdownNumbers">
+                 <property name="text">
+                  <string />
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="countdownTarget">
+                 <property name="text">
+                  <string />
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="countdownInput">
+                 <property name="placeholderText">
+                  <string>输入算式，回车检查</string>
+                 </property>
+                 <property name="maxLength">
+                  <number>160</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="countdownButtons">
+                 <item>
+                  <widget class="QToolButton" name="countdownNewButton">
+                   <property name="text">
+                    <string>换题</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="countdownCheckButton">
+                   <property name="text">
+                    <string>检查</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="countdownAnswerButton">
+                   <property name="text">
+                    <string>查看最优解</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QLabel" name="countdownFeedback">
+                 <property name="text">
+                  <string />
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="countdownSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pagePyramid">
+              <layout class="QVBoxLayout" name="pyramidLayout">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="pyramidRules">
+                 <property name="text">
+                  <string>每格数字等于它下方相邻两格之和。根据已知数字填满金字塔，按回车检查。</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QGridLayout" name="pyramidGrid" />
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="pyramidButtons">
+                 <item>
+                  <widget class="QToolButton" name="pyramidNewButton">
+                   <property name="text">
+                    <string>换题</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="pyramidCheckButton">
+                   <property name="text">
+                    <string>检查</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="pyramidAnswerButton">
+                   <property name="text">
+                    <string>查看答案</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QLabel" name="pyramidFeedback">
+                 <property name="text">
+                  <string />
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="pyramidSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageLightsOut">
+              <layout class="QVBoxLayout" name="lightsOutLayout">
+               <property name="leftMargin"><number>0</number></property>
+               <property name="topMargin"><number>0</number></property>
+               <property name="rightMargin"><number>0</number></property>
+               <property name="bottomMargin"><number>0</number></property>
+               <item>
+                <widget class="QLabel" name="lightsOutRules">
+                 <property name="text"><string>点击一格，切换自身及上下左右邻灯；熄灭全部灯即可过关。</string></property>
+                 <property name="wordWrap"><bool>true</bool></property>
+                </widget>
+               </item>
+               <item><widget class="QWidget" name="lightsOutBoard" native="true"><layout class="QVBoxLayout" name="lightsOutBoardLayout">
+                <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               </layout></widget></item>
+               <item>
+                <layout class="QHBoxLayout" name="lightsOutButtons">
+                 <item><widget class="QToolButton" name="lightsOutNewButton"><property name="text"><string>新一局</string></property></widget></item>
+                 <item><widget class="QToolButton" name="lightsOutRetryButton"><property name="text"><string>重试本局</string></property></widget></item>
+                </layout>
+               </item>
+               <item><widget class="QLabel" name="lightsOutFeedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="page2048">
+              <layout class="QVBoxLayout" name="game2048Layout">
+               <property name="leftMargin"><number>0</number></property>
+               <property name="topMargin"><number>0</number></property>
+               <property name="rightMargin"><number>0</number></property>
+               <property name="bottomMargin"><number>0</number></property>
+               <item>
+                <widget class="QLabel" name="game2048Rules">
+                 <property name="text"><string>用方向键、WASD 或下方按钮移动。相同数字合并，目标是2048；达到目标后可继续。点击棋盘即可使用键盘。</string></property>
+                 <property name="wordWrap"><bool>true</bool></property>
+                </widget>
+               </item>
+               <item><widget class="QLabel" name="game2048Score"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item>
+                <widget class="QWidget" name="game2048Board" native="true">
+                 <property name="focusPolicy"><enum>Qt::FocusPolicy::StrongFocus</enum></property>
+                 <layout class="QGridLayout" name="game2048Grid">
+                  <property name="leftMargin"><number>0</number></property>
+                  <property name="topMargin"><number>0</number></property>
+                  <property name="rightMargin"><number>0</number></property>
+                  <property name="bottomMargin"><number>0</number></property>
+                  <property name="spacing"><number>4</number></property>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="game2048Buttons">
+                 <item><widget class="QToolButton" name="game2048LeftButton"><property name="text"><string>←</string></property><property name="toolTip"><string>向左移动</string></property></widget></item>
+                 <item><widget class="QToolButton" name="game2048UpButton"><property name="text"><string>↑</string></property><property name="toolTip"><string>向上移动</string></property></widget></item>
+                 <item><widget class="QToolButton" name="game2048DownButton"><property name="text"><string>↓</string></property><property name="toolTip"><string>向下移动</string></property></widget></item>
+                 <item><widget class="QToolButton" name="game2048RightButton"><property name="text"><string>→</string></property><property name="toolTip"><string>向右移动</string></property></widget></item>
+                 <item><widget class="QToolButton" name="game2048NewButton"><property name="text"><string>新一局</string></property></widget></item>
+                </layout>
+               </item>
+               <item><widget class="QLabel" name="game2048Feedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><spacer name="game2048Spacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageUntangle">
+              <layout class="QVBoxLayout" name="untangleLayout">
+               <property name="leftMargin"><number>0</number></property>
+               <property name="topMargin"><number>0</number></property>
+               <property name="rightMargin"><number>0</number></property>
+               <property name="bottomMargin"><number>0</number></property>
+               <item><widget class="QLabel" name="untangleRules"><property name="text"><string>拖动圆点，让所有连线都不再交叉。红色表示交叉的线；同一圆点相连的线可以在该点相遇。每次拖动结束时，只有连线之间的交叉关系发生变化才计一步。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QComboBox" name="untanglePreset">
+                <item><property name="text"><string>6 个点</string></property></item>
+                <item><property name="text"><string>10 个点</string></property></item>
+                <item><property name="text"><string>15 个点</string></property></item>
+                <item><property name="text"><string>20 个点</string></property></item>
+                <item><property name="text"><string>25 个点</string></property></item>
+                <property name="currentIndex"><number>1</number></property>
+               </widget></item>
+               <item><widget class="QLabel" name="untangleStatus"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QWidget" name="untangleBoard" native="true"><layout class="QVBoxLayout" name="untangleBoardLayout">
+                <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               </layout></widget></item>
+               <item><layout class="QHBoxLayout" name="untangleButtons">
+                <item><widget class="QToolButton" name="untangleNewButton"><property name="text"><string>新一局</string></property></widget></item>
+                <item><widget class="QToolButton" name="untangleRetryButton"><property name="text"><string>重试本局</string></property></widget></item>
+                <item><widget class="QToolButton" name="untangleUndoButton"><property name="text"><string>撤销</string></property></widget></item>
+               </layout></item>
+               <item><widget class="QLabel" name="untangleFeedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><spacer name="untangleSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageFlood">
+              <layout class="QVBoxLayout" name="floodLayout">
+               <property name="leftMargin"><number>0</number></property>
+               <property name="topMargin"><number>0</number></property>
+               <property name="rightMargin"><number>0</number></property>
+               <property name="bottomMargin"><number>0</number></property>
+               <item><widget class="QLabel" name="floodRules"><property name="text"><string>点击格子或下方颜色，让左上角的同色区域向上下左右扩张。在步数上限内将全盘染成同一种颜色即可获胜；选择当前颜色不计步。方向键移动光标，回车或空格选色，也可按数字键 1–6。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QComboBox" name="floodDifficulty">
+                <item><property name="text"><string>12×12 · 简单</string></property></item>
+                <item><property name="text"><string>12×12 · 普通</string></property></item>
+                <item><property name="text"><string>12×12 · 困难</string></property></item>
+                <item><property name="text"><string>16×16 · 普通</string></property></item>
+                <item><property name="text"><string>16×16 · 困难</string></property></item>
+                <item><property name="text"><string>12×12 · 3 色</string></property></item>
+                <item><property name="text"><string>12×12 · 4 色</string></property></item>
+                <property name="currentIndex"><number>0</number></property>
+               </widget></item>
+               <item><widget class="QLabel" name="floodStatus"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QWidget" name="floodBoard" native="true"><layout class="QVBoxLayout" name="floodBoardLayout">
+                <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               </layout></widget></item>
+               <item><layout class="QHBoxLayout" name="floodColorsLayout"/></item>
+               <item><layout class="QHBoxLayout" name="floodButtons">
+                <item><widget class="QToolButton" name="floodNewButton"><property name="text"><string>新一局</string></property></widget></item>
+                <item><widget class="QToolButton" name="floodRetryButton"><property name="text"><string>重试本局</string></property></widget></item>
+                <item><widget class="QToolButton" name="floodUndoButton"><property name="text"><string>撤销</string></property></widget></item>
+               </layout></item>
+               <item><widget class="QLabel" name="floodFeedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><spacer name="floodSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageMap">
+              <layout class="QVBoxLayout" name="mapLayout">
+               <property name="leftMargin"><number>0</number></property>
+               <property name="topMargin"><number>0</number></property>
+               <property name="rightMargin"><number>0</number></property>
+               <property name="bottomMargin"><number>0</number></property>
+               <item><widget class="QLabel" name="mapRules"><property name="text"><string>用四种颜色填满地图，共边的区域不能同色，仅在角上接触不算相邻。带锁标记的预填颜色不能修改，每题有唯一解。先选颜色再点击区域，也可从已着色区域拖拽取色；从地图外拖入可擦除。右键标记候选色，数字键 1–4 着色，Delete 擦除，Tab 切换区域，L 显示编号。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QComboBox" name="mapPreset">
+                <item><property name="text"><string>20×15 · 30 个区域 · 简单</string></property></item>
+                <item><property name="text"><string>20×15 · 30 个区域 · 普通</string></property></item>
+                <item><property name="text"><string>20×15 · 30 个区域 · 困难</string></property></item>
+                <item><property name="text"><string>20×15 · 30 个区域 · 极难（允许猜测）</string></property></item>
+                <item><property name="text"><string>30×25 · 75 个区域 · 普通</string></property></item>
+                <item><property name="text"><string>30×25 · 75 个区域 · 困难</string></property></item>
+                <property name="currentIndex"><number>1</number></property>
+               </widget></item>
+               <item><widget class="QLabel" name="mapStatus"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QWidget" name="mapBoard" native="true"><layout class="QVBoxLayout" name="mapBoardLayout">
+                <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               </layout></widget></item>
+               <item><layout class="QHBoxLayout" name="mapColorsLayout"/></item>
+               <item><layout class="QHBoxLayout" name="mapButtons">
+                <item><widget class="QToolButton" name="mapEraseButton"><property name="text"><string>擦除</string></property></widget></item>
+                <item><widget class="QToolButton" name="mapNewButton"><property name="text"><string>新一局</string></property></widget></item>
+                <item><widget class="QToolButton" name="mapRetryButton"><property name="text"><string>重试本局</string></property></widget></item>
+                <item><widget class="QToolButton" name="mapUndoButton"><property name="text"><string>撤销</string></property></widget></item>
+               </layout></item>
+               <item><widget class="QLabel" name="mapFeedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><spacer name="mapSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageCube">
+              <layout class="QVBoxLayout" name="cubeLayout">
+               <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               <item><widget class="QLabel" name="cubeRules"><property name="text"><string>滚动多面体，将棋盘上的蓝色格子收到各个面上。每次滚动后，接触格子与底面交换颜色。按方向键或小键盘 1、3、7、9 滚动，也可点击棋盘朝点击方向移动。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QComboBox" name="cubeType">
+                <item><property name="text"><string>立方体 · 4×4</string></property></item>
+                <item><property name="text"><string>四面体 · 1×2</string></property></item>
+                <item><property name="text"><string>八面体 · 2×2</string></property></item>
+                <item><property name="text"><string>二十面体 · 3×3</string></property></item>
+               </widget></item>
+               <item><widget class="QLabel" name="cubeStatus"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QWidget" name="cubeBoard" native="true"><layout class="QVBoxLayout" name="cubeBoardLayout">
+                <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               </layout></widget></item>
+               <item><layout class="QHBoxLayout" name="cubeDirections">
+                <item><widget class="QToolButton" name="cubeUpButton"><property name="text"><string>↑</string></property></widget></item>
+                <item><widget class="QToolButton" name="cubeLeftButton"><property name="text"><string>←</string></property></widget></item>
+                <item><widget class="QToolButton" name="cubeDownButton"><property name="text"><string>↓</string></property></widget></item>
+                <item><widget class="QToolButton" name="cubeRightButton"><property name="text"><string>→</string></property></widget></item>
+               </layout></item>
+               <item><layout class="QHBoxLayout" name="cubeButtons">
+                <item><widget class="QToolButton" name="cubeNewButton"><property name="text"><string>新一局</string></property></widget></item>
+                <item><widget class="QToolButton" name="cubeRetryButton"><property name="text"><string>重试本局</string></property></widget></item>
+                <item><widget class="QToolButton" name="cubeUndoButton"><property name="text"><string>撤销</string></property></widget></item>
+               </layout></item>
+               <item><widget class="QLabel" name="cubeFeedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><spacer name="cubeSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pagePegs">
+              <layout class="QVBoxLayout" name="pegsLayout">
+               <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               <item><widget class="QLabel" name="pegsRules"><property name="text"><string>棋子沿上下左右跳过相邻棋子，落到两个格子外的空孔，并移除被跳过的棋子。只剩一颗即获胜。拖拽棋子，或依次点击棋子与空孔；方向键移动光标，回车选中棋子，再按方向键跳吃。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QComboBox" name="pegsPreset">
+                <item><property name="text"><string>十字 · 5×7</string></property></item>
+                <item><property name="text"><string>十字 · 7×7</string></property></item>
+                <item><property name="text"><string>十字 · 5×9</string></property></item>
+                <item><property name="text"><string>十字 · 7×9</string></property></item>
+                <item><property name="text"><string>十字 · 9×9</string></property></item>
+                <item><property name="text"><string>八角 · 7×7</string></property></item>
+                <item><property name="text"><string>随机 · 5×5</string></property></item>
+                <item><property name="text"><string>随机 · 7×7</string></property></item>
+                <item><property name="text"><string>随机 · 9×9</string></property></item>
+                <property name="currentIndex"><number>1</number></property>
+               </widget></item>
+               <item><widget class="QLabel" name="pegsStatus"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QWidget" name="pegsBoard" native="true"><layout class="QVBoxLayout" name="pegsBoardLayout">
+                <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               </layout></widget></item>
+               <item><layout class="QHBoxLayout" name="pegsButtons">
+                <item><widget class="QToolButton" name="pegsNewButton"><property name="text"><string>新一局</string></property></widget></item>
+                <item><widget class="QToolButton" name="pegsRetryButton"><property name="text"><string>重试本局</string></property></widget></item>
+                <item><widget class="QToolButton" name="pegsUndoButton"><property name="text"><string>撤销</string></property></widget></item>
+               </layout></item>
+               <item><widget class="QLabel" name="pegsFeedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><spacer name="pegsSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageNet">
+              <layout class="QVBoxLayout" name="netLayout">
+               <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               <item><widget class="QLabel" name="netRules"><property name="text"><string>旋转格子，让所有管线连成一个没有环路的网络；与中心源点连通的格子会亮起，每题有唯一解。左键逆时针，右键顺时针，中键或 Shift＋左键锁定。方向键移动光标，A／D 旋转，F 转半圈，S 锁定。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QComboBox" name="netPreset">
+                <item><property name="text"><string>5×5</string></property></item>
+                <item><property name="text"><string>7×7</string></property></item>
+                <item><property name="text"><string>9×9</string></property></item>
+                <item><property name="text"><string>11×11</string></property></item>
+                <item><property name="text"><string>13×11</string></property></item>
+                <item><property name="text"><string>5×5 · 环绕</string></property></item>
+                <item><property name="text"><string>7×7 · 环绕</string></property></item>
+                <item><property name="text"><string>9×9 · 环绕</string></property></item>
+                <item><property name="text"><string>11×11 · 环绕</string></property></item>
+                <item><property name="text"><string>13×11 · 环绕</string></property></item>
+               </widget></item>
+               <item><widget class="QLabel" name="netStatus"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QWidget" name="netBoard" native="true"><layout class="QVBoxLayout" name="netBoardLayout">
+                <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               </layout></widget></item>
+               <item><layout class="QHBoxLayout" name="netButtons">
+                <item><widget class="QToolButton" name="netNewButton"><property name="text"><string>新一局</string></property></widget></item>
+                <item><widget class="QToolButton" name="netRetryButton"><property name="text"><string>重试本局</string></property></widget></item>
+                <item><widget class="QToolButton" name="netUndoButton"><property name="text"><string>撤销</string></property></widget></item>
+               </layout></item>
+               <item><widget class="QLabel" name="netFeedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><spacer name="netSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageFifteen">
+              <layout class="QVBoxLayout" name="fifteenLayout">
+               <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               <item><widget class="QLabel" name="fifteenRules"><property name="text"><string>滑动数字，使它们从左上起依次排列，空格在右下角。点击空格同行或同列的数字可滑动整段，每移动一块计一步。方向键表示数字移动的方向；H 提示，U 撤销，R 重做。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><layout class="QHBoxLayout" name="fifteenSizeLayout">
+                <item><widget class="QLabel" name="fifteenWidthLabel"><property name="text"><string>宽度</string></property><property name="buddy"><cstring>fifteenWidth</cstring></property></widget></item>
+                <item><widget class="QSpinBox" name="fifteenWidth"><property name="minimum"><number>2</number></property><property name="maximum"><number>12</number></property><property name="value"><number>4</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item>
+                <item><widget class="QLabel" name="fifteenHeightLabel"><property name="text"><string>高度</string></property><property name="buddy"><cstring>fifteenHeight</cstring></property></widget></item>
+                <item><widget class="QSpinBox" name="fifteenHeight"><property name="minimum"><number>2</number></property><property name="maximum"><number>12</number></property><property name="value"><number>4</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item>
+               </layout></item>
+               <item><widget class="QLabel" name="fifteenStatus"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QWidget" name="fifteenBoard" native="true"><layout class="QVBoxLayout" name="fifteenBoardLayout">
+                <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               </layout></widget></item>
+               <item><layout class="QHBoxLayout" name="fifteenHistoryButtons">
+                <item><widget class="QToolButton" name="fifteenNewButton"><property name="text"><string>新一局</string></property></widget></item>
+                <item><widget class="QToolButton" name="fifteenRetryButton"><property name="text"><string>重试本局</string></property></widget></item>
+                <item><widget class="QToolButton" name="fifteenUndoButton"><property name="text"><string>撤销</string></property></widget></item>
+                <item><widget class="QToolButton" name="fifteenRedoButton"><property name="text"><string>重做</string></property></widget></item>
+               </layout></item>
+               <item><layout class="QHBoxLayout" name="fifteenHelpButtons">
+                <item><widget class="QToolButton" name="fifteenHintButton"><property name="text"><string>提示（H）</string></property><property name="toolTip"><string>按网页的算法直接移动一步；连续使用可以完成本局，但可能暂时打乱已有进度。</string></property></widget></item>
+                <item><widget class="QToolButton" name="fifteenSolveButton"><property name="text"><string>自动完成</string></property><property name="toolTip"><string>直接摆成完成状态，可用于练习滑动；支持撤销。</string></property></widget></item>
+               </layout></item>
+               <item><widget class="QLabel" name="fifteenFeedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><spacer name="fifteenSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageMines">
+              <layout class="QVBoxLayout" name="minesLayout">
+               <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               <item><widget class="QLabel" name="minesRules"><property name="text"><string>打开所有安全格，避开地雷。左键打开，右键或 Control＋左键插旗；点击数字且周围旗数正确时，可打开其余邻格。默认确保无需猜测。方向键移动光标，回车打开，空格插旗，U 撤销，R 重做。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QComboBox" name="minesPreset"/></item>
+               <item><widget class="QWidget" name="minesCustomSettings" native="true">
+                <layout class="QVBoxLayout" name="minesCustomLayout">
+                 <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+                 <item><layout class="QHBoxLayout" name="minesSizeLayout">
+                  <item><widget class="QLabel" name="minesWidthLabel"><property name="text"><string>宽度</string></property><property name="buddy"><cstring>minesWidth</cstring></property></widget></item>
+                  <item><widget class="QSpinBox" name="minesWidth"><property name="minimum"><number>1</number></property><property name="maximum"><number>2147483647</number></property><property name="value"><number>9</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item>
+                  <item><widget class="QLabel" name="minesHeightLabel"><property name="text"><string>高度</string></property><property name="buddy"><cstring>minesHeight</cstring></property></widget></item>
+                  <item><widget class="QSpinBox" name="minesHeight"><property name="minimum"><number>1</number></property><property name="maximum"><number>2147483647</number></property><property name="value"><number>9</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item>
+                 </layout></item>
+                 <item><layout class="QHBoxLayout" name="minesCountLayout">
+                  <item><widget class="QLabel" name="minesCountLabel"><property name="text"><string>雷数</string></property><property name="buddy"><cstring>minesCount</cstring></property></widget></item>
+                  <item><widget class="QLineEdit" name="minesCount"><property name="text"><string>10</string></property><property name="placeholderText"><string>数量或百分比，如 10 / 25%</string></property><property name="maxLength"><number>16</number></property></widget></item>
+                 </layout></item>
+                 <item><widget class="QComboBox" name="minesGridType"/></item>
+                 <item><widget class="QCheckBox" name="minesSoluble"><property name="text"><string>确保可解（无需猜测）</string></property><property name="checked"><bool>true</bool></property></widget></item>
+                 <item><widget class="QToolButton" name="minesApplyButton"><property name="text"><string>应用并开新局</string></property></widget></item>
+                </layout>
+               </widget></item>
+               <item><widget class="QLabel" name="minesStatus"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QWidget" name="minesBoard" native="true"><layout class="QVBoxLayout" name="minesBoardLayout">
+                <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               </layout></widget></item>
+               <item><layout class="QHBoxLayout" name="minesHistoryButtons">
+                <item><widget class="QToolButton" name="minesNewButton"><property name="text"><string>新一局</string></property></widget></item>
+                <item><widget class="QToolButton" name="minesRetryButton"><property name="text"><string>重试本局</string></property></widget></item>
+                <item><widget class="QToolButton" name="minesUndoButton"><property name="text"><string>撤销</string></property></widget></item>
+                <item><widget class="QToolButton" name="minesRedoButton"><property name="text"><string>重做</string></property></widget></item>
+               </layout></item>
+               <item><widget class="QToolButton" name="minesSolveButton"><property name="text"><string>显示布局</string></property><property name="toolTip"><string>首次打开一格后，可显示本局完整布局；支持撤销。</string></property></widget></item>
+               <item><widget class="QLabel" name="minesFeedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><spacer name="minesSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageSignpost">
+              <layout class="QVBoxLayout" name="signpostLayout">
+               <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               <item><widget class="QLabel" name="signpostRules"><property name="text"><string>沿箭头将所有格子连成 1 起始的连续路径，可以跨越多个格子。左键拖向后继，右键或 Control＋左键拖向前驱；拖出棋盘可断开连线。方向键移动光标，回车连接后继，空格连接前驱；X 断开当前格，Shift＋X 断开未编号链。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QComboBox" name="signpostPreset"/></item>
+               <item><widget class="QWidget" name="signpostCustomSettings" native="true">
+                <layout class="QVBoxLayout" name="signpostCustomLayout">
+                 <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+                 <item><layout class="QHBoxLayout" name="signpostSizeLayout">
+                  <item><widget class="QLabel" name="signpostWidthLabel"><property name="text"><string>宽度</string></property><property name="buddy"><cstring>signpostWidth</cstring></property></widget></item>
+                  <item><widget class="QSpinBox" name="signpostWidth"><property name="minimum"><number>1</number></property><property name="maximum"><number>2147483647</number></property><property name="value"><number>4</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item>
+                 </layout></item>
+                 <item><layout class="QHBoxLayout" name="signpostHeightLayout">
+                  <item><widget class="QLabel" name="signpostHeightLabel"><property name="text"><string>高度</string></property><property name="buddy"><cstring>signpostHeight</cstring></property></widget></item>
+                  <item><widget class="QSpinBox" name="signpostHeight"><property name="minimum"><number>1</number></property><property name="maximum"><number>2147483647</number></property><property name="value"><number>4</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item>
+                 </layout></item>
+                 <item><widget class="QCheckBox" name="signpostCornerEnds"><property name="text"><string>起点和终点固定在相对角落</string></property><property name="checked"><bool>true</bool></property></widget></item>
+                 <item><widget class="QToolButton" name="signpostApplyButton"><property name="text"><string>应用并开新局</string></property></widget></item>
+                </layout>
+               </widget></item>
+               <item><widget class="QLabel" name="signpostStatus"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><widget class="QWidget" name="signpostBoard" native="true"><layout class="QVBoxLayout" name="signpostBoardLayout">
+                <property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property>
+               </layout></widget></item>
+               <item><layout class="QHBoxLayout" name="signpostHistoryButtons">
+                <item><widget class="QToolButton" name="signpostNewButton"><property name="text"><string>新一局</string></property></widget></item>
+                <item><widget class="QToolButton" name="signpostRetryButton"><property name="text"><string>重试本局</string></property></widget></item>
+                <item><widget class="QToolButton" name="signpostUndoButton"><property name="text"><string>撤销</string></property></widget></item>
+                <item><widget class="QToolButton" name="signpostRedoButton"><property name="text"><string>重做</string></property></widget></item>
+               </layout></item>
+               <item><widget class="QToolButton" name="signpostSolveButton"><property name="text"><string>显示答案</string></property><property name="toolTip"><string>使用原版求解器完成本局，支持撤销。</string></property></widget></item>
+               <item><widget class="QLabel" name="signpostFeedback"><property name="text"><string/></property><property name="wordWrap"><bool>true</bool></property></widget></item>
+               <item><spacer name="signpostSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="pageSolo">
+<layout class="QVBoxLayout" name="soloLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property><item><widget class="QLabel" name="soloRules"><property name="text"><string>每行、每列和粗线宫内的数字都不重复。左键选格后输入数字，右键或 Control＋左键选格添加候选；回车切换填写／候选，空格或退格清除。方向键移动，10 起使用 a、b、c…；也可点击下方数字按钮。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QComboBox" name="soloPreset"></widget></item><item><widget class="QWidget" name="soloCustomSettings" native="true"><layout class="QVBoxLayout" name="soloCustomLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property><item><layout class="QHBoxLayout" name="soloColumnsLayout"><item><widget class="QLabel" name="soloColumnsLabel"><property name="text"><string>宫列数</string></property><property name="buddy"><cstring>soloColumns</cstring></property></widget></item><item><widget class="QSpinBox" name="soloColumns"><property name="minimum"><number>2</number></property><property name="maximum"><number>255</number></property><property name="value"><number>3</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item></layout></item><item><layout class="QHBoxLayout" name="soloRowsLayout"><item><widget class="QLabel" name="soloRowsLabel"><property name="text"><string>宫行数</string></property><property name="buddy"><cstring>soloRows</cstring></property></widget></item><item><widget class="QSpinBox" name="soloRows"><property name="minimum"><number>1</number></property><property name="maximum"><number>255</number></property><property name="value"><number>3</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item></layout></item><item><widget class="QCheckBox" name="soloDiagonal"><property name="text"><string>X（对角线不重复）</string></property></widget></item><item><widget class="QCheckBox" name="soloJigsaw"><property name="text"><string>Jigsaw（不规则宫）</string></property></widget></item><item><widget class="QCheckBox" name="soloKiller"><property name="text"><string>Killer（求和笼）</string></property></widget></item><item><widget class="QLabel" name="soloSymmetryLabel"><property name="text"><string>线索对称方式</string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QComboBox" name="soloSymmetry"></widget></item><item><widget class="QLabel" name="soloDifficultyLabel"><property name="text"><string>难度</string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QComboBox" name="soloDifficulty"></widget></item><item><widget class="QToolButton" name="soloApplyButton"><property name="text"><string>应用并开新局</string></property></widget></item></layout></widget></item><item><widget class="QCheckBox" name="soloKeepHighlight"><property name="text"><string>修改候选后保留选择</string></property></widget></item><item><widget class="QLabel" name="soloStatus"><property name="text"><string></string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QWidget" name="soloBoard" native="true"><layout class="QVBoxLayout" name="soloBoardLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property></layout></widget></item><item><widget class="QWidget" name="soloNumbers" native="true"><layout class="QGridLayout" name="soloNumbersLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property><property name="horizontalSpacing"><number>3</number></property><property name="verticalSpacing"><number>3</number></property></layout></widget></item><item><layout class="QHBoxLayout" name="soloInputButtons"><item><widget class="QToolButton" name="soloPencilButton"><property name="text"><string>候选模式</string></property><property name="checkable"><bool>true</bool></property></widget></item><item><widget class="QToolButton" name="soloEraseButton"><property name="text"><string>清除</string></property></widget></item></layout></item><item><widget class="QToolButton" name="soloMarksButton"><property name="text"><string>填入全部候选（M）</string></property></widget></item><item><layout class="QHBoxLayout" name="soloHistoryButtons"><item><widget class="QToolButton" name="soloNewButton"><property name="text"><string>新一局</string></property></widget></item><item><widget class="QToolButton" name="soloRetryButton"><property name="text"><string>重试本局</string></property></widget></item><item><widget class="QToolButton" name="soloUndoButton"><property name="text"><string>撤销</string></property></widget></item><item><widget class="QToolButton" name="soloRedoButton"><property name="text"><string>重做</string></property></widget></item></layout></item><item><widget class="QToolButton" name="soloSolveButton"><property name="text"><string>显示答案</string></property></widget></item><item><widget class="QLabel" name="soloFeedback"><property name="text"><string></string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><spacer name="soloSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item></layout></widget>
+             <widget class="QWidget" name="pagePalisade">
+<layout class="QVBoxLayout" name="palisadeLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property><item><widget class="QLabel" name="palisadeRules"><property name="text"><string>用围栏把棋盘分成大小相同的连通区域；数字表示该格的围栏边数，包含棋盘外边界。左键放围栏，右键或 Control＋左键标记无围栏；重复点击可取消。方向键移动光标，半格模式回车放围栏、空格标记无围栏；整格模式使用 Control＋方向键、Shift＋方向键。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QComboBox" name="palisadePreset"></widget></item><item><widget class="QWidget" name="palisadeCustomSettings" native="true"><layout class="QVBoxLayout" name="palisadeCustomLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property><item><layout class="QHBoxLayout" name="palisadeWidthLayout"><item><widget class="QLabel" name="palisadeWidthLabel"><property name="text"><string>宽度</string></property><property name="buddy"><cstring>palisadeWidth</cstring></property></widget></item><item><widget class="QSpinBox" name="palisadeWidth"><property name="minimum"><number>1</number></property><property name="maximum"><number>2147483647</number></property><property name="value"><number>5</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item></layout></item><item><layout class="QHBoxLayout" name="palisadeHeightLayout"><item><widget class="QLabel" name="palisadeHeightLabel"><property name="text"><string>高度</string></property><property name="buddy"><cstring>palisadeHeight</cstring></property></widget></item><item><widget class="QSpinBox" name="palisadeHeight"><property name="minimum"><number>1</number></property><property name="maximum"><number>2147483647</number></property><property name="value"><number>5</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item></layout></item><item><layout class="QHBoxLayout" name="palisadeRegionLayout"><item><widget class="QLabel" name="palisadeRegionLabel"><property name="text"><string>每区格数</string></property><property name="buddy"><cstring>palisadeRegion</cstring></property></widget></item><item><widget class="QSpinBox" name="palisadeRegion"><property name="minimum"><number>1</number></property><property name="maximum"><number>2147483647</number></property><property name="value"><number>5</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item></layout></item><item><widget class="QToolButton" name="palisadeApplyButton"><property name="text"><string>应用并开新局</string></property></widget></item></layout></widget>
+</item><item><widget class="QComboBox" name="palisadeCursorMode"><item><property name="text"><string>半格光标（边界）</string></property></item><item><property name="text"><string>整格光标（格子）</string></property></item></widget></item><item><widget class="QCheckBox" name="palisadeClearRegions"><property name="text"><string>完成区域内淡化未定边</string></property></widget></item><item><widget class="QLabel" name="palisadeStatus"><property name="text"><string></string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QWidget" name="palisadeBoard" native="true"><layout class="QVBoxLayout" name="palisadeBoardLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property></layout></widget></item><item><layout class="QHBoxLayout" name="palisadeHistoryButtons"><item><widget class="QToolButton" name="palisadeNewButton"><property name="text"><string>新一局</string></property></widget></item><item><widget class="QToolButton" name="palisadeRetryButton"><property name="text"><string>重试本局</string></property></widget></item><item><widget class="QToolButton" name="palisadeUndoButton"><property name="text"><string>撤销</string></property></widget></item><item><widget class="QToolButton" name="palisadeRedoButton"><property name="text"><string>重做</string></property></widget></item></layout></item><item><widget class="QToolButton" name="palisadeSolveButton"><property name="text"><string>显示答案</string></property></widget></item><item><widget class="QLabel" name="palisadeFeedback"><property name="text"><string></string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><spacer name="palisadeSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item></layout></widget>
+<widget class="QWidget" name="pageTents"><layout class="QVBoxLayout" name="tentsLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property><item><widget class="QLabel" name="tentsRules"><property name="text"><string>每棵树配一顶相邻帐篷，帐篷之间不能相邻（含对角）；行列数量须符合边缘数字。左键放帐篷，右键或 Control＋左键标空；右键拖动可连续标空。方向键移动，回车放帐篷，空格标空；Shift＋方向键标空，Control＋方向键可覆盖帐篷。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QComboBox" name="tentsPreset" /></item><item><widget class="QWidget" name="tentsCustomSettings" native="true"><layout class="QVBoxLayout" name="tentsCustomLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property><item><layout class="QHBoxLayout" name="tentsWidthLayout"><item><widget class="QLabel" name="tentsWidthLabel"><property name="text"><string>宽度</string></property><property name="wordWrap"><bool>true</bool></property><property name="buddy"><cstring>tentsWidth</cstring></property></widget></item><item><widget class="QSpinBox" name="tentsWidth"><property name="minimum"><number>4</number></property><property name="maximum"><number>2147483647</number></property><property name="value"><number>8</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item></layout></item><item><layout class="QHBoxLayout" name="tentsHeightLayout"><item><widget class="QLabel" name="tentsHeightLabel"><property name="text"><string>高度</string></property><property name="wordWrap"><bool>true</bool></property><property name="buddy"><cstring>tentsHeight</cstring></property></widget></item><item><widget class="QSpinBox" name="tentsHeight"><property name="minimum"><number>4</number></property><property name="maximum"><number>2147483647</number></property><property name="value"><number>8</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item></layout></item><item><widget class="QLabel" name="tentsDifficultyLabel"><property name="text"><string>难度</string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QComboBox" name="tentsDifficulty" /></item><item><widget class="QToolButton" name="tentsApplyButton"><property name="text"><string>应用并开新局</string></property></widget></item></layout></widget></item><item><widget class="QLabel" name="tentsStatus"><property name="text"><string /></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QWidget" name="tentsBoard" native="true"><layout class="QVBoxLayout" name="tentsBoardLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property></layout></widget></item><item><layout class="QHBoxLayout" name="tentsHistoryButtons"><item><widget class="QToolButton" name="tentsNewButton"><property name="text"><string>新一局</string></property></widget></item><item><widget class="QToolButton" name="tentsRetryButton"><property name="text"><string>重试本局</string></property></widget></item><item><widget class="QToolButton" name="tentsUndoButton"><property name="text"><string>撤销</string></property></widget></item><item><widget class="QToolButton" name="tentsRedoButton"><property name="text"><string>重做</string></property></widget></item></layout></item><item><widget class="QToolButton" name="tentsSolveButton"><property name="text"><string>显示答案</string></property></widget></item><item><widget class="QLabel" name="tentsFeedback"><property name="text"><string /></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><spacer name="tentsSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item></layout></widget>
+<widget class="QWidget" name="pageUndead"><layout class="QVBoxLayout" name="undeadLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property><item><widget class="QLabel" name="undeadRules"><property name="text"><string>填满非镜面格，并符合怪物总数及四周的视线数字：幽灵仅在反射后可见，吸血鬼仅直视可见，僵尸始终可见。左键选格后按 G/V/Z 或 1/2/3，也可点怪物按钮；右键或 Control＋左键选格写候选。方向键移动，回车切换候选，空格或退格清除。点击边缘数字标记完成。</string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QComboBox" name="undeadPreset" /></item><item><widget class="QWidget" name="undeadCustomSettings" native="true"><layout class="QVBoxLayout" name="undeadCustomLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property><item><layout class="QHBoxLayout" name="undeadWidthLayout"><item><widget class="QLabel" name="undeadWidthLabel"><property name="text"><string>宽度</string></property><property name="wordWrap"><bool>true</bool></property><property name="buddy"><cstring>undeadWidth</cstring></property></widget></item><item><widget class="QSpinBox" name="undeadWidth"><property name="minimum"><number>3</number></property><property name="maximum"><number>18</number></property><property name="value"><number>4</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item></layout></item><item><layout class="QHBoxLayout" name="undeadHeightLayout"><item><widget class="QLabel" name="undeadHeightLabel"><property name="text"><string>高度</string></property><property name="wordWrap"><bool>true</bool></property><property name="buddy"><cstring>undeadHeight</cstring></property></widget></item><item><widget class="QSpinBox" name="undeadHeight"><property name="minimum"><number>3</number></property><property name="maximum"><number>18</number></property><property name="value"><number>4</number></property><property name="keyboardTracking"><bool>false</bool></property></widget></item></layout></item><item><widget class="QLabel" name="undeadDifficultyLabel"><property name="text"><string>难度</string></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QComboBox" name="undeadDifficulty" /></item><item><widget class="QToolButton" name="undeadApplyButton"><property name="text"><string>应用并开新局</string></property></widget></item></layout></widget></item><item><widget class="QCheckBox" name="undeadKeepHighlight"><property name="text"><string>修改候选后保留选择</string></property></widget></item><item><widget class="QCheckBox" name="undeadLetters"><property name="text"><string>字母显示怪物（A）</string></property></widget></item><item><widget class="QComboBox" name="undeadCountStyle"><item><property name="text"><string>怪物总数</string></property></item><item><property name="text"><string>待放数量（C）</string></property></item><item><property name="text"><string>已放／总数</string></property></item></widget></item><item><widget class="QLabel" name="undeadStatus"><property name="text"><string /></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><widget class="QToolButton" name="undeadGhostButton"><property name="text"><string>幽灵 G</string></property></widget></item><item><widget class="QToolButton" name="undeadVampireButton"><property name="text"><string>吸血鬼 V</string></property></widget></item><item><widget class="QToolButton" name="undeadZombieButton"><property name="text"><string>僵尸 Z</string></property></widget></item><item><widget class="QWidget" name="undeadBoard" native="true"><layout class="QVBoxLayout" name="undeadBoardLayout"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property></layout></widget></item><item><widget class="QToolButton" name="undeadEraseButton"><property name="text"><string>清除（空格／退格）</string></property></widget></item><item><widget class="QToolButton" name="undeadMarksButton"><property name="text"><string>填入全部候选（M）</string></property></widget></item><item><layout class="QHBoxLayout" name="undeadHistoryButtons"><item><widget class="QToolButton" name="undeadNewButton"><property name="text"><string>新一局</string></property></widget></item><item><widget class="QToolButton" name="undeadRetryButton"><property name="text"><string>重试本局</string></property></widget></item><item><widget class="QToolButton" name="undeadUndoButton"><property name="text"><string>撤销</string></property></widget></item><item><widget class="QToolButton" name="undeadRedoButton"><property name="text"><string>重做</string></property></widget></item></layout></item><item><widget class="QToolButton" name="undeadSolveButton"><property name="text"><string>显示答案</string></property></widget></item><item><widget class="QLabel" name="undeadFeedback"><property name="text"><string /></property><property name="wordWrap"><bool>true</bool></property></widget></item><item><spacer name="undeadSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item></layout></widget>
+
             </widget>
            </item>
           </layout>

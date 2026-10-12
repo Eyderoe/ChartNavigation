@@ -52,6 +52,50 @@ find_package(Qt6 REQUIRED COMPONENTS
         ProtobufTools)
 
 
+add_library(ChartMinesBackend STATIC
+        src/gui/games/minesBackend.c
+        src/gui/games/minesBackend.h
+        src/gui/games/signpostBackend.c
+        src/gui/games/signpostBackend.h
+        src/gui/games/soloBackend.c
+        src/gui/games/soloBackend.h
+        src/gui/games/palisadeBackend.c
+        src/gui/games/palisadeBackend.h
+        src/gui/games/tentsBackend.c
+        src/gui/games/tentsBackend.h
+        src/gui/games/undeadBackend.c
+        src/gui/games/undeadBackend.h
+        src/gui/games/simon/matching.c
+        src/gui/games/simon/divvy.c
+        src/gui/games/simon/inputCore.c
+        src/gui/games/simon/grid.c
+        src/gui/games/simon/random.c
+        src/gui/games/simon/tree234.c
+        src/gui/games/simon/dsf.c
+        src/gui/games/simon/combi.c
+        src/gui/games/simon/penrose.c
+        src/gui/games/simon/penrose-legacy.c
+        src/gui/games/simon/hat.c
+        src/gui/games/simon/spectre.c
+        src/gui/games/simon/malloc.c
+        src/gui/games/simon/miscCore.c
+)
+target_include_directories(ChartMinesBackend PRIVATE src/gui/games/simon)
+include(CheckIncludeFile)
+check_include_file(tgmath.h CHART_MINES_HAVE_TGMATH_H)
+if (NOT CHART_MINES_HAVE_TGMATH_H)
+    target_compile_definitions(ChartMinesBackend PRIVATE NO_TGMATH_H)
+endif ()
+set_target_properties(ChartMinesBackend PROPERTIES
+        AUTOMOC OFF AUTOUIC OFF AUTORCC OFF POSITION_INDEPENDENT_CODE ON
+        C_STANDARD 11 C_STANDARD_REQUIRED ON
+)
+if (MSVC)
+    target_compile_definitions(ChartMinesBackend PRIVATE _CRT_SECURE_NO_WARNINGS)
+else ()
+    target_compile_options(ChartMinesBackend PRIVATE -Wno-deprecated-declarations)
+endif ()
+
 qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         resources.qrc
         resources/qdarkstyle/dark/darkstyle.qrc
@@ -131,6 +175,57 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/gui/note_widget.cpp
         src/gui/note_widget.hpp
         src/gui/note_widget.ui
+        src/gui/games/games.cpp
+        src/gui/games/games.hpp
+        src/gui/games/game.hpp
+        src/gui/games/squareGameView.hpp
+        src/gui/games/arithmeticExpression.hpp
+        src/gui/games/colorPalette.hpp
+        src/gui/games/twentyFour.cpp
+        src/gui/games/twentyFour.hpp
+        src/gui/games/guessNumber.cpp
+        src/gui/games/guessNumber.hpp
+        src/gui/games/countdown.cpp
+        src/gui/games/countdown.hpp
+        src/gui/games/pyramid.cpp
+        src/gui/games/pyramid.hpp
+        src/gui/games/lightsOut.cpp
+        src/gui/games/lightsOut.hpp
+        src/gui/games/game2048.cpp
+        src/gui/games/game2048.hpp
+        src/gui/games/untangle.cpp
+        src/gui/games/untangle.hpp
+        src/gui/games/flood.cpp
+        src/gui/games/flood.hpp
+        src/gui/games/map.cpp
+        src/gui/games/map.hpp
+        src/gui/games/mapGeometry.cpp
+        src/gui/games/mapGeometry.hpp
+        src/gui/games/gridGameView.hpp
+        src/gui/games/cube.cpp
+        src/gui/games/cube.hpp
+        src/gui/games/SIMON-TATHAM-LICENSE.txt
+        src/gui/games/pegs.cpp
+        src/gui/games/pegs.hpp
+        src/gui/games/net.cpp
+        src/gui/games/net.hpp
+        src/gui/games/fifteen.cpp
+        src/gui/games/fifteen.hpp
+        src/gui/games/fifteenPuzzle.hpp
+        src/gui/games/mines.cpp
+        src/gui/games/mines.hpp
+        src/gui/games/signpost.cpp
+        src/gui/games/signpost.hpp
+        src/gui/games/solo.cpp
+        src/gui/games/solo.hpp
+        src/gui/games/palisade.cpp
+        src/gui/games/palisade.hpp
+        src/gui/games/tents.cpp
+        src/gui/games/tents.hpp
+        src/gui/games/undead.cpp
+        src/gui/games/undead.hpp
+        src/gui/games/rectPuzzleView.hpp
+        src/gui/games/puzzleInput.h
         src/utils/weatherReportParser.cpp
         src/utils/weatherReportParser.hpp
         src/ui/enhancedMap.cpp
@@ -142,6 +237,9 @@ qt_add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
         src/services/attachedChart.hpp
         src/services/mapItemTemplate.cpp
         src/services/mapItemTemplate.hpp
+)
+set_property(TARGET ${PROJECT_NAME} PROPERTY AUTOUIC_SEARCH_PATHS
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/gui"
 )
 qt_add_protobuf(${PROJECT_NAME}
         PROTO_FILES
@@ -161,6 +259,7 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
         <QtPdfWidgets/QPdfView>
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
+        ChartMinesBackend
         GeographicLib::GeographicLib
         SQLiteCpp
         Qt::Core

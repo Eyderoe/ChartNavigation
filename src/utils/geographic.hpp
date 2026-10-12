@@ -60,7 +60,7 @@ class DynamicLCC { // WGS84,兰伯特等角圆锥投影.投影一般分类标准
 // 地图场景坐标：单位米，向东为 x 正方向、向南为 y 正方向。
 class MapProjection {
     public:
-        enum class Type : int { dynamicLCC, webMercator };
+        enum class Type : int { dynamicLCC = 0, webMercator = 1, gnomonic = 2 };
         explicit MapProjection (Type type = Type::dynamicLCC) : type(type) {}
         void reset (double left, double right, double bottom, double top);
         [[nodiscard]] Point2D trans (Point2D position) const;
@@ -73,6 +73,7 @@ class MapProjection {
         Type type;
         DynamicLCC lcc;
         double centralMeridian{}; // 度；按缓存中心展开经度，保持日期变更线附近连续。
+        double centerLatitudeSin{}, centerLatitudeCos{1.0}; // 球心投影切点纬度的正弦、余弦。
         double falseEasting{}, falseNorthing{};
         bool valid{false};
 };

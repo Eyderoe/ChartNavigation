@@ -45,7 +45,7 @@ class SettingsManager : public QObject {
             planeFollowed, // 居中飞机 bool
             enrouteCenter, // 航路图视口中心 QPointF(经度, 纬度)
             enrouteZoomLevel, // 航路图缩放等级 MapZoomLevel(int)
-            mapProjection, // 航路图投影方式 int: 0=动态LCC, 1=Web墨卡托
+            mapProjection, // 航路图投影方式 int: 0=动态LCC, 1=Web墨卡托, 2=球心投影
             tcasRange, // TCAS显示范围 TcasMode(int)
             infoMode, // 飞行器信息 InfoMode(int)
             showTrail, // 显示飞行器航迹 bool

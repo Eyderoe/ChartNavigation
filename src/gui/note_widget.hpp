@@ -18,6 +18,8 @@ class note_widget;
 
 QT_END_NAMESPACE
 
+class Games;
+
 class note_widget : public QWidget {
         Q_OBJECT
     public:
@@ -26,6 +28,7 @@ class note_widget : public QWidget {
         bool eventFilter (QObject *watched, QEvent *event) override;
     private:
         Ui::note_widget *ui;
+        Games *games{};
         void initConnect ();
         // 右侧预设
         QGraphicsScene *flightLevelScene{};

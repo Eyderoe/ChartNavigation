@@ -190,6 +190,11 @@
               <string>Web 墨卡托</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>球心投影</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item row="9" column="0" colspan="2">
